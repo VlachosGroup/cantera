@@ -249,6 +249,7 @@ _species = []
 _speciesnames = []
 _phases = []
 _reactions = []
+_interactions = []
 _atw = {}
 _enames = {}
 
@@ -373,6 +374,11 @@ def write(outName=None):
         r['motz_wise'] = str(_motz_wise).lower()
     for rx in _reactions:
         rx.build(r)
+
+    i = x.addChild('interactionData')
+    i['id'] = 'interaction_data'
+    for interaction in _interactions:
+        interaction.build(i)
 
     if outName == 'STDOUT':
         x.write(sys.stdout)
@@ -989,7 +995,7 @@ class gas_transport(transport):
         self._rot_relax = rot_relax
         self._w_ac = acentric_factor
         self._disp_coeff = disp_coeff
-        self._quad_polar = quad_polar
+        self._quad_polar = quaprivated_polar
 
     def build(self, t):
         #t = s.addChild("transport")
@@ -1689,6 +1695,120 @@ class edge_reaction(reaction):
 
 
 #--------------
+
+class lateral_interaction(object):
+    """
+    A coverage dependent lateral interaction between surface species defined
+    as piecewise linear function. It writes to XML file as 3 parameter
+    lateral interaction model (Two strength parameters and one coverage
+    threhsold  parameter).
+    """
+    def __init__(self,
+                 species = '',
+                 strengths = None,
+                 coverage_thresholds = None,
+                 id = ''):
+        """
+        :param species:
+            Pair of Surface species between which lateral interaction is
+            defined. Given as a string with white space separating the pair.
+            Assumption is that species are defined locally.
+        :param strengths:
+            The lateral interaction strengths, where the lateral interaction
+            is considered picewise linear. The strength parameters define the
+            slopes. Could be one or more floats.
+            f three numbers is given, these will be interpreted as [A, b, E] in
+            the modified Arrhenius function :math:`A T^b exp(-E/\hat{R}T)`.
+        :param coverage_thresholds:
+            Coverage threshold at which the lateral interaction strength changes.
+            Could be None, one or more  floats. The length of coverage_threshold
+            parameters should be always less than the length of strength
+            parameter by 1. The given coverage_thresholds are automatically
+            supplementd with 0 and 1 at beginning and end respectively. Then
+            the number of coverage intervals equal to number of strength
+            parameters.
+            1) If a single strength parameter is given with no coverage
+            threshold, coverage threshold is considered to be zero.
+            2) If a single strength parameter with a single coverage threshold
+            parameter is specified, the strength parameter is assumed to be
+            zero below the threshold, and the given strength parameter applies
+            for coverage above the  given threshold.
+        :param id:
+            An optional identification string. If omitted, it defaults to a
+            four-digit numeric string beginning with 0001 for the first
+            reaction in the file.
+        """
+        self._id = id
+        self._species = species
+
+        def get_list(a):
+            if hasattr(a, '__iter__'):
+                return list(a)
+            else:
+                return [a]
+
+        if not coverage_thresholds:
+            coverage_thresholds = [0, 1]
+        else:
+            ct = coverage_thresholds
+            if len(ct) == 1 or isinstance(ct, float):
+                coverage_thresholds = get_list(ct)
+                if 0 not in coverage_thresholds:
+                    coverage_thresholds.insert(0, 0)
+                if 1 not in coverage_thresholds:
+                    coverage_thresholds.append(1)
+
+        if len(strengths) == 1 or isinstance(strengths, float):
+            strengths = get_list(strengths)
+            if len(coverage_thresholds) == 3:
+                strengths.insert(0, 0)
+
+
+        self._strengths = strengths
+        self._coverage_thresholds = coverage_thresholds
+        self._num = len(_interactions)+1
+
+        _interactions.append(self)
+
+    def unit_factor(self):
+        """
+        Conversion factor from given rate constant units to the MKS (+kmol)
+        used internally by Cantera, taking into account the reaction order.
+        """
+        return (math.pow(_length[_ulen], -self.ldim) *
+                math.pow(_moles[_umol], -self.mdim) / _time[_utime])
+
+    def build(self, p):
+        if self._id:
+            id = self._id
+        else:
+            id = '%04i' % self._num
+
+
+        p.addComment("   interaction "+id+"    ")
+        i = p.addChild('interaction')
+        i['id'] = id
+
+        # Species definitions are considered local. If not local,
+        # complicated processing done as in phase has to be adapted
+        sp = i.addChild('speciesArray',self._species)
+        sp['datasrc'] = '#species_data'
+
+        str_str = ''
+        for strength in self._strengths:
+            str_str += '%17.9E, ' % strength
+        str_n = i.addChild("floatArray", str_str)
+        str_n["name"] = "strength"
+
+        cov_str = ''
+        for cov_thr in self._coverage_thresholds:
+            cov_str += '%17.9E, ' % cov_thr
+        cov_n = i.addChild("floatArray", cov_str)
+        cov_n["name"] = "coverage_threshold"
+
+        return i
+
+#-------------------
 
 
 class state(object):
