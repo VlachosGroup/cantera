@@ -2608,6 +2608,108 @@ class ideal_interface(phase):
         return (1, -2)
 
 
+class interacting_interface(phase):
+    """A chemically-reacting surface solution of multiple species with coverage
+    dependent lateral interactions."""
+    def __init__(self,
+                 name = '',
+                 elements = '',
+                 species = '',
+                 note = '',
+                 reactions = 'none',
+                 interactions = 'none',
+                 site_density = 0.0,
+                 phases = [],
+                 kinetics = 'Interface',
+                 transport = 'None',
+                 initial_state = None,
+                 options = []):
+        """
+        The parameters correspond to those of :class:`.phase`, with the
+        following modifications:
+
+        :param reactions:
+            The heterogeneous reactions at this interface. If omitted, no
+            reactions will be included. A string or sequence of strings in the
+            format described in `Declaring the Reactions
+            <https://cantera.org/tutorials/cti/phases.html#declaring-the-reactions>`__.
+        :param site_density:
+            The number of adsorption sites per unit area.
+        :param phases:
+            A string listing the bulk phases that participate in reactions
+            at this interface.
+        """
+        self._type = 'interacting_surface'
+        phase.__init__(self, name, 2, elements, species, note,
+                       reactions, initial_state, options)
+        self._pure = 0
+        self._intrxns = interactions
+        self._kin = kinetics
+        self._tr = transport
+        self._phases = phases
+        self._sitedens = site_density
+        self._irx = []
+
+    def _buildintrxns(self, p):
+
+        if isinstance(self._intrxns, str):
+            self._intrxns = [self._intrxns]
+
+        # for each interaction string, check whether or not the interactions
+        # are imported or defined locally. If imported, the string
+        # contains a colon (:)
+        for ir in self._intrxns:
+            icolon = ir.find(':')
+            if icolon > 0:
+                #datasrc, rnum = r.split(':')
+                datasrc = ir[:icolon].strip()
+                irnum = ir[icolon+1:]
+                self._irx.append((datasrc+'.xml', irnum))
+            else:
+                irnum = ir
+                self._irx.append(('', irnum))
+
+        for ir in self._irx:
+            datasrc = ir[0]
+            ira = p.addChild('interactionArray')
+            ira['datasrc'] = datasrc+'#interaction_data'
+            irk = None
+            if 'skip_undeclared_species' in self._options:
+                irk = ira.addChild('skip')
+                irk['species'] = 'undeclared'
+
+            irtoks = ir[1].split()
+            if irtoks[0] != 'all':
+                i = ira.addChild('include')
+                #i['prefix'] = 'reaction_'
+                i['min'] = irtoks[0]
+                if len(irtoks) > 2 and (irtoks[1] == 'to' or irtoks[1] == '-'):
+                    i['max'] = irtoks[2]
+                else:
+                    i['max'] = irtoks[0]
+
+
+    def build(self, p):
+        ph = phase.build(self, p)
+
+        if self._intrxns != 'none':
+            self._buildintrxns(ph)
+        e = ph.child("thermo")
+        e['model'] = 'InteractingSurface'
+        addFloat(e, 'site_density', self._sitedens, defunits = _umol+'/'+_ulen+'2')
+        k = ph.addChild("kinetics")
+        k['model'] = self._kin
+        t = ph.addChild('transport')
+        t['model'] = self._tr
+        p = ph.addChild('phaseArray',self._phases)
+
+
+    def conc_dim(self):
+        return (1, -2)
+
+
+
+
 class edge(phase):
     """A 1D boundary between two surface phases."""
     def __init__(self,
