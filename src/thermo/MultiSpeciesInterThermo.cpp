@@ -57,17 +57,18 @@ void MultiSpeciesInterThermo::buildSpeciesInterMap(std::vector<std::string> spec
     }
 
     if (m_int_strengths.size() == 0) { // Initialize to zero values. 
-        m_int_strengths = Eigen::MatrixXd.Zero(species.size(), species.size())
+        m_int_strengths = Eigen::MatrixXd::Zero(species.size(), species.size());
     }
 
     if (m_coverages.size() == 0) { // Not yet initialized, initialize to zero values
-        m_coverages = Eigen::VectorXd.Zero(species.size())
+        m_coverages = Eigen::VectorXd::Zero(species.size());
     }
 
 }
 
 void MultiSpeciesInterThermo::update(doublereal t, doublereal* coverages, 
                                      doublereal* h_RT) 
+// Check the validity of this function
 {
     
 
