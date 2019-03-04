@@ -54,7 +54,7 @@ class LateralInteraction;
  *
  * @ingroup spthermo
  */
-class MultiSpeciesInterThermo
+class MultiSpeciesInterThermo 
 {
 public:
     //! Constructor
