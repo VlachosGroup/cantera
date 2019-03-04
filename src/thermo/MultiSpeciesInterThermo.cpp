@@ -41,8 +41,8 @@ int get_index(std::vector<std::string> species, std::string name) {
     {
         return std::distance(species.begin(), it);
     }
-
 }
+
 void MultiSpeciesInterThermo::buildSpeciesInterMap(std::vector<std::string> species)
 {
     auto cnt = 0;
