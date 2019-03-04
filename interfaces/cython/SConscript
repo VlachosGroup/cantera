@@ -105,7 +105,7 @@ elif localenv['python_prefix']:
         # 64-bit RHEL / Fedora
         extra = localenv.subst(
             ' --prefix=${python_prefix}'
-            ' --install-lib=${python_prefix}/lib64/python{}/site-packages'.format(py_version))
+            ' --install-lib=${python_prefix}')
     else:
         extra = '--user'
         localenv.AppendENVPath(
