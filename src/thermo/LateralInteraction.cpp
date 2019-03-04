@@ -36,6 +36,12 @@ bool LateralInteraction::validate()
         return false;
 }
 
+
+std::string LateralInteraction::species1Name() { return m_species.first->name; }
+
+std::string LateralInteraction::species2Name() { return m_species.second->name; }
+
+
 shared_ptr<LateralInteraction> newLateralInteraction(const XML_Node& interaction_node)
 {
     if (interaction_node.hasAttrib("id")){

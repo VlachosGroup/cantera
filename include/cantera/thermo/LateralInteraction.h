@@ -33,12 +33,16 @@ public:
 
     bool validate();
 
+    std::string species1Name(); 
+
+    std::string species2Name();
+
     //! Get the interaction strength at the given coverage
     double strength(double coverage);
 
 
 protected:
-    std::set<std::shared_ptr<Species> > m_species; 
+    std::pair<std::shared_ptr<Species>, std::shared_ptr<Species> > m_species; 
     vector_fp m_strengths;
     vector_fp m_cov_thresholds;
     std::string m_id;
