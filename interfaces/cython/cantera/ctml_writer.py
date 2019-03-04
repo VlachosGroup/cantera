@@ -1002,7 +1002,7 @@ class gas_transport(transport):
         self._rot_relax = rot_relax
         self._w_ac = acentric_factor
         self._disp_coeff = disp_coeff
-        self._quad_polar = quaprivated_polar
+        self._quad_polar = quad_polar
 
     def build(self, t):
         #t = s.addChild("transport")
