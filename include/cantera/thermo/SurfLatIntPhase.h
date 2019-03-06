@@ -12,11 +12,13 @@
 #ifndef CT_SURFLATINTPHASE_H
 #define CT_SURFLATINTPHASE_H
 
+#include <memory>
 #include "SurfPhase.h"
 #include "MultiSpeciesInterThermo.h"
 
 namespace Cantera
 {
+
 
 //class MultiSpeciesInterThermo;
 //! A thermodynamic model for a surface phase, where lateral interactions between
@@ -236,7 +238,21 @@ public:
      *    </thermo>
      * @endcode
      */
-    //virtual void setParametersFromXML(const XML_Node& thermoData);
+    virtual void setParametersFromXML(const XML_Node& thermoData);
+
+    virtual void initThermoXML(XML_Node& phaseNode, const std::string& id);
+
+    bool addInteraction(std::shared_ptr<LateralInteraction> intrxn);
+
+    bool installInteractionArrays(const XML_Node& p, bool check_for_duplicates);
+
+    void checkDuplicates() {}
+
+    std::vector<std::string> getAffectedInteractions(std::string speciesName);
+
+    std::vector<std::string> getAffectingInteractions(std::string speciesName);
+
+    int nInteractions() const { return m_interactions.size(); }
 
     //virtual void getGibbs_RT(doublereal* grt) const;
     //virtual void getEnthalpy_RT(doublereal* hrt) const;
@@ -246,7 +262,11 @@ public:
 protected:
     //! Vector of lateral interaction parameters (number of species squared). length m_kk**2.
     MultiSpeciesInterThermo m_spInterThermo;
+
+    std::map<std::string, shared_ptr<LateralInteraction> > m_interactions;
+
     vector_fp m_coverages;  // Working array for the interactions
+
 
 //private:
     //! Update the species reference state thermodynamic functions
