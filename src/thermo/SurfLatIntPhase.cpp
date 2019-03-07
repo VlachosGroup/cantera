@@ -38,6 +38,15 @@ SurfLatIntPhase::SurfLatIntPhase(XML_Node& xmlphase) :
 {
 }
 
+bool SurfLatIntPhase::addSpecies(shared_ptr<Species> spec) 
+{
+
+    bool added = SurfPhase::addSpecies(spec);
+    if (added)
+        m_h0_inter.push_back(0.0);
+    return added;
+}
+
 //!  Gather a vector of pointers to XML_Nodes for a phase
 /*!
  *   @param intrxnDataNodeList   Output vector of pointer to XML_Nodes which 
@@ -138,7 +147,8 @@ bool SurfLatIntPhase::addInteraction(shared_ptr<LateralInteraction> intrxn) {
     m_interactions[toLowerCopy(intrxn->name())] = intrxn;
 } 
 
-vector<string> SurfLatIntPhase::getAffectedInteractions(string speciesName) {
+vector<string> SurfLatIntPhase::getAffectedInteractions(string speciesName) 
+{
     vector<string> intrxnNames;
     intrxnNames.reserve(nSpecies());
     for (auto const& intrxn: m_interactions) 
@@ -148,7 +158,8 @@ vector<string> SurfLatIntPhase::getAffectedInteractions(string speciesName) {
     return intrxnNames;
 }
 
-vector<string> SurfLatIntPhase::getAffectingInteractions(string speciesName) {
+vector<string> SurfLatIntPhase::getAffectingInteractions(string speciesName) 
+{
     vector<string> intrxnNames;
     intrxnNames.reserve(nSpecies());
     for (auto const& intrxn: m_interactions) 
@@ -156,6 +167,11 @@ vector<string> SurfLatIntPhase::getAffectingInteractions(string speciesName) {
             intrxnNames.push_back(intrxn.first);
 
     return intrxnNames;
+}
+
+shared_ptr<LateralInteraction> SurfLatIntPhase::getInteractionfromID(string id) 
+{
+    return m_interactions[toLowerCopy(id)];
 }
 
 bool SurfLatIntPhase::installInteractionArrays(const XML_Node& p, 
@@ -314,25 +330,29 @@ void SurfLatIntPhase::getPartialMolarEnthalpies(doublereal* hbar) const
         hbar[k] *= RT();
     }
 }
+*/
 
-void SurfLatIntPhase::_updateThermo(bool force) const
+void SurfLatIntPhase::_updateThermo(bool force) 
 {
     doublereal tnow = temperature();
     if (m_tlast != tnow || force) {
         m_spthermo.update(tnow, m_cp0.data(), m_h0.data(), m_s0.data());
+        getCoverages(m_coverages.data());
+        m_spInterThermo.update(tnow, m_coverages.data(), m_h0_inter.data());
         m_tlast = tnow;
         for (size_t k = 0; k < m_kk; k++) {
+            m_h0[k] += m_h0_inter[k];
             m_h0[k] *= GasConstant * tnow;
             m_s0[k] *= GasConstant;
             m_cp0[k] *= GasConstant;
             m_mu0[k] = m_h0[k] - tnow*m_s0[k];
         }
-        _updateInterThermo();
         m_tlast = tnow;
     }
 }
 
-void SurfLatIntPhase::_updateThermo(bool force, ) const
+/*
+void SurfLatIntPhase::_updateInterThermo() 
 {
     doublereal tnow = temperature();
     m_spInterThermo.update(tnow, m_h0.data());

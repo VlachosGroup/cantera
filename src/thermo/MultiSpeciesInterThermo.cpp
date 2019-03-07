@@ -17,10 +17,14 @@
 #include "cantera/base/ctexceptions.h"
 #include "cantera/numerics/eigen_dense.h"
 
+using namespace std;
+
 namespace Cantera
 {
 
-MultiSpeciesInterThermo::MultiSpeciesInterThermo() 
+MultiSpeciesInterThermo::MultiSpeciesInterThermo(
+        vector<shared_ptr<LateralInteraction> > interactions) :
+    m_interactions(interactions)
 {
 }
 
@@ -30,8 +34,8 @@ void MultiSpeciesInterThermo::addInteraction(
     m_interactions.push_back(interaction); 
 }
 
-int get_index(std::vector<std::string> species, std::string name) {
-    auto it = std::find(species.begin(), species.end(), name);
+int get_index(vector<string> species, string name) {
+    auto it = find(species.begin(), species.end(), name);
     if (it == species.end())
     {
         // name not in vector
@@ -39,7 +43,7 @@ int get_index(std::vector<std::string> species, std::string name) {
                 //"Name of species in interaction not found in supplied species");
     } else
     {
-        return std::distance(species.begin(), it);
+        return distance(species.begin(), it);
     }
 }
 
@@ -47,12 +51,12 @@ void MultiSpeciesInterThermo::buildSpeciesInterMap(std::vector<std::string> spec
 {
     auto cnt = 0;
     for (auto inter : m_interactions) {
-        std::string sp1 = inter->species1Name();
-        std::string sp2 = inter->species2Name();
+        string sp1 = inter->species1Name();
+        string sp2 = inter->species2Name();
 
         auto ind1 = get_index(species, sp1);
         auto ind2 = get_index(species, sp2);
-        m_specie_inter_map[std::make_pair(ind1, ind2)] = cnt;
+        m_specie_inter_map[make_pair(ind1, ind2)] = cnt;
         cnt++;
     }
 
@@ -66,8 +70,8 @@ void MultiSpeciesInterThermo::buildSpeciesInterMap(std::vector<std::string> spec
 
 }
 
-void MultiSpeciesInterThermo::update(doublereal t, doublereal* coverages, 
-                                     doublereal* h_RT) 
+void MultiSpeciesInterThermo::update(doublereal t, double* const coverages, 
+                                     double* const h_RT) 
 // Check the validity of this function
 {
     
@@ -81,8 +85,11 @@ void MultiSpeciesInterThermo::update(doublereal t, doublereal* coverages,
             }
         }
     }
-    *h_RT = (m_int_strengths * m_coverages).sum();
-    //return interaction;
+
+    Eigen::VectorXd inter_h0_RT = m_int_strengths.rowwise().sum()/(GasConstant * t);
+
+    memcpy(h_RT, inter_h0_RT.data(), m_int_strengths.rows()) ;
+
 }
 
 /*

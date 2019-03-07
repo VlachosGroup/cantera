@@ -13,6 +13,8 @@
 #include <utility>
 
 
+using namespace std;
+
 namespace Cantera {
 
 LateralInteraction::LateralInteraction()
@@ -53,19 +55,19 @@ std::string LateralInteraction::species2Name() {
     return m_species.second; 
 }
 
-double LateralInteraction::strength(const double coverage) const {
-    /*
+double LateralInteraction::strength(const double coverage) const 
+{
     if (coverage > 1) {
-        throw CanteraError ("Coverage cannot be greater than 1");
+        throw CanteraError ("Cantera::LateralInteraction", 
+                "Coverage '{}' greater than 1", coverage);
     }
-    else {
-        if (coverage < 0) {
-            throw CanteraError ("Coverage cannot be less than 0");
-        }
-    }*/
+    else if (coverage < 0){
+        throw CanteraError ("Cantera::LateralInteraction", 
+                "Coverage '{}' less than 0", coverage);
+    }
 
     doublereal val = 0.0;
-    for (auto i=0; i < m_strengths.size(); i++) {
+    for (size_t i = 0; i < m_strengths.size(); i++) {
         auto cov_low_thr = m_cov_thresholds[i];
         auto cov_up_thr = m_cov_thresholds[i+1];
         if (cov_up_thr < coverage) {
@@ -84,9 +86,7 @@ double LateralInteraction::strength(const double coverage) const {
 
 shared_ptr<LateralInteraction> newLateralInteraction(const XML_Node& interaction_node)
 {
-    //if (interaction_node.hasAttrib("id")){
     std::string id = interaction_node["id"];
-    //}
     const XML_Node& sp_array = interaction_node.child("speciesArray");
     std::vector<std::string> species;
     getStringArray(sp_array, species);
@@ -104,16 +104,15 @@ shared_ptr<LateralInteraction> newLateralInteraction(const XML_Node& interaction
     std::vector<XML_Node*> fas = interaction_node.getChildren("floatArray");
     vector_fp strengths, cov_thresholds;
     for (auto fa: fas){
-        if (fa->name() == "strength")
+        if (fa->attrib("name") == "strength")
             getFloatArray(*fa, strengths);//, nodeName = "strength")
-        if (fa->name() == "coverage_threshold")
+        if (fa->attrib("name") == "coverage_threshold")
             getFloatArray(*fa, cov_thresholds);//, nodeName = "coverage_threshold")
     }
 
     
     auto interaction = make_shared<LateralInteraction>(species[0], species[1], 
                                                        strengths, cov_thresholds, id);
-    //auto interaction = make_shared<LateralInteraction>();
 
     return interaction;
 }
