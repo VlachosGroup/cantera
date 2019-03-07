@@ -243,6 +243,8 @@ public:
     virtual void initThermoXML(XML_Node& phaseNode, const std::string& id);
 
     bool addInteraction(std::shared_ptr<LateralInteraction> intrxn);
+    
+    virtual bool addSpecies(shared_ptr<Species> spec);
 
     bool installInteractionArrays(const XML_Node& p, bool check_for_duplicates);
 
@@ -251,6 +253,8 @@ public:
     std::vector<std::string> getAffectedInteractions(std::string speciesName);
 
     std::vector<std::string> getAffectingInteractions(std::string speciesName);
+
+    std::shared_ptr<LateralInteraction> getInteractionfromID(std::string id);
 
     int nInteractions() const { return m_interactions.size(); }
 
@@ -263,9 +267,11 @@ protected:
     //! Vector of lateral interaction parameters (number of species squared). length m_kk**2.
     MultiSpeciesInterThermo m_spInterThermo;
 
-    std::map<std::string, shared_ptr<LateralInteraction> > m_interactions;
+    std::map<std::string, std::shared_ptr<LateralInteraction> > m_interactions;
 
     vector_fp m_coverages;  // Working array for the interactions
+
+    vector_fp m_h0_inter;   // Temporarily store the enthalpy delta from interactions
 
 
 //private:
@@ -279,7 +285,7 @@ protected:
      * @param lat_int Boolean, which if true, modifies the enthalpy to account for
      *                lateral interactions of surface species. default = false.
      */
-    //void _updateThermo(bool force=false, bool lat_int=false) const;
+    void _updateThermo(bool force=false) ;
 };
 }
 
