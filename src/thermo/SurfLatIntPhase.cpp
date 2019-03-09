@@ -42,8 +42,11 @@ bool SurfLatIntPhase::addSpecies(shared_ptr<Species> spec)
 {
 
     bool added = SurfPhase::addSpecies(spec);
-    if (added)
+    if (added){
         m_h0_inter.push_back(0.0);
+        m_coverages.push_back(0.0);
+    }
+
     return added;
 }
 
@@ -81,7 +84,6 @@ static void formInteractionXMLNodeList(vector<XML_Node*> &intrxnDataNodeList,
         vector<string> intrxnnames;
         getStringArray(intrxnArray, intrxnnames);
         size_t nintrxn = intrxnnames.size();
-        cout << "No. of interactions " << nintrxn << endl;
 
         // if 'all' is specified as the one and only intrxn in the
         // intrxnArray_names field, then add all intrxn defined in the
@@ -209,7 +211,6 @@ bool SurfLatIntPhase::installInteractionArrays(const XML_Node& p,
         if (incl.empty()) {
             for (size_t i = 0; i < allintrxns.size(); i++) {
                 string intrxnid = allintrxns[i]->attrib("id");
-                cout << "Interaction id " << intrxnid << endl;
                 addInteraction(newLateralInteraction(*allintrxns[i]));
                 ++itot;
             }
@@ -250,8 +251,15 @@ bool SurfLatIntPhase::installInteractionArrays(const XML_Node& p,
         }
     }
 
-    if (check_for_duplicates) {
-        checkDuplicates();
+    /* Add the interactions to MultiSpeciesInterThermo */
+    for (const auto & intrx_id_pair : m_interactions) {
+        m_spInterThermo.addInteraction(intrx_id_pair.second);
+    }
+    m_spInterThermo.buildSpeciesInterMap(speciesNames()); 
+
+
+    if (check_for_duplicates) { 
+        checkDuplicates(); //Not yet implemented
     }
 
     return true;
@@ -311,9 +319,10 @@ void SurfLatIntPhase::initThermoXML(XML_Node& phaseNode, const string& id)
             this->addInteraction(newLateralInteraction(*s));
         }
     }
+
 }
 
-/*
+
 doublereal SurfLatIntPhase::enthalpy_mole() const
 {
     if (m_n0 <= 0.0) {
@@ -323,6 +332,7 @@ doublereal SurfLatIntPhase::enthalpy_mole() const
     return mean_X(m_h0);
 }
 
+/*
 void SurfLatIntPhase::getPartialMolarEnthalpies(doublereal* hbar) const
 {
     getEnthalpy_RT(hbar);
@@ -332,13 +342,88 @@ void SurfLatIntPhase::getPartialMolarEnthalpies(doublereal* hbar) const
 }
 */
 
-void SurfLatIntPhase::_updateThermo(bool force) 
+doublereal SurfLatIntPhase::entropy_mole() const
+{
+    _updateThermo();
+    doublereal s = 0.0;
+    for (size_t k = 0; k < m_kk; k++) {
+        s += moleFraction(k) * (m_s0[k] -
+            GasConstant * log(std::max(concentration(k) * size(k)/m_n0, SmallNumber)));
+    }
+    return s;
+}
+
+doublereal SurfLatIntPhase::cp_mole() const
+{
+    _updateThermo();
+    return mean_X(m_cp0);
+}
+
+void SurfLatIntPhase::getStandardChemPotentials(doublereal* mu0) const
+{
+    _updateThermo();
+    copy(m_mu0.begin(), m_mu0.end(), mu0);
+}
+
+void SurfLatIntPhase::getChemPotentials(doublereal* mu) const
+{
+    _updateThermo();
+    copy(m_mu0.begin(), m_mu0.end(), mu);
+    getActivityConcentrations(m_work.data());
+    for (size_t k = 0; k < m_kk; k++) {
+        mu[k] += RT() * (log(m_work[k]) - logStandardConc(k));
+    }
+}
+
+void SurfLatIntPhase::getPureGibbs(doublereal* g) const
+{
+    _updateThermo();
+    copy(m_mu0.begin(), m_mu0.end(), g);
+}
+
+void SurfLatIntPhase::getGibbs_RT(doublereal* grt) const
+{
+    _updateThermo();
+    scale(m_mu0.begin(), m_mu0.end(), grt, 1.0/RT());
+}
+
+void SurfLatIntPhase::getEnthalpy_RT(doublereal* hrt) const
+{
+    _updateThermo();
+    scale(m_h0.begin(), m_h0.end(), hrt, 1.0/RT());
+}
+
+void SurfLatIntPhase::getEntropy_R(doublereal* sr) const
+{
+    _updateThermo();
+    scale(m_s0.begin(), m_s0.end(), sr, 1.0/GasConstant);
+}
+
+void SurfLatIntPhase::getCp_R(doublereal* cpr) const
+{
+    _updateThermo();
+    scale(m_cp0.begin(), m_cp0.end(), cpr, 1.0/GasConstant);
+}
+
+void SurfLatIntPhase::getStandardVolumes(doublereal* vol) const
+{
+    _updateThermo();
+    for (size_t k = 0; k < m_kk; k++) {
+        vol[k] = 1.0/standardConcentration(k);
+    }
+}
+
+
+
+void SurfLatIntPhase::_updateThermo(bool force) const
 {
     doublereal tnow = temperature();
     if (m_tlast != tnow || force) {
         m_spthermo.update(tnow, m_cp0.data(), m_h0.data(), m_s0.data());
+
         getCoverages(m_coverages.data());
         m_spInterThermo.update(tnow, m_coverages.data(), m_h0_inter.data());
+
         m_tlast = tnow;
         for (size_t k = 0; k < m_kk; k++) {
             m_h0[k] += m_h0_inter[k];
