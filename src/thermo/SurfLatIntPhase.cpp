@@ -418,7 +418,7 @@ void SurfLatIntPhase::getStandardVolumes(doublereal* vol) const
 void SurfLatIntPhase::_updateThermo(bool force) const
 {
     doublereal tnow = temperature();
-    if (m_tlast != tnow || force) {
+    //if (m_tlast != tnow || force) { //TODO: This check is needed 
         m_spthermo.update(tnow, m_cp0.data(), m_h0.data(), m_s0.data());
 
         getCoverages(m_coverages.data());
@@ -433,7 +433,7 @@ void SurfLatIntPhase::_updateThermo(bool force) const
             m_mu0[k] = m_h0[k] - tnow*m_s0[k];
         }
         m_tlast = tnow;
-    }
+    //}
 }
 
 /*

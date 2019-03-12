@@ -105,15 +105,13 @@ shared_ptr<LateralInteraction> newLateralInteraction(const XML_Node& interaction
     vector_fp strengths, cov_thresholds;
     for (auto fa: fas){
         if (fa->attrib("name") == "strength")
-            getFloatArray(*fa, strengths);//, nodeName = "strength")
+            getFloatArray(*fa, strengths, true, "actEnergy");
         if (fa->attrib("name") == "coverage_threshold")
-            getFloatArray(*fa, cov_thresholds);//, nodeName = "coverage_threshold")
+            getFloatArray(*fa, cov_thresholds, false);
     }
 
-    
     auto interaction = make_shared<LateralInteraction>(species[0], species[1], 
                                                        strengths, cov_thresholds, id);
-
     return interaction;
 }
 
