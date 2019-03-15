@@ -16,11 +16,17 @@
 #include "cantera/base/utilities.h"
 #include "cantera/base/ctexceptions.h"
 #include "cantera/numerics/eigen_dense.h"
+#include <utility>
+#include <iostream>
+
+using namespace std;
 
 namespace Cantera
 {
 
-MultiSpeciesInterThermo::MultiSpeciesInterThermo() 
+MultiSpeciesInterThermo::MultiSpeciesInterThermo(
+        vector<shared_ptr<LateralInteraction> > interactions) :
+    m_interactions(interactions)
 {
 }
 
@@ -30,8 +36,8 @@ void MultiSpeciesInterThermo::addInteraction(
     m_interactions.push_back(interaction); 
 }
 
-int get_index(std::vector<std::string> species, std::string name) {
-    auto it = std::find(species.begin(), species.end(), name);
+int get_index(vector<string> species, string name) {
+    auto it = find(species.begin(), species.end(), name);
     if (it == species.end())
     {
         // name not in vector
@@ -39,7 +45,7 @@ int get_index(std::vector<std::string> species, std::string name) {
                 //"Name of species in interaction not found in supplied species");
     } else
     {
-        return std::distance(species.begin(), it);
+        return distance(species.begin(), it);
     }
 }
 
@@ -47,12 +53,12 @@ void MultiSpeciesInterThermo::buildSpeciesInterMap(std::vector<std::string> spec
 {
     auto cnt = 0;
     for (auto inter : m_interactions) {
-        std::string sp1 = inter->species1Name();
-        std::string sp2 = inter->species2Name();
+        string sp1 = inter->species1Name();
+        string sp2 = inter->species2Name();
 
         auto ind1 = get_index(species, sp1);
         auto ind2 = get_index(species, sp2);
-        m_specie_inter_map[std::make_pair(ind1, ind2)] = cnt;
+        m_species_intrxn_map[make_pair(ind1, ind2)] = cnt;
         cnt++;
     }
 
@@ -60,29 +66,39 @@ void MultiSpeciesInterThermo::buildSpeciesInterMap(std::vector<std::string> spec
         m_int_strengths = Eigen::MatrixXd::Zero(species.size(), species.size());
     }
 
-    if (m_coverages.size() == 0) { // Not yet initialized, initialize to zero values
-        m_coverages = Eigen::VectorXd::Zero(species.size());
-    }
+    m_nSpecies = species.size();
+
+    //if (m_coverages.size() == 0) { // Not yet initialized, initialize to zero values
+    //    m_coverages = Eigen::VectorXd::Zero(species.size());
+    //}
 
 }
 
-void MultiSpeciesInterThermo::update(doublereal t, doublereal* coverages, 
-                                     doublereal* h_RT) 
-// Check the validity of this function
+void MultiSpeciesInterThermo::update(doublereal t, double* coverages, 
+                                     double* h_RT) const
 {
     
-
-    for (auto i = 0; i <  m_coverages.size(); i++){
-        if (coverages[i] != m_coverages[i]){
-            m_coverages(i) = coverages[i];
-            for (auto j=0; j < m_coverages.size(); j++){
-                auto inter = m_interactions[m_specie_inter_map[std::make_pair(j, i)]];
-                m_int_strengths(j,i) = inter->strength(m_coverages[i]);
+    for (int i = 0; i <  m_nSpecies; i++){
+        //if (coverages[i] != m_coverages[i]){
+            //m_coverages(i) = coverages[i];
+            //for (auto j=0; j < m_coverages.size(); j++){
+                //auto inter = m_interactions[m_specie_inter_map[std::make_pair(j, i)]];
+                //m_int_strengths(j,i) = inter->strength(m_coverages[i]);
+            //}
+        //}
+        for (int j=0; j < m_nSpecies; j++){
+            auto it = m_species_intrxn_map.find(make_pair(j,i));
+            if (it != m_species_intrxn_map.end()) {
+                auto ind = it->second;
+                m_int_strengths(j,i) = m_interactions[ind]->strength(coverages[i]);
             }
         }
     }
-    *h_RT = (m_int_strengths * m_coverages).sum();
-    //return interaction;
+
+    Eigen::VectorXd inter_h0_RT = m_int_strengths.rowwise().sum()/(GasConstant * t);
+    for (size_t i = 0; i < m_nSpecies; i++) {
+        h_RT[i] = inter_h0_RT[i];
+    }
 }
 
 /*

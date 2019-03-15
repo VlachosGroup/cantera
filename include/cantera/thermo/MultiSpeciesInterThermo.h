@@ -58,7 +58,10 @@ class MultiSpeciesInterThermo
 {
 public:
     //! Constructor
-    MultiSpeciesInterThermo();
+    MultiSpeciesInterThermo() {}
+
+    MultiSpeciesInterThermo(
+            std::vector<std::shared_ptr<LateralInteraction> > interactions);
 
     // MultiSpeciesInterThermo objects are not copyable or assignable
     MultiSpeciesInterThermo(const MultiSpeciesInterThermo& b) = delete;
@@ -87,7 +90,10 @@ public:
      * @param coverages Coverages (vector of floats)
      * @param h_RT      Vector of Dimensionless enthalpies. (length m_kk).
      */
-    void update(doublereal T, doublereal* coverages, doublereal* h_rt);
+    void update(doublereal T, double* coverages, 
+                double* h_rt) const;
+
+    int nSpecies() {return m_nSpecies;}
 
     //! This utility function reports back the interaction
     //! parameters for the species with index number *index*.
@@ -111,11 +117,13 @@ protected:
     //! Store the interaction objects to obtain the interactions strengths
     std::vector<std::shared_ptr<LateralInteraction> > m_interactions;
     //! Map the interaction index to species indices
-    std::map< std::pair<int, int>, int> m_specie_inter_map;
-    //! Interaction strength parameters (matrix) stored in vector form
-    Eigen::MatrixXd m_int_strengths;
+    std::map< std::pair<int, int>, int > m_species_intrxn_map;
+    //! Interaction strength parameters  stored in matrix form
+    mutable Eigen::MatrixXd m_int_strengths;
+
+    int m_nSpecies;
     //! Vector of coverages 
-    Eigen::VectorXd m_coverages;
+    //Eigen::VectorXd m_coverages;
 
 };
 

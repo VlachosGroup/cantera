@@ -12,11 +12,13 @@
 #ifndef CT_SURFLATINTPHASE_H
 #define CT_SURFLATINTPHASE_H
 
+#include <memory>
 #include "SurfPhase.h"
 #include "MultiSpeciesInterThermo.h"
 
 namespace Cantera
 {
+
 
 //class MultiSpeciesInterThermo;
 //! A thermodynamic model for a surface phase, where lateral interactions between
@@ -181,7 +183,7 @@ public:
     SurfLatIntPhase(XML_Node& xmlphase);
 
     virtual std::string type() const {
-        return "SurfLatInt";
+        return "Surf";
     }
 
     //! Return the Molar Enthalpy. Units: J/kmol.
@@ -236,8 +238,61 @@ public:
      *    </thermo>
      * @endcode
      */
-    //virtual void setParametersFromXML(const XML_Node& thermoData);
+    virtual void setParametersFromXML(const XML_Node& thermoData);
 
+    virtual void initThermoXML(XML_Node& phaseNode, const std::string& id);
+
+    bool addInteraction(std::shared_ptr<LateralInteraction> intrxn);
+    
+    virtual bool addSpecies(shared_ptr<Species> spec);
+
+    bool installInteractionArrays(const XML_Node& p, bool check_for_duplicates);
+
+    void checkDuplicates() {}
+
+    std::vector<std::string> getAffectedInteractions(std::string speciesName);
+
+    std::vector<std::string> getAffectingInteractions(std::string speciesName);
+
+    std::shared_ptr<LateralInteraction> getInteractionfromID(std::string id);
+
+    int nInteractions() const { return m_interactions.size(); }
+
+    //! Return the Molar Enthalpy. Units: J/kmol.
+    /*!
+     * For an ideal solution,
+     * \f[
+     * \hat h(T,P) = \sum_k X_k \hat h^0_k(T),
+     * \f]
+     * and is a function only of temperature. The standard-state pure-species
+     * Enthalpies \f$ \hat h^0_k(T) \f$ are computed by the species
+     * thermodynamic property manager.
+     *
+     * \see MultiSpeciesThermo
+     */
+    virtual doublereal enthalpy_mole() const;
+
+    //! Return the Molar Entropy. Units: J/kmol-K
+    /**
+     * \f[
+     *  \hat s(T,P) = \sum_k X_k (\hat s^0_k(T) - R \log(\theta_k))
+     * \f]
+     */
+    virtual doublereal entropy_mole() const;
+
+    virtual doublereal cp_mole() const;
+
+    virtual void getStandardChemPotentials(doublereal* mu0) const;
+    virtual void getChemPotentials(doublereal* mu) const;
+
+    virtual void getPureGibbs(doublereal* g) const;
+    virtual void getGibbs_RT(doublereal* grt) const;
+    virtual void getEnthalpy_RT(doublereal* hrt) const;
+    virtual void getEntropy_R(doublereal* sr) const;
+    virtual void getCp_R(doublereal* cpr) const;
+    virtual void getStandardVolumes(doublereal* vol) const;
+
+ 
     //virtual void getGibbs_RT(doublereal* grt) const;
     //virtual void getEnthalpy_RT(doublereal* hrt) const;
 
@@ -246,7 +301,13 @@ public:
 protected:
     //! Vector of lateral interaction parameters (number of species squared). length m_kk**2.
     MultiSpeciesInterThermo m_spInterThermo;
-    vector_fp m_coverages;  // Working array for the interactions
+
+    std::map<std::string, std::shared_ptr<LateralInteraction> > m_interactions;
+
+    mutable vector_fp m_coverages;  // Working array for the interactions
+
+    mutable vector_fp m_h0_inter;   // Temporarily store the enthalpy delta from interactions
+
 
 //private:
     //! Update the species reference state thermodynamic functions
@@ -259,7 +320,7 @@ protected:
      * @param lat_int Boolean, which if true, modifies the enthalpy to account for
      *                lateral interactions of surface species. default = false.
      */
-    //void _updateThermo(bool force=false, bool lat_int=false) const;
+    void _updateThermo(bool force=false) const;
 };
 }
 

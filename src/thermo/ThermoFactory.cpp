@@ -26,6 +26,7 @@
 #include "cantera/thermo/RedlichKwongMFTP.h"
 #include "cantera/thermo/ConstDensityThermo.h"
 #include "cantera/thermo/SurfPhase.h"
+#include "cantera/thermo/SurfLatIntPhase.h"
 #include "cantera/thermo/EdgePhase.h"
 #include "cantera/thermo/MetalPhase.h"
 #include "cantera/thermo/StoichSubstance.h"
@@ -55,6 +56,7 @@ ThermoFactory::ThermoFactory()
     reg("IdealGas", []() { return new IdealGasPhase(); });
     reg("Incompressible", []() { return new ConstDensityThermo(); });
     reg("Surface", []() { return new SurfPhase(); });
+    reg("SurfaceCoverage", []() { return new SurfLatIntPhase(); });
     reg("Edge", []() { return new EdgePhase(); });
     reg("Metal", []() { return new MetalPhase(); });
     reg("StoichSubstance", []() { return new StoichSubstance(); });
