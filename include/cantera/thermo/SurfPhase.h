@@ -313,6 +313,14 @@ public:
         return m_n0;
     }
 
+    //! Returns the total site density of all surface phases
+    /*!
+     * Total Site density kmol m-2
+     */
+    doublereal totalSiteDensity() {
+        return m_n0_total;
+    }
+
     //! Returns the number of sites occupied by one molecule of species *k*.
     virtual double size(size_t k) const {
         return m_speciesSize[k];
@@ -323,6 +331,15 @@ public:
      *  @param n0 Site density of the surface phase (kmol m-2)
      */
     void setSiteDensity(doublereal n0);
+
+    //! Set Total Site Density
+    /*!
+     * Total site density (kmol m-2) when multiple surfaces are defined.
+     * Needed to correctly convert sticking coefficients to rate constants. 
+     *
+     *  @param n0_total Total site densities of all surface phases (kmol m-2)
+     */
+    double setTotalSiteDensity(doublereal n0_total);
 
     virtual void getGibbs_RT(doublereal* grt) const;
     virtual void getEnthalpy_RT(doublereal* hrt) const;
@@ -398,6 +415,9 @@ protected:
     //! Surface site density (kmol m-2)
     doublereal m_n0;
 
+    //! Total site density (kmol m-2) of all surface phases
+    doublereal m_n0_total;
+
     //! Vector of species sizes (number of sites occupied). length m_kk.
     vector_fp m_speciesSize;
 
@@ -440,6 +460,9 @@ private:
      */
     void _updateThermo(bool force=false) const;
 };
+
+//Add a function that computes the total site densities based on supplied surface phase
+
 }
 
 #endif
