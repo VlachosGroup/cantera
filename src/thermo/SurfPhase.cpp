@@ -321,6 +321,7 @@ void SurfPhase::setParametersFromXML(const XML_Node& eosdata)
     eosdata._require("model","Surface");
     doublereal n = getFloat(eosdata, "site_density", "toSI");
     setSiteDensity(n);
+    setTotalSiteDensity(n); // Initially set total site density equal to site density
 }
 
 void SurfPhase::initThermo()
