@@ -233,6 +233,15 @@ void SurfPhase::setSiteDensity(doublereal n0)
     m_logn0 = log(m_n0);
 }
 
+void SurfPhase::setTotalSiteDensity(doublereal n0_total)
+{
+    if (n0_total <= 0.0) {
+        throw CanteraError("SurfPhase::setSiteDensity",
+                           "Site density must be positive. Got {}", n0_total);
+    }
+    m_n0_total = n0_total;
+}
+
 void SurfPhase::setCoverages(const doublereal* theta)
 {
     double sum = 0.0;
@@ -336,6 +345,17 @@ void EdgePhase::setParametersFromXML(const XML_Node& eosdata)
     eosdata._require("model","Edge");
     doublereal n = getFloat(eosdata, "site_density", "toSI");
     setSiteDensity(n);
+}
+
+void setTotalSiteDensity(vector<SurfPhase*> surf_phases)
+{
+    doublereal totalSiteDensity = 0.0;
+    for (const auto phase : surf_phases) {
+        totalSiteDensity += phase->siteDensity();
+    }
+    for (auto phase : surf_phases) {
+        phase->setTotalSiteDensity(totalSiteDensity);
+    }
 }
 
 }

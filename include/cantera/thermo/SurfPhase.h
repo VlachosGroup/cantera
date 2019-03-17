@@ -339,7 +339,7 @@ public:
      *
      *  @param n0_total Total site densities of all surface phases (kmol m-2)
      */
-    double setTotalSiteDensity(doublereal n0_total);
+    void setTotalSiteDensity(doublereal n0_total);
 
     virtual void getGibbs_RT(doublereal* grt) const;
     virtual void getEnthalpy_RT(doublereal* hrt) const;
@@ -461,7 +461,17 @@ private:
     void _updateThermo(bool force=false) const;
 };
 
-//Add a function that computes the total site densities based on supplied surface phase
+//! Function that computes the total site densities based on 
+//! supplied surface phases
+/*!
+ * To convert sticking coefficients to rate constants, total site density of all
+ * surface phases is needed. Compute and set it for the supplied phases.
+ * If more than one couple surface phase is present, this function has to be 
+ * manually called by the user
+ *
+ * @param surf_phases  Vector of pointers to surface phases.
+ */
+void setTotalSiteDensity(std::vector<SurfPhase*> surf_phases);
 
 }
 
