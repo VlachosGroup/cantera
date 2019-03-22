@@ -45,12 +45,12 @@ bool LateralInteraction::validate()
 }
 
 
-std::string LateralInteraction::species1Name() { 
+std::string LateralInteraction::species1Name() const { 
     //return m_species.first->name; 
     return m_species.first; 
 }
 
-std::string LateralInteraction::species2Name() { 
+std::string LateralInteraction::species2Name() const { 
     //return m_species.second->name; 
     return m_species.second; 
 }

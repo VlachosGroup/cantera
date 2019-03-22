@@ -278,10 +278,33 @@ cdef extern from "cantera/thermo/SurfPhase.h":
         CxxSurfPhase()
         double siteDensity()
         void setSiteDensity(double) except +translate_exception
+        void setTotalSiteDensity(double) except +translate_exception
+        double totalSiteDensity() 
         void setCoverages(double*) except +translate_exception
         void setCoveragesByName(Composition&) except +translate_exception
         void setCoveragesNoNorm(double*) except +translate_exception
         void getCoverages(double*) except +translate_exception
+
+
+cdef extern from "cantera/thermo/LateralInteraction.h":
+    cdef cppclass CxxLateralInteraction "Cantera::LateralInteraction":
+        CxxLateralInteraction()
+        string species1Name()
+        string species2Name()
+        string name()
+        double strength(double) except +translate_exception
+
+
+cdef extern from "cantera/thermo/SurfLatIntPhase.h":
+    cdef cppclass CxxSurfLatIntPhase "Cantera::SurfLatIntPhase":
+        CxxSurfLatIntPase()
+        double siteDensity()
+        void setSiteDensity(double) except +translate_exception
+        void setCoverages(double*) except +translate_exception
+        void setCoveragesByName(Composition&) except +translate_exception
+        void setCoveragesNoNorm(double*) except +translate_exception
+        void getCoverages(double*) except +translate_exception
+
 
 
 cdef extern from "cantera/kinetics/Reaction.h" namespace "Cantera":

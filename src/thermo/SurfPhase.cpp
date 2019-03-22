@@ -24,6 +24,7 @@ SurfPhase::SurfPhase(doublereal n0):
     m_press(OneAtm)
 {
     setSiteDensity(n0);
+    setTotalSiteDensity(n0);
     setNDim(2);
 }
 
@@ -144,6 +145,7 @@ void SurfPhase::setParameters(int n, doublereal* const c)
                            "Bad value for number of parameter");
     }
     setSiteDensity(c[0]);
+    setTotalSiteDensity(c[0]);
 }
 
 void SurfPhase::getPureGibbs(doublereal* g) const

@@ -63,6 +63,13 @@ void Reactor::getState(double* y)
     getSurfaceInitialConditions(y + m_nsp + 3);
 }
 
+void Reactor::getSurfaceProductionRates(double* y)
+{
+    for (size_t i = 0; i < m_nsp; i++) {
+        y[i] = m_sdot[i];
+    }
+}
+
 void Reactor::getSurfaceInitialConditions(double* y)
 {
     size_t loc = 0;

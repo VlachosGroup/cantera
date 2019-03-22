@@ -888,6 +888,7 @@ void InterfaceKinetics::applyStickingCorrection(double T, double* kf)
     vector_fp& factors = cached.value;
 
     double n0 = m_surf->totalSiteDensity();
+    //double n0 = m_surf->siteDensity();
     if (!cached.validate(n0)) {
         factors.resize(m_stickingData.size());
         for (size_t n = 0; n < m_stickingData.size(); n++) {
