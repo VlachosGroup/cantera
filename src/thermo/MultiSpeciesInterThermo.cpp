@@ -77,7 +77,6 @@ void MultiSpeciesInterThermo::buildSpeciesInterMap(std::vector<std::string> spec
 void MultiSpeciesInterThermo::update(doublereal t, double* coverages, 
                                      double* h_RT) const
 {
-    
     for (int i = 0; i <  m_nSpecies; i++){
         //if (coverages[i] != m_coverages[i]){
             //m_coverages(i) = coverages[i];
@@ -95,7 +94,7 @@ void MultiSpeciesInterThermo::update(doublereal t, double* coverages,
         }
     }
 
-    Eigen::VectorXd inter_h0_RT = m_int_strengths.rowwise().sum()/(GasConstant * t);
+    Eigen::VectorXd inter_h0_RT = m_int_strengths.rowwise().sum();//(GasConstant * t);
     for (size_t i = 0; i < m_nSpecies; i++) {
         h_RT[i] = inter_h0_RT[i];
     }

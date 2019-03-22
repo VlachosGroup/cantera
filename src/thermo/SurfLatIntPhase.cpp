@@ -30,7 +30,6 @@ SurfLatIntPhase::SurfLatIntPhase(doublereal n0):
 SurfLatIntPhase::SurfLatIntPhase(const string& infile, const string& id_) :
     SurfPhase(infile, id_)
 {
-    
 }
 
 SurfLatIntPhase::SurfLatIntPhase(XML_Node& xmlphase) :
@@ -40,7 +39,6 @@ SurfLatIntPhase::SurfLatIntPhase(XML_Node& xmlphase) :
 
 bool SurfLatIntPhase::addSpecies(shared_ptr<Species> spec) 
 {
-
     bool added = SurfPhase::addSpecies(spec);
     if (added){
         m_h0_inter.push_back(0.0);
@@ -424,10 +422,9 @@ void SurfLatIntPhase::_updateThermo(bool force) const
         getCoverages(m_coverages.data());
         m_spInterThermo.update(tnow, m_coverages.data(), m_h0_inter.data());
 
-        m_tlast = tnow;
         for (size_t k = 0; k < m_kk; k++) {
-            m_h0[k] += m_h0_inter[k];
             m_h0[k] *= GasConstant * tnow;
+            m_h0[k] -= m_h0_inter[k];
             m_s0[k] *= GasConstant;
             m_cp0[k] *= GasConstant;
             m_mu0[k] = m_h0[k] - tnow*m_s0[k];
@@ -449,6 +446,7 @@ void SurfLatIntPhase::setParametersFromXML(const XML_Node& eosdata)
     eosdata._require("model","SurfaceCoverage");
     doublereal n = getFloat(eosdata, "site_density", "toSI");
     setSiteDensity(n);
+    setTotalSiteDensity(n); // Initially set total site density equal to site density
 }
 
 }

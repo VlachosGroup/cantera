@@ -73,13 +73,13 @@ public:
     bool validate();
 
     //! The species affected by the interaction
-    std::string species1Name();     
+    std::string species1Name() const;     
 
     //! The species influencing the interaction
-    std::string species2Name();    
+    std::string species2Name() const;    
 
     //! Id of the interaction
-    std::string name() { return m_id; }
+    std::string name() const { return m_id; }
 
     //! Get the interaction strength at the given coverage
     double strength(const double coverage) const;

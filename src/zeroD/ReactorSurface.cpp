@@ -55,6 +55,7 @@ void ReactorSurface::setReactor(ReactorBase* reactor)
 void ReactorSurface::setCoverages(const double* cov)
 {
     copy(cov, cov + m_cov.size(), m_cov.begin());
+    syncCoverages();
 }
 
 void ReactorSurface::setCoverages(const Composition& cov)

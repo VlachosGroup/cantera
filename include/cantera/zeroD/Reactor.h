@@ -93,6 +93,12 @@ public:
      */
     virtual void getState(doublereal* y);
 
+    //! Get the the production rates of the gas species on surfaces.
+    /*!
+     *  @param[out] y Vector representing the production rate of gas species 
+     */
+    virtual void getSurfaceProductionRates(doublereal* y);
+
     virtual void initialize(doublereal t0 = 0.0);
 
     /*!
