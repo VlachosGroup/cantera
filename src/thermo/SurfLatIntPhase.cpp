@@ -423,8 +423,9 @@ void SurfLatIntPhase::_updateThermo(bool force) const
         m_spInterThermo.update(tnow, m_coverages.data(), m_h0_inter.data());
 
         for (size_t k = 0; k < m_kk; k++) {
-            m_h0[k] *= GasConstant * tnow;
+            cout << k << ": " << "h0: " << m_h0[k] << " h0_intrxn: " << m_h0_inter[k] << endl;
             m_h0[k] -= m_h0_inter[k];
+            m_h0[k] *= GasConstant * tnow;
             m_s0[k] *= GasConstant;
             m_cp0[k] *= GasConstant;
             m_mu0[k] = m_h0[k] - tnow*m_s0[k];
