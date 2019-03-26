@@ -80,15 +80,12 @@ public:
     //! @{
 
     virtual void setState_TP(doublereal temp, doublereal pres);
-    virtual void setState_TR(doublereal temp, doublereal rho);
 
     //! @}
     //! @name Initialization of the Object
     //! @{
 
     void setParent(VPStandardStateTP* phase, size_t k);
-
-    virtual bool useSTITbyPDSS() const { return true; }
 
     void setNeutralSpeciesMultiplier(const std::string& species, double mult);
     void setSpecialSpecies(bool special=true);

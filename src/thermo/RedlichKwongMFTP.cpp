@@ -79,9 +79,16 @@ void RedlichKwongMFTP::setSpeciesCoeffs(const std::string& species,
         if (k == j) {
             continue;
         }
-        double a0kj = sqrt(a_coeff_vec(0, j + m_kk * j) * a0);
-        double a1kj = sqrt(a_coeff_vec(1, j + m_kk * j) * a1);
-        if  (a_coeff_vec(0, j + m_kk * k) == 0) {
+
+        // a_coeff_vec(0) is initialized to NaN to mark uninitialized species
+        if (isnan(a_coeff_vec(0, j + m_kk * j))) {
+            // The diagonal element of the jth species has not yet been defined.
+            continue;
+        } else if (isnan(a_coeff_vec(0, j + m_kk * k))) {
+            // Only use the mixing rules if the off-diagonal element has not already been defined by a
+            // user-specified crossFluidParameters entry:
+            double a0kj = sqrt(a_coeff_vec(0, j + m_kk * j) * a0);
+            double a1kj = sqrt(a_coeff_vec(1, j + m_kk * j) * a1);
             a_coeff_vec(0, j + m_kk * k) = a0kj;
             a_coeff_vec(1, j + m_kk * k) = a1kj;
             a_coeff_vec(0, k + m_kk * j) = a0kj;
@@ -546,9 +553,11 @@ bool RedlichKwongMFTP::addSpecies(shared_ptr<Species> spec)
     bool added = MixtureFugacityTP::addSpecies(spec);
     if (added) {
         a_vec_Curr_.resize(m_kk * m_kk, 0.0);
-        b_vec_Curr_.push_back(0.0);
 
-        a_coeff_vec.resize(2, m_kk * m_kk, 0.0);
+        // Initialize a_vec and b_vec to NaN, to screen for species with
+        //     pureFluidParameters which are undefined in the input file:
+        b_vec_Curr_.push_back(NAN);
+        a_coeff_vec.resize(2, m_kk * m_kk, NAN);
 
         m_pp.push_back(0.0);
         m_tmpV.push_back(0.0);
@@ -573,13 +582,60 @@ void RedlichKwongMFTP::initThermoXML(XML_Node& phaseNode, const std::string& id)
         if (thermoNode.hasChild("activityCoefficients")) {
             XML_Node& acNode = thermoNode.child("activityCoefficients");
 
-            // Loop through the children getting multiple instances of
-            // parameters
+            // Count the number of species with parameters provided in the
+            //    input file:
+            size_t nParams = 0;
+
+            // Loop through the children and read out fluid parameters.  Process
+            //   all the pureFluidParameters, first:
             for (size_t i = 0; i < acNode.nChildren(); i++) {
                 XML_Node& xmlACChild = acNode.child(i);
                 if (caseInsensitiveEquals(xmlACChild.name(), "purefluidparameters")) {
                     readXMLPureFluid(xmlACChild);
-                } else if (caseInsensitiveEquals(xmlACChild.name(), "crossfluidparameters")) {
+                    nParams += 1;
+                }
+            }
+
+            // If any species exist which have undefined pureFluidParameters,
+            // search the database in 'critProperties.xml' to find critical
+            // temperature and pressure to calculate a and b.
+
+            // Loop through all species in the CTI file
+            size_t iSpecies = 0;
+
+            for (size_t i = 0; i < m_kk; i++) {
+                string iName = speciesName(i);
+
+                // Get the index of the species
+                iSpecies = speciesIndex(iName);
+
+                // Check if a and b are already populated (only the diagonal elements of a).
+                size_t counter = iSpecies + m_kk * iSpecies;
+
+                // If not, then search the database:
+                if (isnan(a_coeff_vec(0, counter))) {
+
+                    vector<double> coeffArray;
+
+                    // Search the database for the species name and calculate
+                    // coefficients a and b, from critical properties:
+                    // coeffArray[0] = a0, coeffArray[1] = b;
+                    coeffArray = getCoeff(iName);
+
+                    // Check if species was found in the database of critical properties,
+                    // and assign the results
+                    if (!isnan(coeffArray[0])) {
+                        //Assuming no temperature dependence (i,e a1 = 0)
+                        setSpeciesCoeffs(iName, coeffArray[0], 0.0, coeffArray[1]);
+                    }
+                }
+            }
+
+            // Loop back through the "activityCoefficients" children and process the
+            // crossFluidParameters in the XML tree:
+            for (size_t i = 0; i < acNode.nChildren(); i++) {
+                XML_Node& xmlACChild = acNode.child(i);
+                if (caseInsensitiveEquals(xmlACChild.name(), "crossfluidparameters")) {
                     readXMLCrossFluid(xmlACChild);
                 }
             }
@@ -587,6 +643,70 @@ void RedlichKwongMFTP::initThermoXML(XML_Node& phaseNode, const std::string& id)
     }
 
     MixtureFugacityTP::initThermoXML(phaseNode, id);
+}
+
+vector<double> RedlichKwongMFTP::getCoeff(const std::string& iName)
+{
+    vector_fp spCoeff{NAN, NAN};
+
+    // Get number of species in the database
+    // open xml file critProperties.xml
+    XML_Node* doc = get_XML_File("critProperties.xml");
+    size_t nDatabase = doc->nChildren();
+
+    // Loop through all species in the database and attempt to match supplied
+    // species to each. If present, calculate pureFluidParameters a_k and b_k
+    // based on crit  properties T_c and P_c:
+    for (size_t isp = 0; isp < nDatabase; isp++) {
+        XML_Node& acNodeDoc = doc->child(isp);
+        std::string iNameLower = toLowerCopy(iName);
+        std::string dbName = toLowerCopy(acNodeDoc.attrib("name"));
+
+        // Attempt to match provided specie iName to current database species
+        //  dbName:
+        if (iNameLower == dbName) {
+            // Read from database and calculate a and b coefficients
+            double vParams;
+            double T_crit, P_crit;
+
+            if (acNodeDoc.hasChild("Tc")) {
+                vParams = 0.0;
+                XML_Node& xmlChildCoeff = acNodeDoc.child("Tc");
+                if (xmlChildCoeff.hasAttrib("value"))
+                {
+                    std::string critTemp = xmlChildCoeff.attrib("value");
+                    vParams = strSItoDbl(critTemp);
+                }
+                if (vParams <= 0.0) //Assuming that Pc and Tc are non zero.
+                {
+                    throw CanteraError("RedlichKwongMFTP::GetCoeff",
+                                       "Critical Temperature must be positive ");
+                }
+                T_crit = vParams;
+            }
+            if (acNodeDoc.hasChild("Pc")) {
+                vParams = 0.0;
+                XML_Node& xmlChildCoeff = acNodeDoc.child("Pc");
+                if (xmlChildCoeff.hasAttrib("value"))
+                {
+                    std::string critPressure = xmlChildCoeff.attrib("value");
+                    vParams = strSItoDbl(critPressure);
+                }
+                if (vParams <= 0.0) //Assuming that Pc and Tc are non zero.
+                {
+                    throw CanteraError("RedlichKwongMFTP::GetCoeff",
+                                       "Critical Pressure must be positive ");
+                }
+                P_crit = vParams;
+            }
+
+            //Assuming no temperature dependence
+            spCoeff[0] = omega_a * pow(GasConstant, 2) * pow(T_crit, 2.5) / P_crit; //coeff a
+            spCoeff[1] = omega_b * GasConstant * T_crit / P_crit; // coeff b
+            break;
+        }
+    }
+    return spCoeff;
 }
 
 void RedlichKwongMFTP::readXMLPureFluid(XML_Node& pureFluidParam)
@@ -895,6 +1015,21 @@ void RedlichKwongMFTP::updateAB()
         for (size_t j = 0; j < m_kk; j++) {
             m_a_current += a_vec_Curr_[i * m_kk + j] * moleFractions_[i] * moleFractions_[j];
         }
+    }
+    if (isnan(m_b_current)) {
+        // One or more species do not have specified coefficients.
+        fmt::memory_buffer b;
+        for (size_t k = 0; k < m_kk; k++) {
+            if (isnan(b_vec_Curr_[k])) {
+                if (b.size() > 0) {
+                    format_to(b, ", {}", speciesName(k));
+                } else {
+                    format_to(b, "{}", speciesName(k));
+                }
+            }
+        }
+        throw CanteraError("RedlichKwongMFTP::updateAB",
+            "Missing Redlich-Kwong coefficients for species: {}", to_string(b));
     }
 }
 

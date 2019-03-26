@@ -14,14 +14,6 @@ namespace Cantera
 /**
  * Implementation of a multi-species Redlich-Kwong equation of state
  *
- * @attention This class currently does not have any test cases or examples. Its
- *     implementation may be incomplete, and future changes to Cantera may
- *     unexpectedly cause this class to stop working. If you use this class,
- *     please consider contributing examples or test cases. In the absence of
- *     new tests or examples, this class may be deprecated and removed in a
- *     future version of Cantera. See
- *     https://github.com/Cantera/cantera/issues/267 for additional information.
- *
  * @ingroup thermoprops
  */
 class RedlichKwongMFTP : public MixtureFugacityTP
@@ -185,6 +177,20 @@ public:
     virtual void setParametersFromXML(const XML_Node& thermoNode);
     virtual void setToEquilState(const doublereal* lambda_RT);
     virtual void initThermoXML(XML_Node& phaseNode, const std::string& id);
+
+    //! Retrieve a and b coefficients by looking up tabulated critical parameters
+    /*!
+     *  If pureFluidParameters are not provided for any species in the phase,
+     *  consult the critical properties tabulated in /thermo/critProperties.xml.
+     *  If the species is found there, calculate pure fluid parameters a_k and b_k as:
+     *  \f[ a_k = 0.4278*R**2*T_c^2.5/P_c \f]
+     *
+     *  and:
+     *  \f[ b_k = 0.08664*R*T_c/P_c \f]
+     *
+     *  @param iName    Name of the species
+     */
+    virtual std::vector<double> getCoeff(const std::string& iName);
 
     //! Set the pure fluid interaction parameters for a species
     /*!

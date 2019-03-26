@@ -1,5 +1,6 @@
 # This file is part of Cantera. See License.txt in the top-level directory or
 # at http://www.cantera.org/license.txt for license and copyright information.
+# cython: language_level=3
 
 from libcpp.vector cimport vector
 from libcpp.string cimport string
@@ -376,6 +377,7 @@ cdef extern from "cantera/kinetics/Kinetics.h" namespace "Cantera":
         int phaseIndex(string)
         int kineticsSpeciesIndex(int, int)
         int kineticsSpeciesIndex(string)
+        string kineticsSpeciesName(int)
 
         CxxThermoPhase& thermo(int)
 
@@ -402,6 +404,7 @@ cdef extern from "cantera/kinetics/Kinetics.h" namespace "Cantera":
 cdef extern from "cantera/kinetics/InterfaceKinetics.h":
     cdef cppclass CxxInterfaceKinetics "Cantera::InterfaceKinetics":
         void advanceCoverages(double) except +translate_exception
+        void solvePseudoSteadyStateProblem() except +translate_exception
 
 
 cdef extern from "cantera/transport/TransportBase.h" namespace "Cantera":
@@ -602,6 +605,8 @@ cdef extern from "cantera/zeroD/ReactorNet.h":
         double atol()
         void setMaxTimeStep(double)
         void setMaxErrTestFails(int)
+        void setMaxSteps(int)
+        int maxSteps()
         cbool verbose()
         void setVerbose(cbool)
         size_t neq()
@@ -712,12 +717,6 @@ cdef extern from "cantera/oneD/StFlow.h":
         cbool withSoret()
         void setFreeFlow()
         void setAxisymmetricFlow()
-
-    cdef cppclass CxxFreeFlame "Cantera::FreeFlame":
-        CxxFreeFlame(CxxIdealGasPhase*, int, int)
-
-    cdef cppclass CxxAxiStagnFlow "Cantera::AxiStagnFlow":
-        CxxAxiStagnFlow(CxxIdealGasPhase*, int, int)
 
 
 cdef extern from "cantera/oneD/IonFlow.h":

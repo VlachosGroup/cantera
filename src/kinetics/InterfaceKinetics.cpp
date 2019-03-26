@@ -129,7 +129,7 @@ void InterfaceKinetics::updateKc()
          * and m_mu0_Kc[]
          */
         updateMu0();
-        doublereal rrt = 1.0 / thermo(0).RT();
+        doublereal rrt = 1.0 / thermo(reactionPhaseIndex()).RT();
 
         // compute Delta mu^0 for all reversible reactions
         getRevReactionDelta(m_mu0_Kc.data(), m_rkcn.data());
@@ -159,7 +159,8 @@ void InterfaceKinetics::updateMu0()
         thermo(n).getStandardChemPotentials(m_mu0.data() + m_start[n]);
         for (size_t k = 0; k < thermo(n).nSpecies(); k++) {
             m_mu0_Kc[ik] = m_mu0[ik] + Faraday * m_phi[n] * thermo(n).charge(k);
-            m_mu0_Kc[ik] -= thermo(0).RT() * thermo(n).logStandardConc(k);
+            m_mu0_Kc[ik] -= thermo(reactionPhaseIndex()).RT()
+                            * thermo(n).logStandardConc(k);
             ik++;
         }
     }
@@ -168,7 +169,7 @@ void InterfaceKinetics::updateMu0()
 void InterfaceKinetics::getEquilibriumConstants(doublereal* kc)
 {
     updateMu0();
-    doublereal rrt = 1.0 / thermo(0).RT();
+    doublereal rrt = 1.0 / thermo(reactionPhaseIndex()).RT();
     std::fill(kc, kc + nReactions(), 0.0);
     getReactionDelta(m_mu0_Kc.data(), kc);
     for (size_t i = 0; i < nReactions(); i++) {
@@ -239,7 +240,7 @@ void InterfaceKinetics::applyVoltageKfwdCorrection(doublereal* const kf)
         if (m_ctrxn_BVform[i] == 0) {
             double eamod = m_beta[i] * deltaElectricEnergy_[irxn];
             if (eamod != 0.0) {
-                kf[irxn] *= exp(-eamod/thermo(0).RT());
+                kf[irxn] *= exp(-eamod/thermo(reactionPhaseIndex()).RT());
             }
         }
     }
@@ -265,7 +266,8 @@ void InterfaceKinetics::convertExchangeCurrentDensityFormulation(doublereal* con
             // come out of this calculation.
             if (m_ctrxn_BVform[i] == 0) {
                 //  Calculate the term and modify the forward reaction
-                double tmp = exp(- m_beta[i] * m_deltaG0[irxn] / thermo(0).RT());
+                double tmp = exp(- m_beta[i] * m_deltaG0[irxn]
+                                 / thermo(reactionPhaseIndex()).RT());
                 tmp *= 1.0 / m_ProdStanConcReac[irxn] / Faraday;
                 kfwd[irxn] *= tmp;
             }
@@ -280,7 +282,8 @@ void InterfaceKinetics::convertExchangeCurrentDensityFormulation(doublereal* con
                 // Calculate the term and modify the forward reaction rate
                 // constant so that it's in the exchange current density
                 // formulation format
-                double tmp = exp(m_beta[i] * m_deltaG0[irxn] * thermo(0).RT());
+                double tmp = exp(m_beta[i] * m_deltaG0[irxn]
+                                 * thermo(reactionPhaseIndex()).RT());
                 tmp *= Faraday * m_ProdStanConcReac[irxn];
                 kfwd[irxn] *= tmp;
             }
@@ -291,12 +294,10 @@ void InterfaceKinetics::convertExchangeCurrentDensityFormulation(doublereal* con
 void InterfaceKinetics::getFwdRateConstants(doublereal* kfwd)
 {
     updateROP();
-
-    // copy rate coefficients into kfwd
-    copy(m_rfn.begin(), m_rfn.end(), kfwd);
-
-    // multiply by perturbation factor
-    multiply_each(kfwd, kfwd + nReactions(), m_perturb.begin());
+    for (size_t i = 0; i < nReactions(); i++) {
+        // base rate coefficient multiplied by perturbation factor
+        kfwd[i] = m_rfn[i] * m_perturb[i];
+    }
 }
 
 void InterfaceKinetics::getRevRateConstants(doublereal* krev, bool doIrreversible)
@@ -308,7 +309,9 @@ void InterfaceKinetics::getRevRateConstants(doublereal* krev, bool doIrreversibl
             krev[i] /= m_ropnet[i];
         }
     } else {
-        multiply_each(krev, krev + nReactions(), m_rkcn.begin());
+        for (size_t i = 0; i < nReactions(); i++) {
+            krev[i] *= m_rkcn[i];
+        }
     }
 }
 
@@ -324,19 +327,13 @@ void InterfaceKinetics::updateROP()
         return;
     }
 
-    // Copy the reaction rate coefficients, m_rfn, into m_ropf
-    m_ropf = m_rfn;
-
-    // Multiply by the perturbation factor
-    multiply_each(m_ropf.begin(), m_ropf.end(), m_perturb.begin());
-
-    // Copy the forward rate constants to the reverse rate constants
-    m_ropr = m_ropf;
-
-    // For reverse rates computed from thermochemistry, multiply
-    // the forward rates copied into m_ropr by the reciprocals of
-    // the equilibrium constants
-    multiply_each(m_ropr.begin(), m_ropr.end(), m_rkcn.begin());
+    for (size_t i = 0; i < nReactions(); i++) {
+        // Scale the base forward rate coefficient by the perturbation factor
+        m_ropf[i] = m_rfn[i] * m_perturb[i];
+        // Multiply the scaled forward rate coefficient by the reciprocal of the
+        // equilibrium constant
+        m_ropr[i] = m_ropf[i] * m_rkcn[i];
+    }
 
     // multiply ropf by the activity concentration reaction orders to obtain
     // the forward rates of progress.
@@ -474,7 +471,7 @@ void InterfaceKinetics::getDeltaSSEnthalpy(doublereal* deltaH)
         thermo(n).getEnthalpy_RT(m_grt.data() + m_start[n]);
     }
     for (size_t k = 0; k < m_kk; k++) {
-        m_grt[k] *= thermo(0).RT();
+        m_grt[k] *= thermo(reactionPhaseIndex()).RT();
     }
 
     // Use the stoichiometric manager to find deltaH for each reaction.

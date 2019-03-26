@@ -195,6 +195,13 @@ class chemkinConverterTest(utilities.CanteraTest):
         self.assertEqual(gas.n_species, 3)
         self.assertEqual(gas.n_reactions, 2)
 
+    def test_unrecognized_section(self):
+        with self.assertRaisesRegex(ck2cti.InputParseError, 'SPAM'):
+            convertMech(pjoin(self.test_data_dir, 'unrecognized-section.inp'),
+                        thermoFile=pjoin(self.test_data_dir, 'dummy-thermo.dat'),
+                        outName=pjoin(self.test_work_dir, 'unrecognized-section.cti'),
+                        quiet=True, permissive=True)
+
     def test_nasa9(self):
         convertMech(pjoin(self.test_data_dir, 'nasa9-test.inp'),
                     thermoFile=pjoin(self.test_data_dir, 'nasa9-test-therm.dat'),
@@ -202,6 +209,16 @@ class chemkinConverterTest(utilities.CanteraTest):
 
         ref, gas = self.checkConversion(pjoin(self.test_data_dir, 'nasa9-test.xml'),
                                         'nasa9_test.cti')
+        self.checkThermo(ref, gas, [300, 500, 1200, 5000])
+
+    def test_nasa9_subset(self):
+        convertMech(pjoin(self.test_data_dir, 'nasa9-test-subset.inp'),
+                    thermoFile=pjoin(self.test_data_dir, 'nasa9-test-therm.dat'),
+                    outName=pjoin(self.test_work_dir, 'nasa9-test-subset.cti'),
+                    quiet=True)
+
+        ref, gas = self.checkConversion(pjoin(self.test_data_dir, 'nasa9-test-subset.xml'),
+                                        'nasa9-test-subset.cti')
         self.checkThermo(ref, gas, [300, 500, 1200, 5000])
 
     def test_sri_falloff(self):
@@ -286,6 +303,12 @@ class chemkinConverterTest(utilities.CanteraTest):
                         thermoFile=pjoin(self.test_data_dir, 'dummy-thermo.dat'),
                         outName=pjoin(self.test_work_dir, 'bad-troe.cti'), quiet=True)
 
+    def test_invalid_reaction_equation(self):
+        with self.assertRaisesRegex(ck2cti.InputParseError, 'Unparsable'):
+            convertMech(pjoin(self.test_data_dir, 'invalid-equation.inp'),
+                        thermoFile=pjoin(self.test_data_dir, 'dummy-thermo.dat'),
+                        outName=pjoin(self.test_work_dir, 'invalid-equation.cti'), quiet=True)
+
     def test_reaction_units(self):
         convertMech(pjoin(self.test_data_dir, 'units-default.inp'),
                     thermoFile=pjoin(self.test_data_dir, 'dummy-thermo.dat'),
@@ -349,7 +372,7 @@ class chemkinConverterTest(utilities.CanteraTest):
                         quiet=True)
 
     def test_transport_extra_column_entries(self):
-        with self.assertRaisesRegex(ck2cti.InputParseError, 'Extra parameters'):
+        with self.assertRaisesRegex(ck2cti.InputParseError, '572.400'):
             convertMech(pjoin(self.test_data_dir, 'h2o2.inp'),
                         transportFile=pjoin(self.test_data_dir, 'h2o2-extra-column-entries-tran.dat'),
                         outName=pjoin(self.test_work_dir, 'h2o2_extra-column-entries-tran.cti'),
@@ -483,7 +506,7 @@ class CtmlConverterTest(utilities.CanteraTest):
 
     def test_pdep(self):
         gas = ct.Solution('pdep-test.cti')
-        self.assertEqual(gas.n_reactions, 6)
+        self.assertEqual(gas.n_reactions, 7)
 
     def test_invalid(self):
         try:

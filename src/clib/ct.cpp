@@ -501,19 +501,6 @@ extern "C" {
         }
     }
 
-    int thermo_elementPotentials(int n, size_t lenm, double* lambda)
-    {
-        try {
-            ThermoPhase& thrm = ThermoCabinet::item(n);
-            thrm.checkElementArraySize(lenm);
-            thrm.equilibrate("TP", "element_potential");
-            thrm.getElementPotentials(lambda);
-            return 0;
-        } catch (...) {
-            return handleAllExceptions(-1, ERR);
-        }
-    }
-
     int thermo_setPressure(int n, double p)
     {
         try {
@@ -1160,8 +1147,10 @@ extern "C" {
             k.checkSpeciesArraySize(len);
             k.checkSpeciesArraySize(nsp);
             k.getNetProductionRates(ydot);
-            multiply_each(ydot, ydot + nsp, p.molecularWeights().begin());
-            scale(ydot, ydot + nsp, ydot, 1.0/p.density());
+            double rho_inv = 1.0 / p.density();
+            for (size_t k = 0; k < nsp; k++) {
+                ydot[k] *= p.molecularWeight(k) * rho_inv;
+            }
             return 0;
         } catch (...) {
             return handleAllExceptions(-1, ERR);

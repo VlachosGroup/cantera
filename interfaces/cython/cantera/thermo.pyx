@@ -581,7 +581,7 @@ cdef class ThermoPhase(_SolutionBase):
             >>> gas.mole_fraction_dict()
             {'CH4': 0.049900199, 'N2': 0.750499001, 'O2': 0.199600798}
 
-            >>> gas.set_equivalence_ratio(1.2, {'NH3;:0.8, 'CO':0.2}, 'O2:1.0')
+            >>> gas.set_equivalence_ratio(1.2, {'NH3':0.8, 'CO':0.2}, 'O2:1.0')
             >>> gas.mole_fraction_dict()
             {'CO': 0.1263157894, 'NH3': 0.505263157, 'O2': 0.36842105}
 
@@ -659,9 +659,13 @@ cdef class ThermoPhase(_SolutionBase):
         >>> gas.get_equivalence_ratio(ignore=['NO'])
         1.0
         """
-        if not oxidizers:  # Default behavior, find all possible oxidizers
-            oxidizers = [s.name for s in self.species() if
-                         all(y not in s.composition for y in ['C', 'H', 'S'])]
+        if not oxidizers:
+            # Default behavior, find all possible oxidizers
+            oxidizers = []
+            for s in self.species():
+                if all(y not in s.composition for y in ['C', 'H', 'S']):
+                    oxidizers.append(s.name)
+
         alpha = 0
         mol_O = 0
         for k, s in enumerate(self.species()):
@@ -1326,21 +1330,6 @@ cdef class ThermoPhase(_SolutionBase):
             return self.thermo.electricPotential()
         def __set__(self, double value):
             self.thermo.setElectricPotential(value)
-
-    def element_potentials(self):
-        """
-        Get the array of element potentials. The element potentials are only
-        defined for equilibrium states. This method first sets the composition
-        to a state of equilibrium at constant T and P, then computes the
-        element potentials for this equilibrium state.
-
-        .. deprecated:: 2.3
-            To be removed after Cantera 2.4.
-        """
-        self.equilibrate('TP')
-        cdef np.ndarray[np.double_t, ndim=1] data = np.zeros(self.n_elements)
-        self.thermo.getElementPotentials(&data[0])
-        return data
 
 
 cdef class InterfacePhase(ThermoPhase):

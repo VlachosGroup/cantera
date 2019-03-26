@@ -210,6 +210,11 @@ void CVodesIntegrator::setMaxSteps(int nmax)
     }
 }
 
+int CVodesIntegrator::maxSteps()
+{
+    return m_maxsteps;
+}
+
 void CVodesIntegrator::setMaxErrTestFails(int n)
 {
     m_maxErrTestFails = n;
@@ -364,6 +369,10 @@ void CVodesIntegrator::applyOptions()
             SUNLinSolFree((SUNLinearSolver) m_linsol);
             SUNMatDestroy((SUNMatrix) m_linsol_matrix);
             m_linsol_matrix = SUNDenseMatrix(N, N);
+            if (m_linsol_matrix == nullptr) {
+                throw CanteraError("CVodesIntegrator::applyOptions",
+                    "Unable to create SUNDenseMatrix of size {0} x {0}", N);
+            }
             #if CT_SUNDIALS_USE_LAPACK
                 m_linsol = SUNLapackDense(m_y, (SUNMatrix) m_linsol_matrix);
             #else
@@ -395,6 +404,11 @@ void CVodesIntegrator::applyOptions()
             SUNLinSolFree((SUNLinearSolver) m_linsol);
             SUNMatDestroy((SUNMatrix) m_linsol_matrix);
             m_linsol_matrix = SUNBandMatrix(N, nu, nl, nu+nl);
+            if (m_linsol_matrix == nullptr) {
+                throw CanteraError("CVodesIntegrator::applyOptions",
+                    "Unable to create SUNBandMatrix of size {} with bandwidths "
+                    "{} and {}", N, nu, nl);
+            }
             #if CT_SUNDIALS_USE_LAPACK
                 m_linsol = SUNLapackBand(m_y, (SUNMatrix) m_linsol_matrix);
             #else

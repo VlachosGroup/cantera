@@ -459,7 +459,8 @@ config_options = [
            Cantera will use Eigen for linear algebra support. To use BLAS
            and LAPACK, set 'blas_lapack_libs' to the the list of libraries
            that should be passed to the linker, separated by commas, e.g.,
-           "lapack,blas" or "lapack,f77blas,cblas,atlas".""",
+           "lapack,blas" or "lapack,f77blas,cblas,atlas". Eigen is required
+           whether or not BLAS/LAPACK are used.""",
         ''),
     PathVariable(
         'blas_lapack_dir',
@@ -610,6 +611,11 @@ config_options = [
            as symlinks.
            """,
         defaults.versionedSharedLibrary),
+    BoolVariable(
+        'use_rpath_linkage',
+        """If enabled, link to all shared libraries using 'rpath', i.e., a fixed
+           run-time search path for dynamic library loading.""",
+        True),
     EnumVariable(
         'layout',
         """The layout of the directory structure. 'standard' installs files to
@@ -619,7 +625,7 @@ config_options = [
            files in the subdirectory defined by 'prefix'. This layout is best
            with a prefix like '/opt/cantera'. 'debian' installs to the stage
            directory in a layout used for generating Debian packages.""",
-        defaults.fsLayout, ('standard','compact','debian')),
+        defaults.fsLayout, ('standard','compact','debian'))
 ]
 
 opts.AddVariables(*config_options)
@@ -677,7 +683,7 @@ for arg in ARGUMENTS:
         sys.exit(1)
 
 # Require a StrictVersion-compatible version
-env['cantera_version'] = "2.5.0a1"
+env['cantera_version'] = "2.5.0a2"
 ctversion = StrictVersion(env['cantera_version'])
 # For use where pre-release tags are not permitted (MSI, sonames)
 env['cantera_pure_version'] = '.'.join(str(x) for x in ctversion.version)
@@ -722,6 +728,9 @@ env['extra_lib_dirs'] = [d for d in env['extra_lib_dirs'].split(':') if d]
 env.Append(CPPPATH=env['extra_inc_dirs'],
            LIBPATH=env['extra_lib_dirs'])
 
+if env['use_rpath_linkage']:
+    env.Append(RPATH=env['extra_lib_dirs'])
+
 if env['CC'] == 'cl':
     # embed manifest file
     env['LINKCOM'] = [env['LINKCOM'],
@@ -734,6 +743,8 @@ if env['boost_inc_dir']:
 
 if env['blas_lapack_dir']:
     env.Append(LIBPATH=[env['blas_lapack_dir']])
+    if env['use_rpath_linkage']:
+        env.Append(RPATH=env['blas_lapack_dir'])
 
 if env['system_sundials'] in ('y','default'):
     if env['sundials_include']:
@@ -742,6 +753,8 @@ if env['system_sundials'] in ('y','default'):
     if env['sundials_libdir']:
         env.Append(LIBPATH=[env['sundials_libdir']])
         env['system_sundials'] = 'y'
+        if env['use_rpath_linkage']:
+            env.Append(RPATH=env['sundials_libdir'])
 
 # BLAS / LAPACK configuration
 if env['blas_lapack_libs'] != '':

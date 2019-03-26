@@ -8,23 +8,11 @@
 #ifndef CT_WATERTRAN_H
 #define CT_WATERTRAN_H
 
-#include "LiquidTransportParams.h"
 #include "cantera/thermo/WaterPropsIAPWS.h"
+#include "cantera/transport/TransportBase.h"
 
 namespace Cantera
 {
-//! @{
-const int LVISC_CONSTANT = 0;
-const int LVISC_WILKES = 1;
-const int LVISC_MIXTUREAVG = 2;
-
-const int LDIFF_MIXDIFF_UNCORRECTED = 0;
-const int LDIFF_MIXDIFF_FLUXCORRECTED = 1;
-const int LDIFF_MULTICOMP_STEFANMAXWELL = 2;
-//! @}
-
-class WaterProps;
-class PDSS_Water;
 
 //! Transport Parameters for pure water
 //! @ingroup tranprops
@@ -82,30 +70,6 @@ public:
     virtual doublereal thermalConductivity();
 
     virtual void init(thermo_t* thermo, int mode=0, int log_level=0);
-
-private:
-    //! Pointer to the WaterPropsIAPWS object, which does the actual calculations
-    //! for the real equation of state
-    /*!
-     * This object owns m_sub
-     */
-    mutable WaterPropsIAPWS* m_sub;
-
-    //! Pointer to the WaterProps object
-    /*!
-     * This class is used to house several approximation routines for properties
-     * of water.
-     *
-     * This object owns m_waterProps, and the WaterPropsIAPWS object used by
-     * WaterProps is m_sub, which is defined above.
-     */
-    WaterProps* m_waterProps;
-
-    //! Pressure dependent standard state object for water
-    /*!
-     * We assume that species 0 is water, with a PDSS_Water object.
-     */
-    PDSS_Water* m_waterPDSS;
 };
 }
 #endif

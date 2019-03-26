@@ -1,7 +1,7 @@
 # This file is part of Cantera. See License.txt in the top-level directory or
 # at http://www.cantera.org/license.txt for license and copyright information.
 
-import interrupts
+from .interrupts import no_op
 import warnings
 
 # Need a pure-python class to store weakrefs to
@@ -264,7 +264,7 @@ cdef class Boundary1D(Domain1D):
             self.boundary.setTemperature(T)
 
     property mdot:
-        """ The mass flow rate per unit area [kg/m^2] """
+        """ The mass flow rate per unit area [kg/s/m^2] """
         def __get__(self):
             return self.boundary.mdot()
         def __set__(self, mdot):
@@ -533,34 +533,6 @@ cdef class IdealGasFlow(_FlowBase):
         self.flow = new CxxStFlow(gas, thermo.n_species, 2)
 
 
-cdef class FreeFlow(IdealGasFlow):
-    """
-    .. deprecated:: 2.4
-        To be removed after Cantera 2.4. Use class `IdealGasFlow` instead and
-        call the ``set_free_flow()`` method.
-    """
-    def __init__(self, *args, **kwargs):
-        warnings.warn("Class FreeFlow is deprecated and will be removed after"
-            " Cantera 2.4. Use class IdealGasFlow instead and call the"
-            " ``set_free_flow()`` method.")
-        super().__init__(*args, **kwargs)
-        self.set_free_flow()
-
-
-cdef class AxisymmetricStagnationFlow(IdealGasFlow):
-    """
-    .. deprecated:: 2.4
-        To be removed after Cantera 2.4. Use class `IdealGasFlow` instead and
-        call the ``set_axisymmetric_flow()`` method.
-    """
-    def __init__(self, *args, **kwargs):
-        warnings.warn("Class AxisymmetricStagnationFlow is deprecated and will"
-            " be removed after Cantera 2.4. Use class IdealGasFlow instead and"
-            " call the set_axisymmetric_flow() method.")
-        super().__init__(*args, **kwargs)
-        self.set_free_flow()
-
-
 cdef class IonFlow(_FlowBase):
     """
     An ion flow domain.
@@ -617,7 +589,7 @@ cdef class Sim1D:
 
         self.sim = new CxxSim1D(D)
         self.domains = tuple(domains)
-        self.set_interrupt(interrupts.no_op)
+        self.set_interrupt(no_op)
         self._initialized = False
         self._initial_guess_args = ()
         self._initial_guess_kwargs = {}

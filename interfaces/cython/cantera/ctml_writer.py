@@ -22,6 +22,7 @@
 from __future__ import print_function
 
 import sys
+import re
 
 # Python 2/3 compatibility
 try:
@@ -268,13 +269,13 @@ def disable_motz_wise():
     global _motz_wise
     _motz_wise = False
 
-def export_species(filename, fmt = 'CSV'):
+def export_species(filename, fmt='CSV'):
     global _valexport
     global _valfmt
     _valexport = filename
     _valfmt = fmt
 
-def validate(species = 'yes', reactions = 'yes'):
+def validate(species='yes', reactions='yes'):
     """
     Enable or disable validation of species and reactions.
 
@@ -534,7 +535,8 @@ class species(object):
                  thermo = None,
                  transport = None,
                  charge = -999,
-                 size = 1.0):
+                 size = 1.0,
+                 standardState = None):
         """
         :param name:
             The species name (or formula). The name may be arbitrarily long,
@@ -568,6 +570,9 @@ class species(object):
             The charge, in multiples of :math:`|e|`. If not specified, the
             charge will be calculated from the number of "atoms" of element
             ``E``, which represents an electron.
+        :param standardState:
+            The species standard state model. Currently used only for IdealSolidSolution and derived
+            classes where it is used to calculate the phase density.
         """
         self._name = name
         self._atoms = getAtomicComp(atoms)
@@ -580,6 +585,7 @@ class species(object):
             self._thermo = const_cp()
 
         self._transport = transport
+        self._standardState = standardState
         chrg = 0
         self._charge = charge
         if 'E' in self._atoms:
@@ -596,7 +602,7 @@ class species(object):
         for e in self._atoms.keys():
             _enames[e] = 1
 
-    def export(self, f, fmt = 'CSV'):
+    def export(self, f, fmt='CSV'):
         if fmt == 'CSV':
             s = self._name+','
             for e in _enames:
@@ -645,12 +651,17 @@ class species(object):
                 nt = len(self._transport)
                 for n in range(nt):
                     self._transport[n].build(t)
+        if self._standardState:
+            ss = s.addChild("standardState")
+            ss['model'] = id
+            if isinstance(self._standardState, standardState):
+                self._standardState.build(ss)
 
 class thermo(object):
     """Base class for species standard-state thermodynamic properties."""
     def _build(self, p):
         return p.addChild("thermo")
-    def export(self, f, fmt = 'CSV'):
+    def export(self, f, fmt='CSV'):
         pass
 
 class Mu0_table(thermo):
@@ -804,6 +815,23 @@ class NASA9(thermo):
         u["size"] = "9"
         u["name"] = "coeffs"
 
+class standardState(object):
+    """Base class for species standard-state properties."""
+
+
+class constantIncompressible(standardState):
+    """Constant molar volume."""
+    def __init__(self,
+                 molarVolume = 0.0):
+        """
+        :param molarVolume:
+            Reference-state molar volume. Default: 0.0.
+        """
+        self._mv = molarVolume
+    def build(self, ss):
+        ss['model'] = 'constant_incompressible'
+        mv_units = _ulen+'3/'+_umol
+        addFloat(ss,'molarVolume',self._mv, defunits = mv_units)
 
 class activityCoefficients(object):
     pass
@@ -823,11 +851,11 @@ class pureFluidParameters(activityCoefficients):
     def build(self,a):
         f= a.addChild("pureFluidParameters")
         f['species'] = self._species
-        s = '%10.4E, %10.4E \n' % (self._acoeff[0], self._acoeff[1])
+        s = '%.10g, %.10g\n' % (self._acoeff[0], self._acoeff[1])
         ac = f.addChild("a_coeff",s)
         ac["units"] = _upres+'-'+_ulen+'6/'+_umol+'2'
         ac["model"] = "linear_a"
-        s = '%0.2f \n' % self._bcoeff
+        s = '%.10g\n' % self._bcoeff
         bc = f.addChild("b_coeff",s)
         bc["units"] = _ulen+'3/'+_umol
 
@@ -842,12 +870,12 @@ class crossFluidParameters(activityCoefficients):
         f= a.addChild("crossFluidParameters")
         f["species2"] = self._species2
         f["species1"] = self._species1
-        s = '%10.4E, %10.4E \n' % (self._acoeff[0], self._acoeff[1])
+        s = '%.10g, %.10g\n' % (self._acoeff[0], self._acoeff[1])
         ac = f.addChild("a_coeff",s)
         ac["units"] = _upres+'-'+_ulen+'6/'+_umol+'2'
         ac["model"] = "linear_a"
         if self._bcoeff:
-            s = '%0.2f \n' % self._bcoeff
+            s = '%.10g\n' % self._bcoeff
             bc = f.addChild("b_coeff",s)
             bc["units"] = _ulen+'3/'+_umol
 
@@ -891,41 +919,6 @@ class Shomate(thermo):
         u = n.addChild("floatArray", s)
         u["size"] = "7"
         u["name"] = "coeffs"
-
-
-class Adsorbate(thermo):
-    """Adsorbed species characterized by a binding energy and a set of
-    vibrational frequencies."""
-
-    def __init__(self, Trange = (0.0, 0.0),
-                 binding_energy = 0.0,
-                 frequencies = [], p0 = -1.0):
-        self._t = Trange
-        self._pref = p0
-        self._freqs = frequencies
-        self._be = binding_energy
-
-
-    def build(self, t):
-        n = t.addChild("adsorbate")
-        n['Tmin'] = repr(self._t[0])
-        n['Tmax'] = repr(self._t[1])
-        if self._pref <= 0.0:
-            n['P0'] = repr(_pref)
-        else:
-            n['P0'] = repr(self._pref)
-
-        energy_units = _uenergy+'/'+_umol
-        addFloat(n,'binding_energy',self._be, defunits = energy_units)
-        s = ""
-        nfreq = len(self._freqs)
-        for i in  range(nfreq):
-            s += '%17.9E, ' % self._freqs[i]
-        s += '\n'
-        u = n.addChild("floatArray", s)
-        u["size"] = repr(nfreq)
-        u["name"] = "freqs"
-
 
 
 class const_cp(thermo):
@@ -1307,8 +1300,12 @@ class reaction(object):
             self._kf = [self._kf]
         elif self._type == 'surface':
             self._kf = [self._kf]
+            if self._rate_coeff_type:
+                kfnode['type'] = self._rate_coeff_type
         elif self._type == 'edge':
             self._kf = [self._kf]
+            if self._rate_coeff_type:
+                kfnode['type'] = self._rate_coeff_type
         elif self._type == 'threeBody':
             self._kf = [self._kf]
             self.mdim += 1
@@ -1627,8 +1624,14 @@ class surface_reaction(reaction):
     A heterogeneous chemical reaction with pressure-independent rate
     coefficient and mass-action kinetics.
     """
-    def __init__(self, equation='', kf=None, id='', order='', beta = 0.0,
-                 options=[]):
+    def __init__(self,
+                 equation='',
+                 kf=None,
+                 id='',
+                 order='',
+                 beta = 0.0,
+                 options=[],
+                 rate_coeff_type = ''):
         """
         :param equation:
             A string specifying the chemical equation.
@@ -1655,10 +1658,14 @@ class surface_reaction(reaction):
             potential difference between two phases is applied to the
             activiation energy of the fwd reaction.  The remainder is applied to
             the reverse reaction.
+        :param rate_coeff_type:
+            Form of the rate coefficient given.  If none given, assumed that the
+            rate coefficient is the standard kf.
         """
         reaction.__init__(self, equation, kf, id, order, options)
         self._type = 'surface'
         self._beta = beta
+        self._rate_coeff_type = rate_coeff_type
 
 
 class edge_reaction(reaction):
@@ -1669,10 +1676,12 @@ class edge_reaction(reaction):
                  id = '',
                  order = '',
                  beta = 0.0,
-                 options = []):
+                 options = [],
+                 rate_coeff_type = ''):
         reaction.__init__(self, equation, kf, id, order, options)
         self._type = 'edge'
         self._beta = beta
+        self._rate_coeff_type = rate_coeff_type
 
 
 #--------------
@@ -2051,8 +2060,6 @@ class phase(object):
             ph.addChild('note',self._comment)
 
         thermo = ph.addChild('thermo')
-        if 'allow_discontinuous_thermo' in self._options:
-            thermo['allow_discontinuities'] = 'true'
 
         return ph
 
@@ -2283,6 +2290,115 @@ class incompressible_solid(phase):
         k = ph.addChild("kinetics")
         k['model'] = 'none'
 
+class IdealSolidSolution(phase):
+    """An IdealSolidSolution phase."""
+    def __init__(self,
+                 name = '',
+                 elements = '',
+                 species = '',
+                 note = '',
+                 density = None,
+                 transport = 'None',
+                 initial_state = None,
+                 standard_concentration = None,
+                 options = []):
+
+        phase.__init__(self, name, 3, elements, species, note, 'None',
+                       initial_state, options)
+        self._stdconc = standard_concentration
+        if self._stdconc is None:
+            raise CTI_Error('In phase ' + name + ': standard_concentration must be specified.')
+        self._tr = transport
+
+    def conc_dim(self):
+        return (1,-3)
+
+    def build(self, p):
+        ph = phase.build(self, p)
+        e = ph.child("thermo")
+        e['model'] = 'IdealSolidSolution'
+        if self._tr:
+            t = ph.addChild('transport')
+            t['model'] = self._tr
+        k = ph.addChild("kinetics")
+        k['model'] = 'none'
+        sc = ph.addChild('standardConc')
+        sc['model'] = self._stdconc
+
+class BinarySolutionTabulatedThermo(phase):
+    """A BinarySolutionTabulatedThermo phase."""
+    def __init__(self,
+                 name = '',
+                 elements = '',
+                 species = '',
+                 note = '',
+                 transport = 'None',
+                 initial_state = None,
+                 standard_concentration = None,
+                 tabulated_species = None,
+                 tabulated_thermo = None,
+                 options = []):
+        phase.__init__(self, name, 3, elements, species, note, 'None',
+                       initial_state, options)
+        self._tabSpecies = tabulated_species
+        self._tabThermo = tabulated_thermo
+        self._stdconc = standard_concentration
+        self._tr = transport
+        if self._stdconc is None:
+            raise CTI_Error('In phase ' + name
+                + ': standard_concentration must be specified.')
+        if tabulated_species is None:
+            raise CTI_Error('In phase ' + name
+                + ': tabulated_species must be specified.')
+        if tabulated_thermo is None:
+            raise CTI_Error('In phase ' + name
+                + ': Thermo data must be provided for the tabulated_species.')
+
+    def build(self, p):
+        ph = phase.build(self, p)
+        e = ph.child("thermo")
+        e['model'] = 'BinarySolutionTabulatedThermo'
+        e1 = e.addChild('tabulatedSpecies')
+        e1['name'] = self._tabSpecies
+        t = e.addChild("tabulatedThermo")
+        self._tabThermo.build(t)
+        if self._tr:
+            t = ph.addChild('transport')
+            t['model'] = self._tr
+        k = ph.addChild("kinetics")
+        k['model'] = 'none'
+        sc = ph.addChild('standardConc')
+        sc['model'] = self._stdconc
+
+class table(thermo):
+    """User provided thermo table for BinarySolutionTabulatedThermo"""
+    def __init__(self,
+                 moleFraction = ([],''),
+                 enthalpy = ([],''),
+                 entropy = ([],'')):
+        """
+        :param moleFraction:
+            The mole fraction of the tabulated species. Required parameter.
+        :param enthalpy:
+            The enthalpy of the tabulated species. Required parameter.
+        :param entropy:
+            The entropy of the tabulated species. Required parameter.
+        """
+        self.x = moleFraction
+        self.h = enthalpy
+        self.s = entropy
+    def build(self,t):
+        x = ', '.join('{0:12.5e}'.format(val) for val in self.x[0])
+        u1 = t.addChild("moleFraction", x)
+        u1['size'] = str(len(self.x[0]))
+        h = ', '.join('{0:12.5e}'.format(val) for val in self.h[0])
+        u2 = t.addChild("enthalpy", h)
+        u2['units'] = self.h[1]
+        u2['size'] = str(len(self.h[0]))
+        s = ', '.join('{0:12.5e}'.format(val) for val in self.s[0])
+        u3 = t.addChild("entropy", s)
+        u3['units'] = self.s[1]
+        u3['size'] = str(len(self.s[0]))
 
 class lattice(phase):
     def __init__(self,
