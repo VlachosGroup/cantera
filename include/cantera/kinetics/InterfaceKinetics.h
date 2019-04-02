@@ -582,6 +582,17 @@ protected:
      */
     bool m_has_coverage_dependence;
 
+    //! Boolean flag indicating whether species thermo data has coverage dependence
+    //! In such case the activation energy is compared with the reaction gibbs energy
+    //! (which change depending on the coverage) and if lower, reaction gibbs energy
+    //! is used in place of activation energy
+    /*!
+     *   If this is true, then the foward rate constants are updated  if required as
+     *   mentioned above into
+     */
+    bool m_has_thermo_coverage_dependence;
+
+
     //! Boolean flag indicating whether any reaction in the mechanism
     //! has a beta electrochemical parameter.
     /*!

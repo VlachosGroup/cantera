@@ -25,6 +25,7 @@ InterfaceKinetics::InterfaceKinetics(thermo_t* thermo) :
     m_temp(0.0),
     m_logtemp(0.0),
     m_has_coverage_dependence(false),
+    m_has_thermo_coverage_dependence(false),
     m_has_electrochem_rxns(false),
     m_has_exchange_current_density_formulation(false),
     m_phaseExistsCheck(false),
@@ -64,7 +65,17 @@ void InterfaceKinetics::_update_rates_T()
         m_logtemp = log(T);
 
         //  Calculate the forward rate constant by calling m_rates and store it in m_rfn[]
-        m_rates.update(T, m_logtemp, m_rfn.data());
+        if (m_has_thermo_coverage_dependence){
+            vector_fp deltaG0_RT(m_deltaG0.size());
+            getDeltaSSGibbs(deltaG0_RT.data());
+            cout << "RT: " << m_thermo[0]->RT() << endl;
+            for (size_t i = 0; i < deltaG0_RT.size(); i++){
+                deltaG0_RT[i] /= m_thermo[0]->RT(); //Assuming temp is identical across all phases
+            }
+            m_rates.update(T, m_logtemp, m_deltaG0.data(), m_rfn.data());
+        }
+        else
+            m_rates.update(T, m_logtemp, m_rfn.data());
         applyStickingCorrection(T, m_rfn.data());
 
         // If we need to do conversions between exchange current density
