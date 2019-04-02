@@ -13,8 +13,6 @@
 #include "cantera/base/stringUtils.h"
 #include "cantera/base/global.h"
 
-#include <iostream>
-
 namespace Cantera
 {
 
@@ -170,6 +168,20 @@ public:
     doublereal updateRC(doublereal logT, doublereal recipT) const {
         return m_A * std::exp(std::log(10.0)*m_acov + m_b*logT -
                               (m_E + m_ecov)*recipT + m_mcov);
+    }
+
+    /**
+     * Update the value the rate constant.
+     *
+     * This function returns the rate constant for the given T and activation energy. 
+     * Used for the cases, where coverage effects modify the activation energy. This 
+     * is different for the normal scheme employed in cantera
+     */
+    doublereal updateRC(doublereal logT, doublereal recipT, doublereal deltaG0) const {
+        doublereal act_en = m_E;
+        if (deltaG0 > m_E && m_E != 0.0)
+            act_en = deltaG0;
+        return m_A * std::exp(m_b*logT - act_en*recipT);
     }
 
     //! Return the pre-exponential factor *A* (in m, kmol, s to powers depending

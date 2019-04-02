@@ -55,6 +55,7 @@ public:
         otherPhases.push_back(this);
         importKinetics(*x, otherPhases, this);
         m_ok = true;
+        m_has_thermo_coverage_dependence = true;
     }
 
     //! Not operator
