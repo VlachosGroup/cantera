@@ -66,13 +66,13 @@ void InterfaceKinetics::_update_rates_T()
 
         //  Calculate the forward rate constant by calling m_rates and store it in m_rfn[]
         if (m_has_thermo_coverage_dependence){
-            vector_fp deltaG0_RT(m_deltaG0.size());
-            getDeltaSSGibbs(deltaG0_RT.data());
+            vector_fp deltaG0_R(m_deltaG0.size());
+            getDeltaSSGibbs(deltaG0_R.data());
             cout << "RT: " << m_thermo[0]->RT() << endl;
-            for (size_t i = 0; i < deltaG0_RT.size(); i++){
-                deltaG0_RT[i] /= m_thermo[0]->RT(); //Assuming temp is identical across all phases
+            for (size_t i = 0; i < deltaG0_R.size(); i++){
+                deltaG0_R[i] /= GasConstant; //Assuming temp is identical across all phases
             }
-            m_rates.update(T, m_logtemp, m_deltaG0.data(), m_rfn.data());
+            m_rates.update(T, m_logtemp, deltaG0_R.data(), m_rfn.data());
         }
         else
             m_rates.update(T, m_logtemp, m_rfn.data());
