@@ -10,6 +10,8 @@
 
 #include "RxnRates.h"
 
+#include <iostream>
+
 namespace Cantera
 {
 
@@ -74,10 +76,12 @@ public:
      * entry in values, at the location specified by the reaction number when it
      * was installed. Note that nothing will be done for reactions that have
      * constant rates. The array values should be preloaded with the constant
-     * rate coefficients.
+     * rate coefficients. Instead of the activation energies stored in the class,
+     * the supplied deltaG0 values will be used if the deltaG0 > Ea
      */
     void update(doublereal T, doublereal logT, doublereal* deltaG0, doublereal* values) {
         doublereal recipT = 1.0/T;
+        std::cout << "Inside RCM::update" << std::endl;
         for (size_t i = 0; i != m_rates.size(); i++) {
             values[m_rxn[i]] = m_rates[i].updateRC(logT, recipT, deltaG0[i]);
         }
