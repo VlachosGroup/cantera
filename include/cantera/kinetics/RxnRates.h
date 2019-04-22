@@ -12,7 +12,7 @@
 #include "cantera/base/ctexceptions.h"
 #include "cantera/base/stringUtils.h"
 
-#include <iostream>
+//#include <iostream>
 
 namespace Cantera
 {
@@ -172,7 +172,6 @@ public:
         doublereal act_en = m_E;
         if (deltaG0 > m_E )
             act_en = deltaG0;
-        std::cout << "detlaG0: " << deltaG0 << "   m_E: " << m_E <<  std::endl;
         return m_A * std::exp(m_b*logT - act_en*recipT);
     }
 
