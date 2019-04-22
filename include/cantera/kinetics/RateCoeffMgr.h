@@ -81,7 +81,6 @@ public:
      */
     void update(doublereal T, doublereal logT, doublereal* deltaG0, doublereal* values) {
         doublereal recipT = 1.0/T;
-        std::cout << "Inside RCM::update" << std::endl;
         for (size_t i = 0; i != m_rates.size(); i++) {
             values[m_rxn[i]] = m_rates[i].updateRC(logT, recipT, deltaG0[i]);
         }
