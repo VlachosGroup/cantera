@@ -68,7 +68,6 @@ void InterfaceKinetics::_update_rates_T()
         if (m_has_thermo_coverage_dependence){
             vector_fp deltaG0_R(m_deltaG0.size());
             getDeltaSSGibbs(deltaG0_R.data());
-            cout << "RT: " << m_thermo[0]->RT() << endl;
             for (size_t i = 0; i < deltaG0_R.size(); i++){
                 deltaG0_R[i] /= GasConstant; //Assuming temp is identical across all phases
             }
