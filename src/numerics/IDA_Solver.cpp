@@ -419,8 +419,8 @@ void IDA_Solver::init(doublereal t0)
         long int N = m_neq;
         int flag;
         #if CT_SUNDIALS_VERSION >= 30
-            SUNLinSolFree((SUNLinearSolver) m_linsol);
-            SUNMatDestroy((SUNMatrix) m_linsol_matrix);
+            //SUNLinSolFree((SUNLinearSolver) m_linsol);
+            //SUNMatDestroy((SUNMatrix) m_linsol_matrix);
             m_linsol_matrix = SUNDenseMatrix(N, N);
             if (m_linsol_matrix == nullptr) {
                 throw CanteraError("IDA_Solver::init",
