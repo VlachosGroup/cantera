@@ -53,9 +53,9 @@ public:
         }
         importPhase(*x, this);
         otherPhases.push_back(this);
+        m_has_thermo_coverage_dependence = true;  // Set this before importing Kinetics
         importKinetics(*x, otherPhases, this);
         m_ok = true;
-        m_has_thermo_coverage_dependence = true;
     }
 
     //! Not operator
