@@ -465,7 +465,7 @@ private:
      * @param force  Boolean, which if true, forces a reevaluation of the thermo
      *               polynomials. default = false.
      */
-    void _updateThermo(bool force=false) const;
+    virtual void _updateThermo(bool force=false) const;
 };
 
 //! Function that computes the total site densities based on 
