@@ -600,7 +600,7 @@ protected:
     //! is used in place of activation energy
     /*!
      *   If this is true, then the foward rate constants are updated  if required as
-     *   mentioned above into
+     *   mentioned above. 
      */
     bool m_has_thermo_coverage_dependence;
 
