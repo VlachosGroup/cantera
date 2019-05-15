@@ -13,6 +13,8 @@
 #define CT_SURFLATINTPHASE_H
 
 #include <memory>
+#include <set>
+
 #include "SurfPhase.h"
 #include "MultiSpeciesInterThermo.h"
 
@@ -230,9 +232,9 @@ public:
 
     void checkDuplicates() {}
 
-    std::vector<std::string> getAffectedInteractions(std::string speciesName);
+    std::vector<std::string> getAffectedInteractions(std::string speciesName) const;
 
-    std::vector<std::string> getAffectingInteractions(std::string speciesName);
+    std::vector<std::string> getAffectingInteractions(std::string speciesName) const;
 
     std::shared_ptr<LateralInteraction> getInteractionfromID(std::string id);
 
@@ -249,7 +251,7 @@ protected:
     mutable vector_fp m_h0_inter;   // Temporarily store the enthalpy delta from interactions
 
 
-//private:
+private:
     //! Update the species reference state thermodynamic functions
     /*!
      * The polynomials for the standard state functions are only reevaluated if
@@ -261,6 +263,9 @@ protected:
      *                lateral interactions of surface species. default = false.
      */
     virtual void _updateThermo(bool force=false) const;
+
+
+
 };
 }
 
