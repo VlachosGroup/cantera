@@ -143,6 +143,19 @@ public:
     void addCoverageDependence(size_t k, doublereal a,
                                doublereal m, doublereal e);
 
+    //! Flag that the reaction has coverage dependency due to one of its species
+    //! having finite interaction effects with other species. The interaction
+    //! strength is evaluated in the Thermomanager of the phase and the forward
+    //! rate is adjusted if the Gibss reaction energy is greater than the activation 
+    //! energy
+    void setIntrxnCoverageDependence() {
+        m_has_intrxn_species = true;
+    }
+
+    void resetIntrxnCoverageDependence() {
+        m_has_intrxn_species = false;
+    }
+
     void update_C(const doublereal* theta) {
         m_acov = 0.0;
         m_ecov = 0.0;
@@ -179,9 +192,9 @@ public:
      * Used for the cases, where coverage effects modify the activation energy. This 
      * is different for the normal scheme employed in cantera
      */
-    doublereal updateRC(doublereal logT, doublereal recipT, doublereal deltaG0) const {
+    doublereal updateRC(const doublereal logT, const doublereal recipT, const doublereal& deltaG0) const {
         doublereal act_en = m_E;
-        if (deltaG0 > m_E )
+        if (m_has_intrxn_species and deltaG0 > m_E)
             act_en = deltaG0;
         return m_A * std::exp(m_b*logT - act_en*recipT);
     }
@@ -209,6 +222,7 @@ public:
 protected:
     doublereal m_b, m_E, m_A;
     doublereal m_acov, m_ecov, m_mcov;
+    bool m_has_intrxn_species;
     std::vector<size_t> m_sp, m_msp;
     vector_fp m_ac, m_ec, m_mc;
 };

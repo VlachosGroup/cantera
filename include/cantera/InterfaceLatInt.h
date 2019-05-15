@@ -53,7 +53,9 @@ public:
         }
         importPhase(*x, this);
         otherPhases.push_back(this);
-        m_has_thermo_coverage_dependence = true;  // Set this before importing Kinetics
+        if (nInteractions()) {
+            m_has_thermo_coverage_dependence = true;  // Make this true only if lateral interactions are present. 
+        }
         importKinetics(*x, otherPhases, this);
         m_ok = true;
     }

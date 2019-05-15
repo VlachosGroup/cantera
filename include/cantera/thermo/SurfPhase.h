@@ -12,6 +12,8 @@
 #ifndef CT_SURFPHASE_H
 #define CT_SURFPHASE_H
 
+#include <set>
+
 #include "ThermoPhase.h"
 
 namespace Cantera
@@ -418,6 +420,25 @@ public:
      */
     virtual void setState(const AnyMap& state);
 
+    //! Return a set of species that have coverage dependent interaction energies.
+    //! This is a placeholder for importKinetics to work.
+    /*!
+     * Get the species affected by interaction terms.
+     */
+    std::set<std::string> getInteractionsAffectedSpecies() const {
+           return m_intrxn_species;
+    }
+
+    //! Return a set of indices of species that have coverage dependent 
+    //! interaction energies.
+    //! This is a placeholder for importKinetics to work.
+    /*!
+     * Get the indices of species affected by interaction terms.
+     */
+    std::set<int> getInteractionsAffectedSpeciesIndices() const {
+           return m_intrxn_species_index;
+    }
+
 protected:
     //! Surface site density (kmol m-2)
     doublereal m_n0;
@@ -455,6 +476,12 @@ protected:
      * species occupies.
      */
     mutable vector_fp m_logsize;
+
+    // Species that are affected by Lateral Interactions
+    std::set<std::string> m_intrxn_species;
+
+    // Indices of Species that are affected by Lateral Interactions
+    std::set<int> m_intrxn_species_index;
 
 private:
     //! Update the species reference state thermodynamic functions

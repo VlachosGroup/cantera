@@ -35,6 +35,7 @@ SurfaceArrhenius::SurfaceArrhenius()
     , m_acov(0.0)
     , m_ecov(0.0)
     , m_mcov(0.0)
+    , m_has_intrxn_species(false)
 {
 }
 
@@ -45,6 +46,7 @@ SurfaceArrhenius::SurfaceArrhenius(double A, double b, double Ta)
     , m_acov(0.0)
     , m_ecov(0.0)
     , m_mcov(0.0)
+    , m_has_intrxn_species(false)
 {
 }
 

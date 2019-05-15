@@ -75,6 +75,7 @@ void InterfaceKinetics::_update_rates_T()
         }
         else
             m_rates.update(T, m_logtemp, m_rfn.data());
+        
         applyStickingCorrection(T, m_rfn.data());
 
         // If we need to do conversions between exchange current density
@@ -715,6 +716,19 @@ SurfaceArrhenius InterfaceKinetics::buildSurfaceArrhenius(
     for (const auto& sp : r.coverage_deps) {
         size_t k = thermo(reactionPhaseIndex()).speciesIndex(sp.first);
         rate.addCoverageDependence(k, sp.second.a, sp.second.m, sp.second.E);
+    }
+
+    // Check if the rate has lateral interaction dependent adjustment
+    if (!r.is_sticking_coefficient) {
+        auto intrxn_species = m_surf->getInteractionsAffectedSpecies();
+        for (const auto& rctnt : r.reactants){
+            if (intrxn_species.find(rctnt.first) != intrxn_species.end())
+                rate.setIntrxnCoverageDependence();
+        }
+        for (const auto& prdct : r.products){
+            if (intrxn_species.find(prdct.first) != intrxn_species.end())
+                rate.setIntrxnCoverageDependence();
+        }
     }
     return rate;
 }

@@ -8,6 +8,7 @@
 
 // This file is part of Cantera. See License.txt in the top-level directory or
 // at http://www.cantera.org/license.txt for license and copyright information.
+//#include <algorithm>
 
 #include "cantera/thermo/SurfLatIntPhase.h"
 #include "cantera/thermo/SurfPhase.h"
@@ -145,9 +146,16 @@ bool SurfLatIntPhase::addInteraction(shared_ptr<LateralInteraction> intrxn) {
     }
 
     m_interactions[toLowerCopy(intrxn->name())] = intrxn;
+
+    // Add the affected species to the m_intrxn_species list if not already present
+    string affectedSpecies = intrxn->species1Name();
+    if (m_intrxn_species.find(affectedSpecies) == m_intrxn_species.end()){
+        m_intrxn_species.insert(affectedSpecies);
+        m_intrxn_species_index.insert(speciesIndex(affectedSpecies));
+    }
 } 
 
-vector<string> SurfLatIntPhase::getAffectedInteractions(string speciesName) 
+vector<string> SurfLatIntPhase::getAffectedInteractions(string speciesName) const
 {
     vector<string> intrxnNames;
     intrxnNames.reserve(nSpecies());
@@ -158,7 +166,7 @@ vector<string> SurfLatIntPhase::getAffectedInteractions(string speciesName)
     return intrxnNames;
 }
 
-vector<string> SurfLatIntPhase::getAffectingInteractions(string speciesName) 
+vector<string> SurfLatIntPhase::getAffectingInteractions(string speciesName) const
 {
     vector<string> intrxnNames;
     intrxnNames.reserve(nSpecies());
@@ -325,7 +333,6 @@ void SurfLatIntPhase::_updateThermo(bool force) const
     doublereal tnow = temperature();
     //if (m_tlast != tnow || force) { //TODO: This check is needed 
         m_spthermo.update(tnow, m_cp0.data(), m_h0.data(), m_s0.data());
-
         getCoverages(m_coverages.data());
         m_spInterThermo.update(tnow, m_coverages.data(), m_h0_inter.data());
 
