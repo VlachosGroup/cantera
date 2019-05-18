@@ -52,6 +52,10 @@ public:
         return getValue(m_constrain, k, c_NONE);
     }
 
+    int nConstraints() const {
+        return m_constrain.size();
+    }
+
     //! Initialization function
     virtual void initSizes() {
         int neq = nEquations();
