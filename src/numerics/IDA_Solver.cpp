@@ -314,6 +314,58 @@ void IDA_Solver::setJacobianType(int formJac)
     }
 }
 
+bool checkFlag(const int constraintFlag)
+{
+    auto cflag = constraintFlag;
+    bool valid_cflag = false;
+    if (cflag == c_NONE || cflag == c_GE_ZERO || cflag == c_GT_ZERO || 
+        cflag == c_LE_ZERO || cflag == c_LT_ZERO)
+        valid_cflag = true;
+    return valid_cflag;
+}
+
+void IDA_Solver::setConstraint(const int k, const int constraintFlag)
+{
+    if (checkFlag(constraintFlag)){
+        if(!m_constraints) {
+            m_constraints = N_VNew_Serial(m_neq);
+        }
+        NV_Ith_S(m_constraints, k) = constraintFlag;
+        if (m_ida_mem){
+            auto flag = IDASetConstraints(m_ida_mem, m_constraints);
+            if (flag != IDA_SUCCESS) {
+                throw CanteraError("IDA_Solver::setConstraint", 
+                                   "IDASetConstraint failed.");
+            }
+        }
+    } else { 
+        throw CanteraError("IDA_Solver::setConstraint", 
+                           "Invalid Constraint vaue");
+    }
+}
+
+void IDA_Solver::setConstraints(const int * const constraintFlags)
+{
+    if(!m_constraints) {
+        m_constraints = N_VNew_Serial(m_neq);
+    }
+    for(size_t i = 0; i < m_neq; i++){
+        auto cflag = constraintFlags[i];
+        if(!checkFlag(cflag)){
+            throw CanteraError("IDA_Solver::setConstraints", 
+                               "Invalid Constraint vaue detected");
+        }
+        NV_Ith_S(m_constraints, i) = cflag;
+    }
+    if (m_ida_mem){
+        auto flag = IDASetConstraints(m_ida_mem, m_constraints);
+        if (flag != IDA_SUCCESS) {
+            throw CanteraError("IDA_Solver::setConstraints", 
+                               "IDASetConstraint failed.");
+        }
+    }
+}
+
 void IDA_Solver::setMaxErrTestFailures(int maxErrTestFails)
 {
     m_maxErrTestFails = maxErrTestFails;
@@ -377,37 +429,24 @@ void IDA_Solver::init(doublereal t0)
     /* Call IDACreate */
     m_ida_mem = IDACreate();
 
-    int flag = 0;
-    if (m_itol == IDA_SV) {
-        flag = IDAInit(m_ida_mem, ida_resid, m_t0, m_y, m_ydot);
-        if (flag != IDA_SUCCESS) {
-            if (flag == IDA_MEM_FAIL) {
-                throw CanteraError("IDA_Solver::init",
-                                   "Memory allocation failed.");
-            } else if (flag == IDA_ILL_INPUT) {
-                throw CanteraError("IDA_Solver::init",
-                    "Illegal value for IDAInit input argument.");
-            } else {
-                throw CanteraError("IDA_Solver::init", "IDAInit failed.");
-            }
+    int flag = IDAInit(m_ida_mem, ida_resid, m_t0, m_y, m_ydot);
+    if (flag != IDA_SUCCESS) {
+        if (flag == IDA_MEM_FAIL) {
+            throw CanteraError("IDA_Solver::init",
+                               "Memory allocation failed.");
+        } else if (flag == IDA_ILL_INPUT) {
+            throw CanteraError("IDA_Solver::init",
+                "Illegal value for IDAInit input argument.");
+        } else {
+            throw CanteraError("IDA_Solver::init", "IDAInit failed.");
         }
+    }
+    if (m_itol == IDA_SV) {
         flag = IDASVtolerances(m_ida_mem, m_reltol, m_abstol);
         if (flag != IDA_SUCCESS) {
             throw CanteraError("IDA_Solver::init", "Memory allocation failed.");
         }
     } else {
-        flag = IDAInit(m_ida_mem, ida_resid, m_t0, m_y, m_ydot);
-        if (flag != IDA_SUCCESS) {
-            if (flag == IDA_MEM_FAIL) {
-                throw CanteraError("IDA_Solver::init",
-                                   "Memory allocation failed.");
-            } else if (flag == IDA_ILL_INPUT) {
-                throw CanteraError("IDA_Solver::init",
-                    "Illegal value for IDAInit input argument.");
-            } else {
-                throw CanteraError("IDA_Solver::init", "IDAInit failed.");
-            }
-        }
         flag = IDASStolerances(m_ida_mem, m_reltol, m_abstols);
         if (flag != IDA_SUCCESS) {
             throw CanteraError("IDA_Solver::init", "Memory allocation failed.");
@@ -536,6 +575,15 @@ void IDA_Solver::init(doublereal t0)
         flag = IDASetSuppressAlg(m_ida_mem, m_setSuppressAlg);
         if (flag != IDA_SUCCESS) {
             throw CanteraError("IDA_Solver::init", "IDASetSuppressAlg failed.");
+        }
+    }
+    if (m_resid.nConstraints()){ // Constraints are defined. 
+        for (size_t i = 0; i < m_neq; i++) {
+            NV_Ith_S(m_constraints, i) = m_resid.constraint(i);
+        }
+        flag = IDASetConstraints(m_ida_mem, m_constraints);
+        if (flag != IDA_SUCCESS) {
+            throw CanteraError("IDA_Solver::init", "IDASetConstraints failed");
         }
     }
 }

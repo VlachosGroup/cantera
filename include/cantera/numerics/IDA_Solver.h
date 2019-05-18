@@ -121,6 +121,10 @@ public:
 
     virtual void inclAlgebraicInErrorTest(bool yesno);
 
+    virtual void setConstraint(const int k, const int flag);  
+
+    virtual void setConstraints(const int * const flags);  
+
     /**
      * Get the value of a solver-specific output parameter.
      */
