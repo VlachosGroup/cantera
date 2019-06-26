@@ -9,17 +9,20 @@
 #include "cantera/base/ct_defs.h"
 #include "cantera/base/ctexceptions.h"
 #include "cantera/base/utilities.h"
+#include "cantera/numerics/NumUtil.h"
 
 #include <cstdio>
 
 namespace Cantera
 {
 
+/*
 const int c_NONE = 0;
 const int c_GE_ZERO = 1;
 const int c_GT_ZERO = 2;
 const int c_LE_ZERO = -1;
 const int c_LT_ZERO = -2;
+*/
 
 /**
  *  Virtual base class for DAE residual function evaluators.
