@@ -3,6 +3,7 @@
 // This file is part of Cantera. See License.txt in the top-level directory or
 // at http://www.cantera.org/license.txt for license and copyright information.
 
+#include "cantera/numerics/NumUtil.h"
 #include "cantera/numerics/CVodesIntegrator.h"
 #include "cantera/base/stringUtils.h"
 
@@ -84,6 +85,7 @@ CVodesIntegrator::CVodesIntegrator() :
     m_func(0),
     m_t0(0.0),
     m_y(0),
+    m_constraints(0),
     m_abstol(0),
     m_type(DENSE+NOJAC),
     m_itol(CV_SS),
@@ -128,6 +130,9 @@ CVodesIntegrator::~CVodesIntegrator()
     }
     if (m_yS) {
         N_VDestroyVectorArray_Serial(m_yS, static_cast<sd_size_t>(m_np));
+    }
+    if (m_constraints) {
+        N_VDestroy_Serial(m_constraints);
     }
 }
 
@@ -234,6 +239,63 @@ void CVodesIntegrator::setIterator(IterType t)
     }
 }
 
+/*
+bool checkFlag(const int constraintFlag)
+ {
+     auto cflag = constraintFlag;
+     bool valid_cflag = false;
+     if (cflag == c_NONE || cflag == c_GE_ZERO || cflag == c_GT_ZERO ||
+         cflag == c_LE_ZERO || cflag == c_LT_ZERO)
+         valid_cflag = true;
+     return valid_cflag;
+ }
+ */
+ 
+
+/* The function CVodeSetConstraints is available only in latest SUNDIALS package
+ void CVodesIntegrator::setConstraint(const int k, const int constraintFlag)
+ {
+     if (checkFlag(constraintFlag)){
+         if(!m_constraints) {
+             m_constraints = N_VNew_Serial(m_neq);
+         }
+         NV_Ith_S(m_constraints, k) = constraintFlag;
+         if (m_cvode_mem){
+             auto flag = CVodeSetConstraints(m_cvode_mem, m_constraints);
+             if (flag != CV_SUCCESS) {
+                 throw CanteraError("CVodesIntegrator::setConstraint",
+                                    "CVodeSetConstraint failed.");
+             }
+         }
+     } else {
+         throw CanteraError("CVodesIntegrator::setConstraint",
+                            "Invalid Constraint vaue");
+     }
+ }
+
+void CVodesIntegrator::setConstraints(const int * const constraintFlags)
+ {
+     if(!m_constraints) {
+         m_constraints = N_VNew_Serial(m_neq);
+     }
+     for(size_t i = 0; i < m_neq; i++){
+         auto cflag = constraintFlags[i];
+         if(!checkFlag(cflag)){
+             throw CanteraError("CVodesIntegrator::setConstraints",
+                                "Invalid Constraint vaue detected");
+         }
+         NV_Ith_S(m_constraints, i) = cflag;
+     }
+     if (m_cvode_mem){
+         auto flag = CVodeSetConstraints(m_cvode_mem, m_constraints);
+         if (flag != CV_SUCCESS) {
+             throw CanteraError("CVodesIntegrator::setConstraints",
+                                "CVodeSetConstraint failed.");
+         }
+     }
+ }
+ */
+
 void CVodesIntegrator::sensInit(double t0, FuncEval& func)
 {
     m_np = func.nparams();
@@ -279,6 +341,12 @@ void CVodesIntegrator::initialize(double t0, FuncEval& func)
         throw CanteraError("CVodesIntegrator::initialize",
                            "not enough absolute tolerance values specified.");
     }
+    
+    if (m_constraints) {
+        N_VDestroy_Serial(m_constraints);
+    }
+    m_constraints = N_VNew_Serial(static_cast<sd_size_t>(m_neq)); // allocate solution vector
+    N_VConst(0.0, m_constraints);
 
     func.getState(NV_DATA_S(m_y));
 
