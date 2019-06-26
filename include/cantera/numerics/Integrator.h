@@ -12,18 +12,12 @@
 #ifndef CT_INTEGRATOR_H
 #define CT_INTEGRATOR_H
 #include "FuncEval.h"
+#include "NumUtil.h"
 
 #include "cantera/base/global.h"
 
 namespace Cantera
 {
-
-const int DIAG = 1;
-const int DENSE = 2;
-const int NOJAC = 4;
-const int JAC = 8;
-const int GMRES = 16;
-const int BAND = 32;
 
 /**
  * Specifies the method used to integrate the system of equations.
