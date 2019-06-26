@@ -4,11 +4,12 @@
 // at https://cantera.org/license.txt for license and copyright information.
 
 #include "cantera/numerics/IDA_Solver.h"
+#include "cantera/numerics/NumUtil.h"
 #include "cantera/base/stringUtils.h"
 
 #include "sundials/sundials_types.h"
 #include "sundials/sundials_math.h"
-#include "ida/ida.h"
+#include "idas/idas.h"
 #if CT_SUNDIALS_VERSION >= 30
     #if CT_SUNDIALS_USE_LAPACK
         #include "sunlinsol/sunlinsol_lapackdense.h"
@@ -18,12 +19,12 @@
         #include "sunlinsol/sunlinsol_band.h"
     #endif
     #include "sunlinsol/sunlinsol_spgmr.h"
-    #include "ida/ida_direct.h"
-    #include "ida/ida_spils.h"
+    #include "idas/idas_direct.h"
+    #include "idas/idas_spils.h"
 #else
-    #include "ida/ida_dense.h"
-    #include "ida/ida_spgmr.h"
-    #include "ida/ida_band.h"
+    #include "idas/idas_dense.h"
+    #include "idas/idas_spgmr.h"
+    #include "idas/idas_band.h"
 #endif
 #include "nvector/nvector_serial.h"
 
@@ -314,6 +315,7 @@ void IDA_Solver::setJacobianType(int formJac)
     }
 }
 
+/*
 bool checkFlag(const int constraintFlag)
 {
     auto cflag = constraintFlag;
@@ -323,6 +325,7 @@ bool checkFlag(const int constraintFlag)
         valid_cflag = true;
     return valid_cflag;
 }
+*/
 
 void IDA_Solver::setConstraint(const int k, const int constraintFlag)
 {
@@ -351,6 +354,7 @@ void IDA_Solver::setConstraints(const int * const constraintFlags)
     }
     for(size_t i = 0; i < m_neq; i++){
         auto cflag = constraintFlags[i];
+        cout << i << " cflag " << cflag << endl;
         if(!checkFlag(cflag)){
             throw CanteraError("IDA_Solver::setConstraints", 
                                "Invalid Constraint vaue detected");

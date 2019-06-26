@@ -74,6 +74,12 @@ public:
     //! Error message information provide by CVodes
     std::string m_error_message;
 
+    /* Disabled due to older version of CVodes
+    virtual void setConstraint(const int k, const int flag);
+
+    virtual void setConstraints(const int * const flags);
+    */
+
 protected:
     //! Applies user-specified options to the underlying CVODES solver. Called
     //! during integrator initialization or reinitialization.
@@ -91,6 +97,7 @@ private:
     double m_time; //!< The current integrator time
     N_Vector m_y, m_abstol;
     N_Vector m_dky;
+    N_Vector m_constraints;
     int m_type;
     int m_itol;
     int m_method;
