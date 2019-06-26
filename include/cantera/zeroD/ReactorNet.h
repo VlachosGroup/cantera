@@ -199,7 +199,7 @@ public:
     //! initial conditions) but with the same configuration of the reactor
     //! network. Can be called manually, or automatically after calling
     //! setInitialTime or modifying a reactor's contents.
-    void reinitialize();
+    virtual void reinitialize();
 
     //! Called to trigger integrator reinitialization before further
     //! integration.
@@ -225,7 +225,7 @@ public:
 protected:
     //! Initialize the reactor network. Called automatically the first time
     //! advance or step is called.
-    void initialize();
+    virtual void initialize();
 
     std::vector<Reactor*> m_reactors;
     std::unique_ptr<Integrator> m_integ;
