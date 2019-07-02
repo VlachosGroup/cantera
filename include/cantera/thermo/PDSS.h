@@ -517,6 +517,9 @@ protected:
     double m_sss_R; //!< Standard state entropy divided by R
     double m_gss_RT; //!< Standard state Gibbs free energy divided by RT
     double m_Vss; //!< Standard State molar volume (m^3/kmol)
+
+    double m_dCp0_RdT; //!< T derivative of reference state heat capacity divided by R
+    double m_dS0_RdT; //!< T derivative of reference state entropy divided by R
 };
 
 }

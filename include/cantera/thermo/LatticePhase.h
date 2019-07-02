@@ -661,6 +661,14 @@ protected:
     //! temperature
     mutable vector_fp m_s0_R;
 
+    //! Temporary storage for the temp derivatives of reference state heat 
+    //! capacities
+    mutable vector_fp m_dCp0_RdT;
+
+    //! Temporary storage for the temp derivatives of reference state 
+    //! entropies at the current temperature
+    mutable vector_fp m_dS0_RdT;
+
     //! Vector of molar volumes for each species in the solution
     /**
      * Species molar volumes \f$ m^3 kmol^-1 \f$
@@ -682,6 +690,8 @@ private:
      * the temperature has changed.
      */
     void _updateThermo() const;
+
+    void _updateThermoDerivatives() const;
 };
 }
 

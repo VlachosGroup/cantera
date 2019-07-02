@@ -211,6 +211,10 @@ bool SurfPhase::addSpecies(shared_ptr<Species> spec)
         m_h0.push_back(0.0);
         m_s0.push_back(0.0);
         m_cp0.push_back(0.0);
+        
+        m_dS0_RdT.push_back(0.0);
+        m_dCp0_RdT.push_back(0.0);
+
         m_mu0.push_back(0.0);
         m_work.push_back(0.0);
         m_speciesSize.push_back(spec->size);
@@ -294,6 +298,7 @@ void SurfPhase::_updateThermo(bool force) const
     doublereal tnow = temperature();
     if (m_tlast != tnow || force) {
         m_spthermo.update(tnow, m_cp0.data(), m_h0.data(), m_s0.data());
+        _updateThermoDerivatives(force);
         m_tlast = tnow;
         for (size_t k = 0; k < m_kk; k++) {
             m_h0[k] *= GasConstant * tnow;
@@ -302,6 +307,14 @@ void SurfPhase::_updateThermo(bool force) const
             m_mu0[k] = m_h0[k] - tnow*m_s0[k];
         }
         m_tlast = tnow;
+    }
+}
+
+void SurfPhase::_updateThermoDerivatives(bool force) const
+{
+    doublereal tnow = temperature();
+    if (m_tlast != tnow || force) {
+        m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
     }
 }
 

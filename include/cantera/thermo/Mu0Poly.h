@@ -116,6 +116,21 @@ public:
                                       doublereal* cp_R,
                                       doublereal* h_RT,
                                       doublereal* s_R) const;
+
+     /*!
+     * @copydoc SpeciesThermoInterpType::updateDerivatives
+     *
+     * Temperature Polynomial:
+     *     tt[0] = temp (Kelvin)
+     */
+    virtual void updateDerivatives(const doublereal* tt,
+                                   doublereal* dCp_RdT, 
+                                   doublereal* dS_RdT) const;
+
+    virtual void updateDerivatives(const doublereal temp,
+                                   doublereal* dCp_RdT, 
+                                   doublereal* dS_RdT) const;
+
     virtual void reportParameters(size_t& n, int& type,
                                   doublereal& tlow, doublereal& thigh,
                                   doublereal& pref,

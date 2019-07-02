@@ -53,6 +53,33 @@ void Mu0Poly::updatePropertiesTemp(const doublereal T,
     updateProperties(&T, cp_R, h_RT, s_R);
 }
 
+void Mu0Poly::updateDerivatives(const doublereal* tt, 
+                                doublereal* dCp_RdT,
+                                doublereal* dS_RdT) const
+{
+    size_t j = m_numIntervals;
+    double T = *tt;
+    for (size_t i = 0; i < m_numIntervals; i++) {
+        double T2 = m_t0_int[i+1];
+        if (T <=T2) {
+            j = i;
+            break;
+        }
+    }
+    double T1 = m_t0_int[j];
+    double cp_Rj = m_cp0_R_int[j];
+    *dCp_RdT = 0;
+    *dS_RdT =  cp_Rj / T;
+}
+
+void Mu0Poly::updateDerivatives(const doublereal T,
+                                doublereal* dCp_RdT,
+                                doublereal* dS_RdT) const
+{
+    updateDerivatives(&T, dCp_RdT, dS_RdT);
+}
+
+
 void Mu0Poly::reportParameters(size_t& n, int& type,
                                doublereal& tlow, doublereal& thigh,
                                doublereal& pref,

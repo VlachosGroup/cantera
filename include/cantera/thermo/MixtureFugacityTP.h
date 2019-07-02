@@ -318,6 +318,8 @@ protected:
      *  -  m_s0_R;
      */
     virtual void _updateReferenceStateThermo() const;
+
+    virtual void _updateThermoDerivatives() const;
 public:
 
     /// @name Thermodynamic Values for the Species Reference States
@@ -571,6 +573,14 @@ protected:
 
     //! Temporary storage for dimensionless reference state entropies
     mutable vector_fp m_s0_R;
+
+    //! Temporary storage for temp derivative of dimensionless reference 
+    //! state heat capacities
+    mutable vector_fp m_dCp0_RdT;
+
+    //! Temporary storage for temp derivative of dimensionless reference 
+    //! state entropies
+    mutable vector_fp m_dS0_RdT;
 };
 }
 

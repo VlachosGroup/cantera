@@ -115,6 +115,38 @@ public:
         updateProperties(tPoly, cp_R, h_RT, s_R);
     }
 
+    /*!
+     * @copydoc NasaPoly1::updateProperties
+     *
+     * Temperature Polynomial:
+     *  tt[0] = t;
+     *  tt[1] = t*t;
+     *  tt[2] = m_t[1]*t;
+     *  tt[3] = m_t[2]*t;
+     *  tt[4] = 1.0/t;
+     *  tt[5] = std::log(t);
+     */
+    virtual void updateDerivates(const doublereal* tt,
+                                 doublereal* dCp_RdT, 
+                                 doublereal* dS_RdT) const {
+        doublereal ct0 = m_coeff[0]*tt[4]; // a0 / T
+        doublereal ct1 = m_coeff[1]; // a1 
+        doublereal ct2 = m_coeff[2]*tt[0]; // a2 * T
+        doublereal ct3 = m_coeff[3]*tt[1]; // a3 * T^2
+        doublereal ct4 = m_coeff[4]*tt[2]; // a4 * T^3
+
+        *dCp_RdT = ct1 + 2*ct2 + 3*ct3 + 4*ct4;
+        *dS_RdT = ct0 + ct1 + ct2 + ct3 + ct4; 
+    }
+
+    virtual void updateDerivates(const doublereal temp,
+                                 doublereal* dCp_RdT, 
+                                 doublereal* dS_RdT) const {
+        double tPoly[6];
+        updateTemperaturePoly(temp, tPoly);
+        updateDerivatives(tPoly, dCp_RdT, dS_RdT);
+    }
+
     virtual void reportParameters(size_t& n, int& type,
                                   doublereal& tlow, doublereal& thigh,
                                   doublereal& pref,

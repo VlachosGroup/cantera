@@ -796,6 +796,7 @@ void MixtureFugacityTP::_updateReferenceStateThermo() const
     // properties were computed, recompute them.
     if (m_Tlast_ref != Tnow) {
         m_spthermo.update(Tnow, &m_cp0_R[0], &m_h0_RT[0], &m_s0_R[0]);
+        _updateThermoDerivatives();
         m_Tlast_ref = Tnow;
 
         // update the species Gibbs functions
@@ -806,6 +807,17 @@ void MixtureFugacityTP::_updateReferenceStateThermo() const
         if (pref <= 0.0) {
             throw CanteraError("MixtureFugacityTP::_updateReferenceStateThermo()", "neg ref pressure");
         }
+    }
+}
+
+void MixtureFugacityTP::_updateThermoDerivatives() const
+{
+    double Tnow = temperature();
+
+    // If the temperature has changed since the last time these
+    // properties were computed, recompute them.
+    if (m_Tlast_ref != Tnow) {
+        m_spthermo.update_derivatives(Tnow, &m_dCp0_RdT[0], &m_dS0_RdT[0]);
     }
 }
 

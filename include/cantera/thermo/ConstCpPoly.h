@@ -76,6 +76,21 @@ public:
     void updatePropertiesTemp(const doublereal temp,
                               doublereal* cp_R, doublereal* h_RT,
                               doublereal* s_R) const;
+    /*!
+     * @copydoc SpeciesThermoInterpType::updateDerivatives
+     *
+     * Form and Length of the temperature polynomial:
+     *  - m_t[0] = tt;
+     *
+     */
+    void updateDerivatives(const doublereal* tt,
+                           doublereal* dCp_RdT, 
+                           doublereal* dS_RdT) const;
+    void updateDerivatives(const doublereal temp,
+                           doublereal* dCp_RdT, 
+                           doublereal* dS_RdT) const;
+
+
     void reportParameters(size_t& n, int& type,
                           doublereal& tlow, doublereal& thigh,
                           doublereal& pref,

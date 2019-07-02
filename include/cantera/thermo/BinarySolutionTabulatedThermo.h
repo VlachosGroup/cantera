@@ -171,6 +171,8 @@ protected:
 
 private:
     virtual void _updateThermo() const;
+
+    virtual void _updateThermoDerivatives() const;
 };
 }
 

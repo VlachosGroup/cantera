@@ -248,6 +248,71 @@ void Reactor::evalEqs(doublereal time, doublereal* y,
     resetSensitivity(params);
 }
 
+void Reactor::evalJacEqs(doublereal time, doublereal* y,
+                         doublereal* ydot, Array2D* jac, size_t start)
+{
+    double dmdt = 0.0; // dm/dt (gas phase)
+    double* dYdt = ydot + 3;
+
+    m_thermo->restoreState(m_state);
+    evalWalls(time);
+    double mdot_surf = evalSurfaces(time, ydot + m_nsp + 3);
+    dmdt += mdot_surf; // mass added to gas phase from surface reactions
+
+    // volume equation
+    ydot[1] = m_vdot;
+
+    const vector_fp& mw = m_thermo->molecularWeights();
+    const doublereal* Y = m_thermo->massFractions();
+
+    if (m_chem) {
+        m_kin->getNetProductionRates(&m_wdot[0]); // "omega dot"
+    }
+
+    for (size_t k = 0; k < m_nsp; k++) {
+        // production in gas phase and from surfaces
+        dYdt[k] = (m_wdot[k] * m_vol + m_sdot[k]) * mw[k] / m_mass;
+        // dilution by net surface mass flux
+        dYdt[k] -= Y[k] * mdot_surf / m_mass;
+    }
+
+    // Energy equation.
+    // \f[
+    //     \dot U = -P\dot V + A \dot q + \dot m_{in} h_{in} - \dot m_{out} h.
+    // \f]
+    if (m_energy) {
+        ydot[2] = - m_thermo->pressure() * m_vdot - m_Q;
+    } else {
+        ydot[2] = 0.0;
+    }
+
+    // add terms for outlets
+    for (size_t i = 0; i < m_outlet.size(); i++) {
+        double mdot_out = m_outlet[i]->massFlowRate(time);
+        dmdt -= mdot_out; // mass flow out of system
+        if (m_energy) {
+            ydot[2] -= mdot_out * m_enthalpy;
+        }
+    }
+
+    // add terms for inlets
+    for (size_t i = 0; i < m_inlet.size(); i++) {
+        double mdot_in = m_inlet[i]->massFlowRate(time);
+        dmdt += mdot_in; // mass flow into system
+        for (size_t n = 0; n < m_nsp; n++) {
+            double mdot_spec = m_inlet[i]->outletSpeciesMassFlowRate(n);
+            // flow of species into system and dilution by other species
+            dYdt[n] += (mdot_spec - mdot_in * Y[n]) / m_mass;
+        }
+        if (m_energy) {
+            ydot[2] += mdot_in * m_inlet[i]->enthalpy_mass();
+        }
+    }
+
+    ydot[0] = dmdt;
+}
+
+
 void Reactor::evalWalls(double t)
 {
     m_vdot = 0.0;

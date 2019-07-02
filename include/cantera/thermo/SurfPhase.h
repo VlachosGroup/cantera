@@ -416,6 +416,12 @@ protected:
     //! Temporary storage for the reference state heat capacities
     mutable vector_fp m_cp0;
 
+    //! Temporary storage for the temp derivatives of reference state entropies
+    mutable vector_fp m_dS0_RdT;
+
+    //! Temporary storage for the temp derivatives of reference state heat capacities
+    mutable vector_fp m_dCp0_RdT;
+
     //! Temporary storage for the reference state Gibbs energies
     mutable vector_fp m_mu0;
 
@@ -439,6 +445,8 @@ private:
      *               polynomials. default = false.
      */
     void _updateThermo(bool force=false) const;
+
+    void _updateThermoDerivatives(bool force=false) const;
 };
 }
 

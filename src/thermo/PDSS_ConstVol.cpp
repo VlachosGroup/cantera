@@ -70,6 +70,7 @@ void PDSS_ConstVol::setTemperature(doublereal temp)
 {
     m_temp = temp;
     m_spthermo->updatePropertiesTemp(temp, &m_cp0_R, &m_h0_RT, &m_s0_R);
+    m_spthermo->updateDerivatives(temp, &m_dCp0_RdT, &m_dS0_RdT);
     m_g0_RT = m_h0_RT - m_s0_R;
 
     doublereal del_pRT = (m_pres - m_p0) / (GasConstant * m_temp);

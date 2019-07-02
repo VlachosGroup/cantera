@@ -41,6 +41,21 @@ void SpeciesThermoInterpType::updatePropertiesTemp(const double temp,
                        "Not implemented");
 }
 
+void SpeciesThermoInterpType::updateDerivatives(const doublereal* tempPoly,
+        doublereal* dCp_RdT, doublereal* dS_RdT) const
+{
+    double T = tempPoly[0];
+    updateDerivatives(T, dCp_RdT, dS_RdT);
+}
+
+void SpeciesThermoInterpType::updateDerivatives(const double temp,
+        double* dCp_RdT, double* dS_RdT) const
+{
+    throw CanteraError("SpeciesThermoInterpType::updateDerivatives",
+                       "Not implemented");
+}
+
+
 void SpeciesThermoInterpType::reportParameters(size_t& index, int& type,
         double& minTemp, double& maxTemp, double& refPressure,
         double* const coeffs) const

@@ -237,6 +237,9 @@ bool LatticePhase::addSpecies(shared_ptr<Species> spec)
         m_g0_RT.push_back(0.0);
         m_cp0_R.push_back(0.0);
         m_s0_R.push_back(0.0);
+
+        m_dCp0_RdT.push_back(0.0);
+        m_dS0_RdT.push_back(0.0);
         if (spec->extra.hasKey("molar_volume")) {
             m_speciesMolarVolume.push_back(spec->extra["molar_volume"].asDouble());
         } else {
@@ -256,6 +259,7 @@ void LatticePhase::_updateThermo() const
     doublereal tnow = temperature();
     if (m_tlast != tnow) {
         m_spthermo.update(tnow, &m_cp0_R[0], &m_h0_RT[0], &m_s0_R[0]);
+        _updateThermoDerivatives();
         m_tlast = tnow;
         for (size_t k = 0; k < m_kk; k++) {
             m_g0_RT[k] = m_h0_RT[k] - m_s0_R[k];
@@ -263,6 +267,15 @@ void LatticePhase::_updateThermo() const
         m_tlast = tnow;
     }
 }
+
+void LatticePhase::_updateThermoDerivatives() const
+{
+    doublereal tnow = temperature();
+    if (m_tlast != tnow) {
+        m_spthermo.update_derivatives(tnow, &m_dCp0_RdT[0], &m_dS0_RdT[0]);
+    }
+}
+
 
 void LatticePhase::setParametersFromXML(const XML_Node& eosdata)
 {

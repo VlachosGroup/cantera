@@ -256,6 +256,10 @@ protected:
     mutable double m_cp0_R;
     //! Dimensionless entropy at the (mtlast, m_p0)
     mutable double m_s0_R;
+    //! Temp derivate of Dimensionless heat capacity at the (mtlast, m_p0)
+    mutable double m_dCp0_RdT;
+    //! Temp derivative of dimensionless entropy at the (mtlast, m_p0)
+    mutable double m_dS0_RdT;
 
     /**
      * @internal This crucial internal routine calls the species thermo update
@@ -263,6 +267,8 @@ protected:
      *        temperature has changed.
      */
     void _updateThermo() const;
+
+    void _updateThermoDerivatives() const;
 };
 
 }

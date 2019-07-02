@@ -97,6 +97,29 @@ public:
     virtual void update(doublereal T, doublereal* cp_R,
                         doublereal* h_RT, doublereal* s_R) const;
 
+    //! Like update_deriviatives_one, but without applying offsets to the output pointers
+    /*!
+     * @param k       species index
+     * @param T       Temperature (Kelvin)
+     * @param dCp_RdT Temp derivative of dimensionless heat capacity
+     * @param dS_RdT  Temp derivative of dimensionless entropy
+     */
+    virtual void update_derivatives_single(size_t k, double T, double* dCp_RdT,
+                                           double* dS_RdT) const;
+
+    //! Compute the temp derivatives of reference-state properties for all species.
+    /*!
+     * Given temperature T in K, this method updates the derivatives of the non-
+     * dimensional heat capacity at constant pressure and entropy,
+     * at the reference pressure, Pref of each of the standard states.
+     *
+     * @param T       Temperature (Kelvin)
+     * @param dCp_RdT Vector of temp derivative of dimensionless heat capacity
+     * @param dS_RdT  Vector of temp derivative of dimensionless entropy
+     */
+    virtual void update_derivatives(doublereal T, doublereal* dCp_RdT,
+                                    doublereal* dS_RdT) const;
+
     //! Minimum temperature.
     /*!
      * If no argument is supplied, this method returns the minimum temperature
