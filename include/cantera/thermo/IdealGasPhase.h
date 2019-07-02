@@ -619,11 +619,16 @@ protected:
     //! Temporary storage for dimensionless reference state entropies
     mutable vector_fp m_s0_R;
 
+    //! Temporary storage for temp derivatives of dimensionless reference state heat capacities
+    mutable vector_fp m_dCp0_RdT;
+
+    //! Temporary storage for temp derivatives of dimensionless reference state entropies
+    mutable vector_fp m_dS0_RdT;
+
     mutable vector_fp m_expg0_RT;
 
     //! Temporary array containing internally calculated partial pressures
     mutable vector_fp m_pp;
-
 private:
     //! Update the species reference state thermodynamic functions
     /*!
@@ -638,6 +643,8 @@ private:
      *  (or equivalent) call is made.
      */
     void _updateThermo() const;
+
+    void _updateThermoDerivatives() const;
 };
 
 }

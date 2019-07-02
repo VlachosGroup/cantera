@@ -678,6 +678,14 @@ protected:
     //! Vector containing the species reference entropies at T = m_tlast
     mutable vector_fp m_s0_R;
 
+    //! Vector containing the temp derivatives of species reference constant 
+    //! pressure heat capacities at T = m_tlast
+    mutable vector_fp m_dCp0_RdT;
+
+    //! Vector containing the temp derivatives of species reference entropies 
+    //! at T = m_tlast
+    mutable vector_fp m_dS0_RdT;
+
     //! Vector containing the species reference exp(-G/RT) functions at
     //! T = m_tlast
     mutable vector_fp m_expg0_RT;
@@ -701,6 +709,7 @@ private:
      */
     virtual void _updateThermo() const;
 
+    virtual void _updateThermoDerivatives() const;
     //@}
 };
 }

@@ -145,6 +145,41 @@ public:
         updateProperties(tPoly, cp_R, h_RT, s_R);
     }
 
+    /*!
+     * @copydoc SpeciesThermoInterpType::updateDerivatives
+     *
+     * Form of the temperature polynomial:
+     *   - `t` is T/1000.
+     *   - `t[0] = t`
+     *   - `t[1] = t*t`
+     *   - `t[2] = t[1]*t`
+     *   - `t[3] = 1.0/t[1]`
+     *   - `t[4] = log(t)`
+     *   - `t[5] = 1.0/t;
+     */
+    virtual void updateDerivatives(const doublereal* tt,
+                                   doublereal* dCp_RdT, 
+                                   doublereal* dS_RdT) const {
+
+        // TODO: Investigate the effect on 1e-3*t done in updatetTemperaturePoly
+        doublereal Atm1 = m_coeff[0]*tt[5];
+        doublereal B = m_coeff[1];
+        doublereal Ct = m_coeff[2]*tt[0];
+        doublereal Dt2 = m_coeff[3]*tt[1];
+        doublereal Etm3 = m_coeff[4]*tt[3]*tt[5];
+
+        *dCp_RdT = B + 2*Ct + 3*Dt2 - 2*Etm3;
+        *dS_RdT = Atm1 + B + Ct + Dt2 + Etm3;
+    }
+
+    virtual void updateDerivatives(const doublereal temp,
+                                   doublereal* dCp_RdT, 
+                                   doublereal* dS_RdT) const {
+        double tPoly[6];
+        updateTemperaturePoly(temp, tPoly);
+        updateDerivatives(tPoly, dCp_RdT, dS_RdT);
+    }
+
     virtual void reportParameters(size_t& n, int& type,
                                   doublereal& tlow, doublereal& thigh,
                                   doublereal& pref,
@@ -307,6 +342,28 @@ public:
     }
 
     virtual size_t nCoeffs() const { return 15; }
+
+    //! @copydoc ShomatePoly::updateDerivatives
+    virtual void updateDerivatives(const doublereal* tt,
+                                   doublereal* dCp_RdT,
+                                   doublereal* dS_RdT) const {
+        double T = 1000 * tt[0];
+        if (T <= m_midT) {
+            msp_low.updateDerivatives(tt, dCp_RdT, dS_RdT);
+        } else {
+            msp_high.updateDerivatives(tt, dCp_RdT, dS_RdT);
+        }
+    }
+
+    virtual void updateDerivatives(const doublereal temp,
+                                   doublereal* dCp_RdT,
+                                   doublereal* dS_RdT) const {
+        if (temp <= m_midT) {
+            msp_low.updateDerivatives(temp, dCp_RdT, dS_RdT);
+        } else {
+            msp_high.updateDerivatives(temp, dCp_RdT, dS_RdT);
+        }
+    }
 
     virtual void reportParameters(size_t& n, int& type,
                                   doublereal& tlow, doublereal& thigh,

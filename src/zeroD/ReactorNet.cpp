@@ -259,6 +259,18 @@ double ReactorNet::sensitivity(size_t k, size_t p)
 void ReactorNet::evalJacobian(doublereal t, doublereal* y,
                               doublereal* ydot, doublereal* p, Array2D* j)
 {
+    // Assuming the jacobian entities are 0 if not defined or used
+    // Typically ReactorNet contains a single reactor leading to a dense type jac matrix
+    // If multiple reactors are defined, jac is a block diagonal matrix.
+    for (size_t n = 0; n < m_reactors.size(); n++) {
+        m_reactors[n]->evalJacEqs(t, y + m_start[n], ydot + m_start[n], j, m_start[n]);
+    }
+}
+
+/*
+void ReactorNet::evalJacobian(doublereal t, doublereal* y,
+                              doublereal* ydot, doublereal* p, Array2D* j)
+{
     //evaluate the unperturbed ydot
     eval(t, y, ydot, p);
     for (size_t n = 0; n < m_nv; n++) {
@@ -278,6 +290,8 @@ void ReactorNet::evalJacobian(doublereal t, doublereal* y,
         y[n] = ysave;
     }
 }
+*/
+
 
 void ReactorNet::updateState(doublereal* y)
 {

@@ -100,6 +100,26 @@ public:
                                       doublereal* cp_R, doublereal* h_RT,
                                       doublereal* s_R) const;
 
+     /*!
+     * @copydoc SpeciesThermoInterpType::updateDerivatives
+     *
+     * Temperature Polynomial:
+     *   - tt[0] = t;
+     *   - tt[1] = t*t;
+     *   - tt[2] = t*t*t;
+     *   - tt[3] = t*t*t*t;
+     *   - tt[4] = 1.0/t;
+     *   - tt[5] = 1.0/(t*t);
+     *   - tt[6] = std::log(t);
+     */
+    virtual void updateDerivatives(const doublereal* tt,
+                                   doublereal* dCp_RdT, 
+                                   doublereal* dS_RdT) const;
+
+    virtual void updateDerivatives(const doublereal temp,
+                                   doublereal* dCp_RdT, 
+                                   doublereal* dS_RdT) const;
+
     //! This utility function reports back the type of parameterization and all
     //! of the parameters for the species
     /*!

@@ -125,6 +125,27 @@ public:
 
     size_t nCoeffs() const { return 15; }
 
+    //! @copydoc NasaPoly1::updateDerivatives
+    void updateDerivatives(const doublereal* tt,
+                           doublereal* dCp_RdT, 
+                           doublereal* dS_RdT) const {
+        if (tt[0] <= m_midT) {
+            mnp_low.updateDerivatives(tt, dCp_RdT, dS_RdT);
+        } else {
+            mnp_high.updateDerivatives(tt, dCp_RdT, dS_RdT);
+        }
+    }
+
+    void updateDerivatives(const doublereal temp,
+                           doublereal* dCp_RdT,
+                           doublereal* dS_RdT) const {
+        if (temp <= m_midT) {
+            mnp_low.updateDerivatives(temp, dCp_RdT, dS_RdT);
+        } else {
+            mnp_high.updateDerivatives(temp, dCp_RdT, dS_RdT);
+        }
+    }
+
     void reportParameters(size_t& n, int& type,
                           doublereal& tlow, doublereal& thigh,
                           doublereal& pref,

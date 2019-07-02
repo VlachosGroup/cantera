@@ -261,7 +261,16 @@ void SingleSpeciesTP::_updateThermo() const
     doublereal tnow = temperature();
     if (m_tlast != tnow) {
         m_spthermo.update(tnow, &m_cp0_R, &m_h0_RT, &m_s0_R);
+        _updateThermoDerivatives(); 
         m_tlast = tnow;
+    }
+}
+
+void SingleSpeciesTP::_updateThermoDerivatives() const
+{
+    doublereal tnow = temperature();
+    if (m_tlast != tnow) {
+        m_spthermo.update_derivatives(tnow, &m_dCp0_RdT, &m_dS0_RdT);
     }
 }
 

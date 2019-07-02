@@ -210,6 +210,39 @@ public:
     //! for a given type of species parameterization
     virtual size_t nCoeffs() const;
 
+    //! Update the temp derivates of properties for this species, given a temperature polynomial
+    /*!
+     * This method is called with a pointer to an array containing the functions
+     * of temperature needed by this parameterization, and two pointers to
+     * arrays where the computed derivate values of properties should be written. This method
+     * updates only one value in each array.
+     *
+     * The form and length of the Temperature Polynomial may vary depending on
+     * the parameterization.
+     *
+     * @param tt      vector of evaluated temperature functions
+     * @param dCp_RdT Vector of temp. derivatives of dimensionless heat capacities. (length m_kk).
+     * @param dS_RdT  Vector of temp derivatives of dimensionless entropies. (length m_kk).
+     */
+    virtual void updateDerivatives(const doublereal* tt,
+                                   doublereal* dCp_RdT, 
+                                   doublereal* dS_RdT) const;
+
+    //! Compute the temp derivative of reference-state property of one species
+    /*!
+     * Given temperature T in K, this method updates the derivatives of the non-
+     * dimensional heat capacity at constant pressure,  and of entropy, at
+     * the reference pressure, of the species.
+     *
+     * @param temp    Temperature (Kelvin)
+     * @param dCp_RdT Vector of temp derivatives of dimensionless heat capacities. (length m_kk).
+     * @param dS_RdT  Vector of temp derivatives of dimensionless entropies. (length m_kk).
+     */
+    virtual void updateDerivatives(const doublereal temp,
+                                   doublereal* dCp_RdT,
+                                   doublereal* dS_RdT) const;
+
+
     //! This utility function returns the type of parameterization and all
     //! of the parameters for the species.
     /*!

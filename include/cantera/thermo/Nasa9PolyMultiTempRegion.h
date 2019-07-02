@@ -93,6 +93,15 @@ public:
                                       doublereal* s_R) const;
 
     virtual size_t nCoeffs() const;
+    
+    //! @copydoc Nasa9Poly1::updateDerivatives
+    virtual void updateDerivatives(const doublereal* tt,
+                                  doublereal* dCp_RdT,
+                                  doublereal* dS_RdT) const;
+
+    virtual void updateDerivatives(const doublereal temp,
+                                  doublereal* dCp_RdT,
+                                  doublereal* dS_RdT) const;
 
     //! This utility function reports back the type of parameterization and all
     //! of the parameters for the species, index.

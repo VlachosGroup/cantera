@@ -89,6 +89,20 @@ public:
 
     size_t nCoeffs() const { return 4; }
 
+    /*!
+     * @copydoc SpeciesThermoInterpType::updateDerivatives
+     *
+     * Form and Length of the temperature polynomial:
+     *  - m_t[0] = tt;
+     *
+     */
+    void updateDerivatives(const doublereal* tt,
+                           doublereal* dCp_RdT, 
+                           doublereal* dS_RdT) const;
+    void updateDerivatives(const doublereal temp,
+                           doublereal* dCp_RdT, 
+                           doublereal* dS_RdT) const;
+
     void reportParameters(size_t& n, int& type,
                           doublereal& tlow, doublereal& thigh,
                           doublereal& pref,

@@ -373,6 +373,10 @@ bool IdealSolidSolnPhase::addSpecies(shared_ptr<Species> spec)
         m_expg0_RT.push_back(0.0);
         m_cp0_R.push_back(0.0);
         m_s0_R.push_back(0.0);
+
+        m_dCp0_RdT.push_back(0.0); 
+        m_dS0_RdT.push_back(0.0);
+
         m_pe.push_back(0.0);;
         m_pp.push_back(0.0);
         if (spec->input.hasKey("equation-of-state")) {
@@ -497,6 +501,7 @@ void IdealSolidSolnPhase::_updateThermo() const
 
         // Update the thermodynamic functions of the reference state.
         m_spthermo.update(tnow, m_cp0_R.data(), m_h0_RT.data(), m_s0_R.data());
+        _updateThermoDerivatives();
         m_tlast = tnow;
         doublereal rrt = 1.0 / RT();
         for (size_t k = 0; k < m_kk; k++) {
@@ -505,6 +510,14 @@ void IdealSolidSolnPhase::_updateThermo() const
             m_g0_RT[k] = m_h0_RT[k] - m_s0_R[k];
         }
         m_tlast = tnow;
+    }
+}
+
+void IdealSolidSolnPhase::_updateThermoDerivatives() const
+{
+    doublereal tnow = temperature();
+    if (m_tlast != tnow) {
+        m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
     }
 }
 

@@ -71,6 +71,7 @@ void BinarySolutionTabulatedThermo::_updateThermo() const
     if (x_changed || m_tlast != tnow) {
         // Update the thermodynamic functions of the reference state.
         m_spthermo.update(tnow, m_cp0_R.data(), m_h0_RT.data(), m_s0_R.data());
+        _updateThermoDerivatives(); 
         double rrt = 1.0 / RT();
         m_h0_RT[m_kk_tab] += m_h0_tab * rrt;
         m_s0_R[m_kk_tab] += m_s0_tab / GasConstant;
@@ -119,6 +120,14 @@ void BinarySolutionTabulatedThermo::initThermo()
         }
     }
     IdealSolidSolnPhase::initThermo();
+}
+
+void BinarySolutionTabulatedThermo::_updateThermoDerivatives() const
+{
+    double tnow = temperature();
+    if (m_tlast != tnow) {
+        m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
+    }
 }
 
 void BinarySolutionTabulatedThermo::initThermoXML(XML_Node& phaseNode, const std::string& id_)

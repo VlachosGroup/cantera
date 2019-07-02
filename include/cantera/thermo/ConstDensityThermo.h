@@ -156,12 +156,20 @@ protected:
     //! Temporary storage for dimensionless reference state entropies
     mutable vector_fp m_s0_R;
 
+    //! Temporary storage for temp derivatives of dimensionless reference state heat capacities
+    mutable vector_fp m_dCp0_RdT;
+
+    //! Temporary storage for temp derivatives of dimensionless reference state entropies
+    mutable vector_fp m_dS0_RdT;
+
     //! Current pressure (Pa)
     doublereal m_press;
 
 private:
     //! Function to update the reference state thermo functions
     void _updateThermo() const;
+
+    void _updateThermoDerivatives() const;
 };
 }
 
