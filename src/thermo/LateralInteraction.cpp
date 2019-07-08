@@ -57,6 +57,7 @@ std::string LateralInteraction::species2Name() const {
 
 double LateralInteraction::strength(const double coverage) const 
 {
+    /*
     if (coverage > 1) {
         throw CanteraError ("Cantera::LateralInteraction", 
                 "Coverage '{}' greater than 1", coverage);
@@ -65,16 +66,18 @@ double LateralInteraction::strength(const double coverage) const
         throw CanteraError ("Cantera::LateralInteraction", 
                 "Coverage '{}' less than 0", coverage);
     }
-
+    */
+    double cov = (coverage < 0) ? 0.0 : coverage;
+    cov = (cov > 1) ? 1.0 : coverage;
     doublereal val = 0.0;
     for (size_t i = 0; i < m_strengths.size(); i++) {
         auto cov_low_thr = m_cov_thresholds[i];
         auto cov_up_thr = m_cov_thresholds[i+1];
-        if (cov_up_thr < coverage) {
+        if (cov_up_thr < cov) {
             val += (cov_up_thr - cov_low_thr) * m_strengths[i];
         } 
         else {
-            val += (coverage - cov_low_thr) * m_strengths[i];
+            val += (cov- cov_low_thr) * m_strengths[i];
             break;
         }
     }
