@@ -540,6 +540,16 @@ public:
      */
     virtual void getNetProductionRates(doublereal* wdot);
 
+    /**
+     * Temperature derivative of species net production rates. Return the
+     * T derivative of species net production rates (creation - destruction) 
+     * in array wdot, which must be dimensioned at least as large as the 
+     * total number of species. @see nTotalSpecies.
+     *
+     * @param dwdotdT Output vector of T derivatives of net production rates. Length: m_kk.
+     */
+    virtual void getNetProductionRateTDerivatives(doublereal* dwdotdT);
+
     //! @}
     //! @name Reaction Mechanism Informational Query Routines
     //! @{
@@ -828,6 +838,12 @@ protected:
         throw NotImplementedError("Kinetics::updateROP");
     }
 
+    // Update internal derivatives of rate-of-progress variables 
+    // #m_dropfdt and #m_droprdt.
+    virtual void updateROPDerivatives() {
+        throw NotImplementedError("Kinetics::updateROP");
+    }
+
     //! Check whether `r1` and `r2` represent duplicate stoichiometries
     //! This function returns a ratio if two reactions are duplicates of
     //! one another, and 0.0 otherwise.
@@ -923,6 +939,9 @@ protected:
     //! Forward rate constant for each reaction
     vector_fp m_rfn;
 
+    //! T derivative multiplier of forward rate constant for each reaction
+    vector_fp m_rfn_dTMult;
+
     //! Reciprocal of the equilibrium constant in concentration units
     vector_fp m_rkcn;
 
@@ -934,6 +953,9 @@ protected:
 
     //! Net rate-of-progress for each reaction
     vector_fp m_ropnet;
+
+    //! Net rate-of-progress for each reaction
+    vector_fp m_dROPNetdT;
 
     //! @see skipUndeclaredSpecies()
     bool m_skipUndeclaredSpecies;

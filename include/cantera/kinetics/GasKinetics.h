@@ -57,6 +57,8 @@ public:
 
     void updateROP();
 
+    virtual void updateROPDerivatives();
+
     //! Update temperature-dependent portions of reaction rates and falloff
     //! functions.
     virtual void update_rates_T();
@@ -117,6 +119,8 @@ protected:
 
     //! Update the equilibrium constants in molar units.
     void updateKc();
+
+    void updateTDerivativeFactors();
 };
 
 }

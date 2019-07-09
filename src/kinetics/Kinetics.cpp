@@ -439,6 +439,18 @@ void Kinetics::getNetProductionRates(doublereal* net)
     m_reactantStoich.decrementSpecies(m_ropnet.data(), net);
 }
 
+void Kinetics::getNetProductionRateTDerivatives(doublereal* dNetdT)
+{
+    updateROP();
+
+    fill(dNetdT, dNetdT + m_kk, 0.0);
+    // products are created for positive net rate of progress
+    m_revProductStoich.incrementSpecies(m_dROPNetdT.data(), dNetdT);
+    m_irrevProductStoich.incrementSpecies(m_dROPNetdT.data(), dNetdT);
+    // reactants are destroyed for positive net rate of progress
+    m_reactantStoich.decrementSpecies(m_dROPNetdT.data(), dNetdT);
+}
+
 void Kinetics::addPhase(thermo_t& thermo)
 {
     // the phase with lowest dimensionality is assumed to be the

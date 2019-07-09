@@ -58,6 +58,17 @@ void GasKinetics::update_rates_T()
     m_temp = T;
 }
 
+void GasKinetics::updateTDerivativeFactors()
+{
+    doublereal T = thermo().temperature();
+    doublereal logT = log(T);
+    if (T != m_temp) {
+        if (!m_rfn_dTMult.empty()) {
+            m_rates.update_TDerivative(T, logT, m_rfn_dTMult.data());
+        }
+    }
+}
+
 void GasKinetics::update_rates_C()
 {
     thermo().getActivityConcentrations(m_conc.data());
@@ -197,6 +208,12 @@ void GasKinetics::updateROP()
                      "m_ropr[{}] is not finite.", i);
     }
     m_ROP_ok = true;
+}
+
+void GasKinetics::updateROPDerivatives()
+{
+    updateTDerivativeFactors();
+    updateROP();
 }
 
 void GasKinetics::getFwdRateConstants(doublereal* kfwd)

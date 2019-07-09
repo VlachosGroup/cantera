@@ -69,6 +69,20 @@ public:
         }
     }
 
+    /**
+     * Write the T derivatives of rate coefficients into array values. Each 
+     * calculator writes one entry in values, at the location specified by 
+     * the reaction number when it was installed. Note that nothing will be 
+     * done for reactions that have constant rates. The array values should 
+     * be preloaded with the constant rate coefficients.
+     */
+    void update_TDerivative(doublereal T, doublereal logT, doublereal* values) {
+        doublereal recipT = 1.0/T;
+        for (size_t i = 0; i != m_rates.size(); i++) {
+            values[m_rxn[i]] = m_rates[i].updateRCDerivative(logT, recipT);
+        }
+    }
+
     size_t nReactions() const {
         return m_rates.size();
     }
