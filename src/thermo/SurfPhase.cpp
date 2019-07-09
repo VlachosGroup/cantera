@@ -184,6 +184,18 @@ void SurfPhase::getStandardVolumes(doublereal* vol) const
     }
 }
 
+void SurfPhase::getdCp_RdT(doublereal* dCpRdT) const
+{
+    _updateThermoDerivatives();
+    copy(m_dCp0_RdT.begin(), m_dCp0_RdT.end(), dCpRdT);
+}
+
+void SurfPhase::getdS_RdT(doublereal* dS_RdT) const
+{
+    _updateThermoDerivatives();
+    copy(m_dS0_RdT.begin(), m_dS0_RdT.end(), dS_RdT);
+}
+
 void SurfPhase::getGibbs_RT_ref(doublereal* grt) const
 {
     getGibbs_RT(grt);

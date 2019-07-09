@@ -248,8 +248,12 @@ void Reactor::evalEqs(doublereal time, doublereal* y,
 }
 
 void Reactor::evalJacEqs(doublereal time, doublereal* y,
-                         doublereal* ydot, Array2D* jac, size_t start)
+                         Array2D* jac, size_t start)
 {
+
+    throw CanteraError("Reactor::evalJacEqs",
+                       "Not implemented");
+    /*
     double dmdt = 0.0; // dm/dt (gas phase)
     double* dYdt = ydot + 3;
 
@@ -309,6 +313,7 @@ void Reactor::evalJacEqs(doublereal time, doublereal* y,
     }
 
     ydot[0] = dmdt;
+    */
 }
 
 

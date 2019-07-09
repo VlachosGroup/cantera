@@ -536,6 +536,10 @@ public:
     virtual void getPureGibbs(doublereal* gpure) const;
     virtual void getIntEnergy_RT(doublereal* urt) const;
     virtual void getCp_R(doublereal* cpr) const;
+    virtual void getdCp_RdT(doublereal* dCpRdT) const; 
+    virtual void getdS_RdT(doublereal* dS_RdT) const;
+
+
     virtual void getStandardVolumes(doublereal* vol) const;
 
     //@}
@@ -594,6 +598,25 @@ public:
         return m_cp0_R;
     }
 
+    //! Returns a reference to the dimensionless reference state Heat Capacity vector.
+    /*!
+     * This function is part of the layer that checks/recalculates the reference
+     * state thermo functions.
+     */
+    const vector_fp& dCp_RdT_ref() const{
+        _updateThermoDerivatives();
+        return m_dCp0_RdT;
+    }
+
+    //! Returns a reference to the dimensionless reference state Heat Capacity vector.
+    /*!
+     * This function is part of the layer that checks/recalculates the reference
+     * state thermo functions.
+     */
+    const vector_fp& dS_RdT_ref() const{
+        _updateThermoDerivatives();
+        return m_dS0_RdT;
+    }
     //@}
 
     virtual bool addSpecies(shared_ptr<Species> spec);

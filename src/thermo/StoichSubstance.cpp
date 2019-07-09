@@ -103,6 +103,18 @@ void StoichSubstance::getCp_R(doublereal* cpr) const
     cpr[0] = m_cp0_R;
 }
 
+void StoichSubstance::getdCp_RdT(doublereal* dCpRdT) const
+{
+    _updateThermoDerivatives();
+    dCpRdT[0] = m_dCp0_RdT;
+}
+
+void StoichSubstance::getdS_RdT(doublereal* dS_RdT) const
+{
+    _updateThermoDerivatives();
+    dS_RdT[0] = m_dS0_RdT;
+}
+
 void StoichSubstance::getIntEnergy_RT(doublereal* urt) const
 {
     _updateThermo();

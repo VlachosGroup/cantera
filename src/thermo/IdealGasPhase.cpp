@@ -175,6 +175,18 @@ void IdealGasPhase::getCp_R(doublereal* cpr) const
     copy(_cpr.begin(), _cpr.end(), cpr);
 }
 
+void IdealGasPhase::getdCp_RdT(doublereal* dCpRdT) const
+{
+    const vector_fp& _dCpRdT = dCp_RdT_ref();
+    copy(_dCpRdT.begin(), _dCpRdT.end(), dCpRdT);
+}
+
+void IdealGasPhase::getdS_RdT(doublereal* dS_RdT) const
+{
+    const vector_fp& _dS_RdT = dS_RdT_ref();
+    copy(_dS_RdT.begin(), _dS_RdT.end(), dS_RdT);
+}
+
 void IdealGasPhase::getStandardVolumes(doublereal* vol) const
 {
     double tmp = 1.0 / molarDensity();

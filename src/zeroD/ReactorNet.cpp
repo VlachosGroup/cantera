@@ -256,14 +256,13 @@ double ReactorNet::sensitivity(size_t k, size_t p)
     return m_integ->sensitivity(k, p) / denom;
 }
 
-void ReactorNet::evalJacobian(doublereal t, doublereal* y,
-                              doublereal* ydot, doublereal* p, Array2D* j)
+void ReactorNet::evalJacobian(doublereal t, doublereal* y, Array2D* j)
 {
     // Assuming the jacobian entities are 0 if not defined or used
     // Typically ReactorNet contains a single reactor leading to a dense type jac matrix
     // If multiple reactors are defined, jac is a block diagonal matrix.
     for (size_t n = 0; n < m_reactors.size(); n++) {
-        m_reactors[n]->evalJacEqs(t, y + m_start[n], ydot + m_start[n], j, m_start[n]);
+        m_reactors[n]->evalJacEqs(t, y, j, m_start[n]);
     }
 }
 
