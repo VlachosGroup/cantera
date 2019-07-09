@@ -71,6 +71,16 @@ public:
         return m_A * std::exp(m_b*logT - m_E*recipT);
     }
 
+    /**
+     * Update the value the rate constant derivative.
+     *
+     * This function returns the multiplier associated with the 
+     * rate constant derivative w.r.t. temperature. 
+     */
+    doublereal updateRCDerivative(doublereal logT, doublereal recipT) const {
+        return (m_b + m_E*recipT) * recipT;
+    }
+
     //! Return the pre-exponential factor *A* (in m, kmol, s to powers depending
     //! on the reaction order)
     double preExponentialFactor() const {
@@ -159,6 +169,16 @@ public:
     doublereal updateRC(doublereal logT, doublereal recipT) const {
         return m_A * std::exp(std::log(10.0)*m_acov + m_b*logT -
                               (m_E + m_ecov)*recipT + m_mcov);
+    }
+
+    /**
+     * Update the value the rate constant derivative.
+     *
+     * This function returns the multiplier associated with the 
+     * rate constant derivative w.r.t. temperature. 
+     */
+    doublereal updateRCDerivative(doublereal logT, doublereal recipT) const {
+        throw NotImplementedError("SurfaeArrhenius::updateRCDerivative");
     }
 
     //! Return the pre-exponential factor *A* (in m, kmol, s to powers depending
@@ -276,6 +296,16 @@ public:
         }
 
         return std::exp(log_k1 + (log_k2-log_k1) * (logP_-logP1_) * rDeltaP_);
+    }
+
+    /**
+     * Update the value the rate constant derivative.
+     *
+     * This function returns the multiplier associated with the 
+     * rate constant derivative w.r.t. temperature. 
+     */
+    doublereal updateRCDerivative(doublereal logT, doublereal recipT) const {
+        throw NotImplementedError("SurfaeArrhenius::updateRCDerivative");
     }
 
     //! Check to make sure that the rate expression is finite over a range of
@@ -398,6 +428,16 @@ public:
             Cn = Cnp1;
         }
         return std::pow(10, logk);
+    }
+
+    /**
+     * Update the value the rate constant derivative.
+     *
+     * This function returns the multiplier associated with the 
+     * rate constant derivative w.r.t. temperature. 
+     */
+    doublereal updateRCDerivative(doublereal logT, doublereal recipT) const {
+        throw NotImplementedError("SurfaeArrhenius::updateRCDerivative");
     }
 
     //! Minimum valid temperature [K]

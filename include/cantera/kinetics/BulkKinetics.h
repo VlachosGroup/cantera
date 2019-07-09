@@ -59,6 +59,7 @@ protected:
     vector_fp m_grt;
 
     bool m_ROP_ok;
+    bool m_ROP_derivatives_ok;
     doublereal m_temp;
 };
 

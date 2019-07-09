@@ -147,11 +147,27 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y,
 {
     // Temperature 
     // $\dho f2 / dho T$
-    vector<double> work(m_nsp);
-    m_thermo->getCp_R(work.data()); // C_p
-    const vector_fp& mw = m_thermo->molecularWeights();
+    vector<double> dCvdT(m_nsp);  // Capital C
+    double dcvdT = 0;       // Small c
+    m_thermo->getdCp_RdT(dCvdT.data()); // dC_p/R/dT = dC_v/R/dT
+    const vector_fp& mw = m_thermo->molecularWeights(); 
+    for (size_t i = 0; i < m_nsp; i++) {  // Compute dcvdT
+        dcvdT += dCvdT[i] / mw[i] * y[start + i];
+    }
+    dcvdT *= GasConstant;
+
+    m_thermo->getCp_R(m_work.data()); // C_p/R
+    m_thermo->getPartialMolarIntEnergies(&m_uk[0]);
+    if (m_chem) {
+        m_kin->getNetProductionRates(&m_wdot[0]); // "omega dot"
+    }
+    //double mdot_surf = evalSurfaces(time, ydot + m_nsp + 3); // "s dot"
+
     for (size_t i = 0; i < m_nsp; i++) { 
-        work[i] = (work[i] - 1)/mw[i];      //c_v = C_v/W = (C_p - C_v)/W
+        m_work[i] = (m_work[i] - 1);            // C_v(k)/R = (C_p(k)/R - 1)
+        m_work[i] -= m_uk[i] * dcvdT;           // C_v(k)/R - u(k) * dC_v/R/dT
+        m_work[i] *= (m_wdot[i] * m_vol + m_sdot[i]); // End of first term Eq (46)
+        m_work[i] += m_uk[i]/m_thermo->cv_mass();
     }
 
 }
