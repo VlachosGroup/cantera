@@ -141,6 +141,21 @@ void IdealGasReactor::evalEqs(doublereal time, doublereal* y,
     resetSensitivity(params);
 }
 
+
+void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, 
+                                 Array2D* jac, size_t start)
+{
+    // Temperature 
+    // $\dho f2 / dho T$
+    vector<double> work(m_nsp);
+    m_thermo->getCp_R(work.data()); // C_p
+    const vector_fp& mw = m_thermo->molecularWeights();
+    for (size_t i = 0; i < m_nsp; i++) { 
+        work[i] = (work[i] - 1)/mw[i];      //c_v = C_v/W = (C_p - C_v)/W
+    }
+
+}
+
 size_t IdealGasReactor::componentIndex(const string& nm) const
 {
     size_t k = speciesIndex(nm);

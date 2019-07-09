@@ -148,12 +148,9 @@ public:
     /*!
      *  @param[in] t Time at which to evaluate the Jacobian
      *  @param[in] y Global state vector at time *t*
-     *  @param[out] ydot Time derivative of the state vector evaluated at *t*.
-     *  @param[in] p sensitivity parameter vector (unused?)
      *  @param[out] j Jacobian matrix, size neq() by neq().
      */
-    void evalJacobian(doublereal t, doublereal* y,
-                      doublereal* ydot, doublereal* p, Array2D* j);
+    void evalJacobian(doublereal t, doublereal* y, Array2D* j);
 
     // overloaded methods of class FuncEval
     virtual size_t neq() {

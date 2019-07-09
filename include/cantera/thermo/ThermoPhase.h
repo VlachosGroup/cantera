@@ -609,6 +609,17 @@ public:
         throw NotImplementedError("ThermoPhase::getCp_R");
     }
 
+    //! Get the temperature derivative of nondimensional heat capacities at 
+    //! constant pressure for the species standard states at the current *T* 
+    //! and *P* of the solution
+    /*!
+     * @param dCpRdT   Output vector of nondimensional standard state heat
+     *              capacities. Length: m_kk.
+     */
+    virtual void getdCp_RdT(doublereal* dCpRdT) const {
+        throw NotImplementedError("ThermoPhase::getCp_R");
+    }
+
     //!  Get the molar volumes of the species standard states at the current
     //!  *T* and *P* of the solution.
     /*!

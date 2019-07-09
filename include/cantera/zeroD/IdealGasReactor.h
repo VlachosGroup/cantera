@@ -34,6 +34,9 @@ public:
     virtual void evalEqs(doublereal t, doublereal* y,
                          doublereal* ydot, doublereal* params);
 
+    virtual void evalJacEqs(doublereal t, doublereal* y,
+                            Array2D* jac, size_t start);
+
     virtual void updateState(doublereal* y);
 
     //! Return the index in the solution vector for this reactor of the
