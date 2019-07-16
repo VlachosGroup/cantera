@@ -187,6 +187,12 @@ void IdealGasPhase::getdS_RdT(doublereal* dS_RdT) const
     copy(_dS_RdT.begin(), _dS_RdT.end(), dS_RdT);
 }
 
+void IdealGasPhase::getdBdT(doublereal* dBdT) const
+{
+    const vector_fp& _dBdT = dBdT_ref();
+    copy(_dBdT.begin(), _dBdT.end(), dBdT);
+}
+
 void IdealGasPhase::getStandardVolumes(doublereal* vol) const
 {
     double tmp = 1.0 / molarDensity();
@@ -258,6 +264,7 @@ bool IdealGasPhase::addSpecies(shared_ptr<Species> spec)
 
         m_dCp0_RdT.push_back(0.0);
         m_dS0_RdT.push_back(0.0);
+        m_dB0dT.push_back(0.0);
 
         m_pp.push_back(0.0);
     }
@@ -319,7 +326,11 @@ void IdealGasPhase::_updateThermoDerivatives() const
     // If the temperature has changed since the last time these
     // properties were computed, recompute them.
     if (cached.state1 != tnow) {
-        m_spthermo.update_derivatives(tnow, &m_dCp0_RdT[0], &m_dS0_RdT[0]);
+        _updateThermo();
+        m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
+        for (size_t i = 0; i < m_kk; i++) {
+            m_dB0dT[i] = m_dS0_RdT[i] - m_cp0_R[i];
+        }
     }
 }
 }

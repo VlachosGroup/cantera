@@ -121,6 +121,7 @@ protected:
     void updateKc();
 
     void updateTDerivativeFactors();
+    void updateYDerivativeFactors();
 };
 
 }

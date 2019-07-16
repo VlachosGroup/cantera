@@ -3,6 +3,7 @@
 // This file is part of Cantera. See License.txt in the top-level directory or
 // at https://cantera.org/license.txt for license and copyright information.
 
+#include "cantera/base/Array.h"
 #include "cantera/zeroD/IdealGasReactor.h"
 #include "cantera/zeroD/FlowDevice.h"
 #include "cantera/zeroD/Wall.h"
@@ -146,30 +147,64 @@ void IdealGasReactor::evalEqs(doublereal time, doublereal* y,
 void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, 
                                  Array2D* jac, size_t start)
 {
-    // Temperature 
-    // $\dho f2 / dho T$
-    vector<double> dCvdT(m_nsp);  // Capital C
-    double dcvdT = 0;       // Small c
-    m_thermo->getdCp_RdT(dCvdT.data()); // dC_p/R/dT = dC_v/R/dT
-    const vector_fp& mw = m_thermo->molecularWeights(); 
-    for (size_t i = 0; i < m_nsp; i++) {  // Compute dcvdT
-        dcvdT += dCvdT[i] / mw[i] * y[start + i];
-    }
-    dcvdT *= GasConstant;
+    Array2D &J = *jac;
 
-    m_thermo->getCp_R(m_work.data()); // C_p/R
-    m_thermo->getPartialMolarIntEnergies(&m_uk[0]);
-    if (m_chem) {
-        m_kin->getNetProductionRates(&m_wdot[0]); // "omega dot"
+    // Temperature Derivatives
+    // J(T_ind, T_ind) = $\dho Tdot / dho T$
+    vector<double> dCvRdT(m_nsp);                       // Capital C/R
+    double dcvRdT = 0;                                  // Small c/R
+    double RT = GasConstant * m_thermo->temperature();
+    m_thermo->getdCp_RdT(dCvRdT.data());                // dC_p/R/dT=dC_v/R/dT
+    const vector_fp& mw = m_thermo->molecularWeights(); 
+    for (size_t i = 0; i < m_nsp; i++) {                // Compute dcvdT
+        dcvRdT += dCvRdT[i] / mw[i] * y[start + i];
     }
-    //double mdot_surf = evalSurfaces(time, ydot + m_nsp + 3); // "s dot"
+
+    vector_fp dwdotdT(m_nsp);
+    auto inv_mcv = 1.0/(m_mass * m_thermo->cv_mass());
+    //vector_fp dsdotdT(m_nsp);
+
+    m_thermo->getCp_R(m_work.data());                   // C_p/R
+    m_thermo->getPartialMolarIntEnergies(m_uk.data());
+    m_kin->getNetProductionRates(m_wdot.data());              
+    m_kin->getNetProductionRateTDerivatives(dwdotdT.data());
+    //double mdot_surf = evalSurfaces(time, ydot + m_nsp + 3); 
+
+    double df1dT {0}, df1dT_2t{0};
+    for (size_t i = 0; i < m_nsp; i++) { 
+        auto CvR = m_work[i] - 1;
+        CvR -= m_uk[i] * dcvRdT / m_thermo->cv_mass();  // C_v(k)/R - u(k) * dc_v/R/dT
+        CvR -= m_uk[i]/RT;          //TODO: Get U/RT as well
+        CvR *= (m_wdot[i] * m_vol + m_sdot[i]);         // End of first term Eq (46)
+        df1dT += CvR;
+    }
+    df1dT *= inv_mcv * GasConstant; // First term of Eq. (46) of pyjac
 
     for (size_t i = 0; i < m_nsp; i++) { 
-        m_work[i] = (m_work[i] - 1);            // C_v(k)/R = (C_p(k)/R - 1)
-        m_work[i] -= m_uk[i] * dcvdT;           // C_v(k)/R - u(k) * dC_v/R/dT
-        m_work[i] *= (m_wdot[i] * m_vol + m_sdot[i]); // End of first term Eq (46)
-        m_work[i] += m_uk[i]/m_thermo->cv_mass();
+        auto prod_rate = m_vol * dwdotdT[i]; //TODO: + dsdotdT 
+        df1dT_2t +=  m_uk[i] *  prod_rate;
     }
+    df1dT_2t *= inv_mcv;
+    
+
+    size_t T_ind = start+2;
+    J(T_ind, T_ind) = df1dT - df1dT_2t;
+    cout << J(T_ind, T_ind) << endl;
+
+    // J(k, T_ind) = $\dho Y_k/ dho T$
+    size_t y_ind = start + 3; 
+    double  T = m_thermo->temperature();
+    for (size_t i = 0; i < m_nsp; i++) {
+        J(y_ind + i, T_ind) = mw[i] /m_mass * ( 
+                (m_vol*m_wdot[i]+m_sdot[i])/T  + dwdotdT[i]); //TODO: + dsdotdT
+    }
+
+    // Mass fraction derivatives
+    // J(T_ind, k) = $\dho Tdot / dho Y_k$
+
+    
+    // J(j, k) = $\dho Y_j / dho Y_k$
+    
 
 }
 

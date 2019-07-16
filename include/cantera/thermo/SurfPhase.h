@@ -332,7 +332,7 @@ public:
     virtual void getStandardVolumes(doublereal* vol) const;
 
     virtual void getdCp_RdT(doublereal* dCpRdT) const; 
-    virtual void getdS_RdT(doublereal* dS0RdT) const;
+    virtual void getdS_RdT(doublereal* dS_RdT) const;
 
     //! Return the thermodynamic pressure (Pa).
     virtual doublereal pressure() const {

@@ -8,6 +8,7 @@
 #ifndef CT_STOICH_MGR_H
 #define CT_STOICH_MGR_H
 
+#include <algorithm>
 #include "cantera/base/stringUtils.h"
 #include "cantera/base/ctexceptions.h"
 
@@ -152,6 +153,13 @@ public:
         R[m_rxn] *= S[m_ic0];
     }
 
+    void derivative_multiply(const doublereal* S, doublereal* R, const size_t k) const {
+        int prod = (k == m_ic0)? 1 : 0;
+        //if (k != m_ic0)
+        //    R[m_rxn] = 0;
+        R[m_rxn] *= prod;
+    }
+
     void incrementReaction(const doublereal* S, doublereal* R) const {
         R[m_rxn] += S[m_ic0];
     }
@@ -210,6 +218,19 @@ public:
             R[m_rxn] = 0;
         } else {
             R[m_rxn] *= S[m_ic0] * S[m_ic1];
+        }
+    }
+
+    void derivative_multiply(const doublereal* S, doublereal* R, const size_t k) const {
+        if (S[m_ic0] < 0 && S[m_ic1] < 0) {
+            R[m_rxn] = 0;
+        } else {
+            if (k == m_ic0)
+                R[m_rxn] *= S[m_ic1];
+            else if (k == m_ic1)
+                R[m_rxn] *= S[m_ic0];
+            else 
+                R[m_rxn] = 0;
         }
     }
 
@@ -276,6 +297,27 @@ public:
             R[m_rxn] = 0;
         } else {
             R[m_rxn] *= S[m_ic0] * S[m_ic1] * S[m_ic2];
+        }
+    }
+
+    void derivative_multiply(const doublereal* S, doublereal* R, const size_t k) const {
+        if ((S[m_ic0] < 0 && (S[m_ic1] < 0 || S[m_ic2] < 0)) ||
+            (S[m_ic1] < 0 && S[m_ic2] < 0)) {
+            R[m_rxn] = 0;
+        } else {
+            if (k == m_ic0) {
+                R[m_rxn] *= S[m_ic1] * S[m_ic2];
+                return;
+            }
+            if (k == m_ic1) {
+                R[m_rxn] *= S[m_ic0] * S[m_ic2];
+                return;
+            }
+            if (k == m_ic2) {
+                R[m_rxn] *= S[m_ic0] * S[m_ic1];
+                return;
+            }
+            R[m_rxn] = 0; // k not part of reaction
         }
     }
 
@@ -364,6 +406,33 @@ public:
         }
     }
 
+    void derivative_multiply(const doublereal* input, doublereal* output, const size_t k) const {
+        auto sp_iter = find(m_ic.begin(), m_ic.end(), k);
+        if (sp_iter == m_ic.end()){
+            output[m_rxn] =  0;
+            return;
+        }
+        auto sp_ind = sp_iter - m_ic.begin();
+
+        for (size_t n = 0; n < m_n; n++) {
+            double order = m_order[n];
+            if (sp_ind == n && order != 0.0) {
+                order -= 1;
+            }
+            if (order != 0.0) {
+                double c = input[m_ic[n]];
+                if (c > 0.0) {
+                    output[m_rxn] *= std::pow(c, order);
+                } else {
+                    output[m_rxn] = 0.0;
+                }
+            }
+            else {
+                output[m_rxn] = 0.0;
+            }
+        }
+    }
+
     void incrementSpecies(const doublereal* input,
                           doublereal* output) const {
         doublereal x = input[m_rxn];
@@ -441,6 +510,15 @@ inline static void _multiply(InputIter begin, InputIter end,
 {
     for (; begin != end; ++begin) {
         begin->multiply(input, output);
+    }
+}
+
+template<class InputIter, class Vec1, class Vec2>
+inline static void _derivative_multiply(InputIter begin, InputIter end,
+                             const Vec1& input, Vec2& output, const size_t k)
+{
+    for (; begin != end; ++begin) {
+        begin->derivative_multiply(input, output, k);
     }
 }
 
@@ -621,6 +699,13 @@ public:
         _multiply(m_c2_list.begin(), m_c2_list.end(), input, output);
         _multiply(m_c3_list.begin(), m_c3_list.end(), input, output);
         _multiply(m_cn_list.begin(), m_cn_list.end(), input, output);
+    }
+
+    void derivative_multiply(const doublereal* input, doublereal* output, const size_t k) const {
+        _derivative_multiply(m_c1_list.begin(), m_c1_list.end(), input, output, k);
+        _derivative_multiply(m_c2_list.begin(), m_c2_list.end(), input, output, k);
+        _derivative_multiply(m_c3_list.begin(), m_c3_list.end(), input, output, k);
+        _derivative_multiply(m_cn_list.begin(), m_cn_list.end(), input, output, k);
     }
 
     void incrementSpecies(const doublereal* input, doublereal* output) const {
