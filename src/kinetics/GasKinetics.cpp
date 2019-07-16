@@ -62,11 +62,20 @@ void GasKinetics::updateTDerivativeFactors()
 {
     doublereal T = thermo().temperature();
     doublereal logT = log(T);
+
     if (T != m_temp) {
         if (!m_rfn_dTMult.empty()) {
             m_rates.update_TDerivative(T, logT, m_rfn_dTMult.data());
         }
+        vector_fp dbdt(m_kk);
+        thermo().getdBdT(dbdt.data());
+        getReactionDelta(dbdt.data(),  m_dBdT.data());
     }
+}
+
+void GasKinetics::updateYDerivativeFactors()
+{
+    update_rates_C();
 }
 
 void GasKinetics::update_rates_C()
@@ -213,7 +222,52 @@ void GasKinetics::updateROP()
 void GasKinetics::updateROPDerivatives()
 {
     updateTDerivativeFactors();
+    updateYDerivativeFactors();
     updateROP();
+
+    for (size_t i = 0; i < nReactions(); i++){
+        m_dFwdROPdT[i] = m_ropf[i] * 
+            (m_rfn_dTMult[i] - m_reactant_stoichsum[i]/m_temp);
+        m_dRevROPdT[i] = m_ropr[i] * 
+            (m_rfn_dTMult[i] - m_product_stoichsum[i]/m_temp - m_dBdT[i]);
+    }
+
+    if (!m_dFwdROPdY.data().size()){
+        m_dFwdROPdY.resize(nReactions(), m_kk);
+    }
+    if (!m_dRevROPdY.data().size()){
+        m_dNetROPdY.resize(nReactions(), m_kk);
+    }
+    if (!m_dNetROPdY.data().size()){
+        m_dNetROPdY.resize(nReactions(), m_kk);
+    }
+
+    auto W = thermo().meanMolecularWeight();
+    const auto weights = thermo().molecularWeights();
+    auto den = thermo().density();
+    for (size_t j = 0; j < m_kk; j++){    // Eq. 76 of pyjac fwd 
+        m_dFwdROPdY.setColumn(j, m_rfn.data());
+        m_reactantStoich.derivative_multiply(m_conc.data(), m_dFwdROPdY.ptrColumn(j), j);
+        for (size_t i = 0; i < nReactions(); i++){    
+            m_dFwdROPdY(i, j) *=  den / weights[j];
+            m_dFwdROPdY(i, j) -= m_ropf[i] * W / weights[j] * m_reactant_stoichsum[i];
+        }
+    }
+
+    for (size_t j = 0; j < m_kk; j++){    // Eq. 76 of pyjac rev
+        m_dRevROPdY.setColumn(j, m_rfn.data());
+        m_revProductStoich.derivative_multiply(m_conc.data(), m_dRevROPdY.ptrColumn(j), j);
+        for (size_t i = 0; i < nReactions(); i++){    
+            m_dRevROPdY(i, j) *=  den / weights[j] * m_rkcn[i];
+            m_dRevROPdY(i, j) = -m_ropr[i] * W / weights[j] * m_product_stoichsum[i];
+        }
+    }
+
+    for (size_t j = 0; j < m_kk; j++){    // Eq. 76 of pyjac
+        for (size_t i = 0; i < nReactions(); i++){    
+            m_dNetROPdY(i, j) = m_dFwdROPdY(i, j) - m_dRevROPdY(i, j);
+        }
+    }
 }
 
 void GasKinetics::getFwdRateConstants(doublereal* kfwd)

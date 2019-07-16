@@ -262,7 +262,7 @@ public:
     virtual void getGibbs_RT(doublereal* grt) const;
     virtual void getCp_R(doublereal* cpr) const;
     virtual void getdCp_RdT(doublereal* dCpRdT) const; 
-    virtual void getdS_RdT(doublereal* dS0RdT) const;
+    virtual void getdS_RdT(doublereal* dS_RdT) const;
 
     //! Returns the vector of nondimensional Internal Energies of the standard
     //! state species at the current *T* and *P* of the solution

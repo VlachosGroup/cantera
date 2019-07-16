@@ -530,6 +530,7 @@ public:
     virtual void getCp_R(doublereal* cpr) const;
     virtual void getdCp_RdT(doublereal* dCpRdT) const; 
     virtual void getdS_RdT(doublereal* dS_RdT) const;
+    virtual void getdBdT(doublereal* dS_RdT) const;
 
 
     virtual void getStandardVolumes(doublereal* vol) const;
@@ -609,6 +610,16 @@ public:
         _updateThermoDerivatives();
         return m_dS0_RdT;
     }
+
+    //! Returns a reference to the dimensionless reference state Heat Capacity vector.
+    /*!
+     * This function is part of the layer that checks/recalculates the reference
+     * state thermo functions.
+     */
+    const vector_fp& dBdT_ref() const{
+        _updateThermoDerivatives();
+        return m_dB0dT;
+    }
     //@}
 
     virtual bool addSpecies(shared_ptr<Species> spec);
@@ -634,11 +645,17 @@ protected:
     //! Temporary storage for dimensionless reference state entropies
     mutable vector_fp m_s0_R;
 
-    //! Temporary storage for temp derivatives of dimensionless reference state heat capacities
+    //! Temporary storage for temp derivatives of dimensionless reference 
+    //! state heat capacities
     mutable vector_fp m_dCp0_RdT;
 
-    //! Temporary storage for temp derivatives of dimensionless reference state entropies
+    //! Temporary storage for temp derivatives of dimensionless reference 
+    //! state entropies
     mutable vector_fp m_dS0_RdT;
+
+    //! Temporary storage for temp derivatives of -ve dimensionless reference 
+    //! state gibb energies
+    mutable vector_fp m_dB0dT;
 
     mutable vector_fp m_expg0_RT;
 

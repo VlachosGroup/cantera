@@ -439,14 +439,26 @@ void Kinetics::getNetProductionRates(doublereal* net)
 
 void Kinetics::getNetProductionRateTDerivatives(doublereal* dNetdT)
 {
-    updateROP();
+    updateROPDerivatives();
 
     fill(dNetdT, dNetdT + m_kk, 0.0);
     // products are created for positive net rate of progress
-    m_revProductStoich.incrementSpecies(m_dROPNetdT.data(), dNetdT);
-    m_irrevProductStoich.incrementSpecies(m_dROPNetdT.data(), dNetdT);
+    m_revProductStoich.incrementSpecies(m_dNetROPdT.data(), dNetdT);
+    m_irrevProductStoich.incrementSpecies(m_dNetROPdT.data(), dNetdT);
     // reactants are destroyed for positive net rate of progress
-    m_reactantStoich.decrementSpecies(m_dROPNetdT.data(), dNetdT);
+    m_reactantStoich.decrementSpecies(m_dNetROPdT.data(), dNetdT);
+}
+
+void Kinetics::getNetProductionRateYDerivatives(doublereal* dNetdY, size_t k)
+{
+    updateROPDerivatives();
+
+    fill(dNetdY, dNetdY + m_kk, 0.0);
+    // products are created for positive net rate of progress
+    m_revProductStoich.incrementSpecies(m_dNetROPdY.ptrColumn(k), dNetdY);
+    m_irrevProductStoich.incrementSpecies(m_dNetROPdY.ptrColumn(k), dNetdY);
+    // reactants are destroyed for positive net rate of progress
+    m_reactantStoich.decrementSpecies(m_dNetROPdY.ptrColumn(k), dNetdY);
 }
 
 void Kinetics::addPhase(thermo_t& thermo)
@@ -588,6 +600,20 @@ bool Kinetics::addReaction(shared_ptr<Reaction> r)
     m_ropr.push_back(0.0);
     m_ropnet.push_back(0.0);
     m_perturb.push_back(1.0);
+
+    // Add derivative related terms
+    m_rfn_dTMult.push_back(0.0);
+    m_dFwdROPdT.push_back(0.0);
+    m_dRevROPdT.push_back(0.0);
+    m_dNetROPdT.push_back(0.0);
+    m_dBdT.push_back(0.0);
+
+    double rstoich_sum {0}, pstoich_sum {0};
+    for (const auto & elem : rstoich) rstoich_sum += elem; 
+    m_reactant_stoichsum.push_back(rstoich_sum);
+    for (const auto & elem : pstoich) pstoich_sum += elem; 
+    m_product_stoichsum.push_back(pstoich_sum);
+
     return true;
 }
 

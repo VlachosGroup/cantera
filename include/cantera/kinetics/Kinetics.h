@@ -15,6 +15,7 @@
 #include "StoichManager.h"
 #include "cantera/kinetics/Reaction.h"
 #include "cantera/base/global.h"
+#include "cantera/base/Array.h"
 
 namespace Cantera
 {
@@ -357,6 +358,38 @@ public:
     virtual void getRevRatesOfProgress(doublereal* revROP);
 
     /**
+     * T derivative of net rates of progress. Return the derivatives of 
+     * net (forward - reverse) rates of * progress in array dNetROPdT, 
+     * which must be dimensioned at least as large
+     * as the total number of reactions.
+     *
+     * @param dNetROPdT  Output vector of the T derivative of net 
+     *                   ROP. Length: nReactions().
+     */
+    virtual void getdNetROPdT(doublereal* dNetROPdT);
+
+    //!  Return the T derivative of forward rates of progress of the reactions
+    /*!
+     * T derivative of forward rates of progress. Return the derivative of 
+     * forward rates of progress in array dFwdROPdT, which must be 
+     * dimensioned at least as large as the total number of reactions.
+     *
+     * @param dFwdROPdT  Output vector containing T derivative of forward rates
+     *                   of progress of the reactions. Length: nReactions().
+     */
+    virtual void getdFwdROPdT(doublereal* dFwdROPdT);
+
+    //!  Return the T derivative of reverse rates of progress of the reactions
+    /*!
+     * Return the T derivative of reverse rates of progress in array dRevROPdT, 
+     * which must be dimensioned at least as large as the total number of reactions.
+     *
+     * @param dRevROPdT  Output vector containing T derivative of reverse 
+     *                   rates of progress of the reactions. Length: nReactions().
+     */
+    virtual void getdRevROPdT(doublereal* dRevROPdT);
+
+    /**
      * Net rates of progress. Return the net (forward - reverse) rates of
      * progress in array netROP, which must be dimensioned at least as large
      * as the total number of reactions.
@@ -543,12 +576,28 @@ public:
     /**
      * Temperature derivative of species net production rates. Return the
      * T derivative of species net production rates (creation - destruction) 
-     * in array wdot, which must be dimensioned at least as large as the 
+     * in array dwdotdT, which must be dimensioned at least as large as the 
      * total number of species. @see nTotalSpecies.
      *
-     * @param dwdotdT Output vector of T derivatives of net production rates. Length: m_kk.
+     * @param dwdotdT   Output vector of T derivatives of net production 
+     *                  rates. Length: m_kk.
      */
     virtual void getNetProductionRateTDerivatives(doublereal* dwdotdT);
+
+    /**
+     * Mass fraction derivative of species net production rates. Return the
+     * derivative of species net production rates (creation - destruction) with
+     * respect to mass fraction of species k in array dwdotdY, which must be 
+     * dimensioned at least as large as the * total number of species. 
+     * @see nTotalSpecies.
+     *
+     * @param dwdotdY   Output vector of derivatives of net production rates 
+     *                  with respect to Y_k. Length: m_kk.
+     * @param k         Index of the species against which the derivatives of 
+     *                  net production rates are computer.
+     */
+    virtual void getNetProductionRateYDerivatives(doublereal* dwdotdY, 
+                                                  size_t k);
 
     //! @}
     //! @name Reaction Mechanism Informational Query Routines
@@ -928,9 +977,6 @@ protected:
     //! Forward rate constant for each reaction
     vector_fp m_rfn;
 
-    //! T derivative multiplier of forward rate constant for each reaction
-    vector_fp m_rfn_dTMult;
-
     //! Reciprocal of the equilibrium constant in concentration units
     vector_fp m_rkcn;
 
@@ -943,14 +989,40 @@ protected:
     //! Net rate-of-progress for each reaction
     vector_fp m_ropnet;
 
-    //! Net rate-of-progress for each reaction
-    vector_fp m_dROPNetdT;
-
     //! @see skipUndeclaredSpecies()
     bool m_skipUndeclaredSpecies;
 
     //! @see skipUndeclaredThirdBodies()
     bool m_skipUndeclaredThirdBodies;
+
+    // The variables needed for analytical jacobian are defined here
+    //! T derivative multiplier of forward rate constant for each reaction
+    vector_fp m_rfn_dTMult;
+
+    //! T derivative of forward rate-of-progress for each reaction
+    vector_fp m_dFwdROPdT;
+
+    //! T derivative of reverse rate-of-progress for each reaction
+    vector_fp m_dRevROPdT;
+
+    //! T derivative of net rate-of-progress for each reaction
+    vector_fp m_dNetROPdT;
+
+    //! T derivative of net rate-of-progress for each reaction
+    vector_fp m_dBdT;       // dB/dT term of Eq. 75 in pyjac paper
+
+    //! Reactant stoich sum for each reaction. Essentially # of reactants in each reaction
+    //! Used in evaluating fwd rate of progress derivative 
+    vector_fp m_reactant_stoichsum;
+
+    //! Product stoich sum for each reaction. Essentially # of products in each reaction
+    //! Used in evaluating rev rate of progress derivative 
+    vector_fp m_product_stoichsum;
+
+    Array2D m_dNetROPdY;
+    Array2D m_dFwdROPdY;
+    Array2D m_dRevROPdY;
+
 };
 
 }

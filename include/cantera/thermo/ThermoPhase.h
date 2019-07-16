@@ -613,11 +613,33 @@ public:
     //! constant pressure for the species standard states at the current *T* 
     //! and *P* of the solution
     /*!
-     * @param dCpRdT   Output vector of nondimensional standard state heat
-     *              capacities. Length: m_kk.
+     * @param dCpRdT   Output vector of T derivative of nondimensional 
+     *                 standard state heat capacities. Length: m_kk.
      */
     virtual void getdCp_RdT(doublereal* dCpRdT) const {
-        throw NotImplementedError("ThermoPhase::getCp_R");
+        throw NotImplementedError("ThermoPhase::getdCp_RdT");
+    }
+
+    //! Get the temperature derivative of nondimensional entropy at 
+    //! constant pressure for the species standard states at the current *T* 
+    //! and *P* of the solution
+    /*!
+     * @param dS_RdT   Output vector of T derivative of nondimensional 
+     *                 standard entropies. Length: m_kk.
+     */
+    virtual void getdS_RdT(doublereal* dS_RdT) const {
+        throw NotImplementedError("ThermoPhase::getdS_RdT");
+    }
+
+    //! Get the temperature derivative of nondimensional gibbs energy at 
+    //! constant pressure for the species standard states at the current *T* 
+    //! and *P* of the solution
+    /*!
+     * @param dBdT   Output vector of T derivative of nondimensional 
+     *               standard state entropies. Length: m_kk.
+     */
+    virtual void getdBdT(doublereal* dBdT) const {
+        throw NotImplementedError("ThermoPhase::getdBdT");
     }
 
     //!  Get the molar volumes of the species standard states at the current
