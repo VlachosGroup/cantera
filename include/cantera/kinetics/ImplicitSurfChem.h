@@ -163,6 +163,20 @@ public:
     virtual void eval(doublereal t, doublereal* y, doublereal* ydot,
                       doublereal* p);
 
+    //! Evaluate the value of ydot[k] at the current conditions
+    /*!
+     *  @param t   Time (seconds)
+     *  @param y   Vector containing the current solution vector
+     *  @param ydot   Input vector containing the value of the
+     *                derivative of the surface coverages.
+     *  @param j   Output matrix containing jacobian 
+     */
+    virtual void evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
+                              doublereal* jac){
+             throw NotImplementedError("ImplicitSurfChem::evalJacobian");
+    }
+
+
     //! Get the current state of the solution vector
     /*!
      *  @param y   Value of the solution vector to be used.

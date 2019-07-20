@@ -7,6 +7,7 @@
 #include "cantera/base/stringUtils.h"
 
 #include <iostream>
+#include <stdio.h>
 using namespace std;
 
 #include "sundials/sundials_types.h"
@@ -74,6 +75,14 @@ extern "C" {
         integrator->m_error_message = msg;
         integrator->m_error_message += "\n";
     }
+
+    static int Jac(realtype t, N_Vector y, N_Vector ydot, SUNMatrix J,
+                   void *f_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+    {
+        FuncEval* f = (FuncEval*) f_data;
+        return f->evalJacobian_nothrow(t, NV_DATA_S(y), NV_DATA_S(ydot), 
+                                       SM_DATA_D(J));
+    }
 }
 
 CVodesIntegrator::CVodesIntegrator() :
@@ -97,6 +106,7 @@ CVodesIntegrator::CVodesIntegrator() :
     m_nabs(0),
     m_hmax(0.0),
     m_hmin(0.0),
+    m_hin(0.0),
     m_maxsteps(20000),
     m_maxErrTestFails(0),
     m_yS(nullptr),
@@ -205,6 +215,14 @@ void CVodesIntegrator::setMinStepSize(doublereal hmin)
     }
 }
 
+void CVodesIntegrator::setInitStepSize(doublereal hin)
+{
+    m_hin = hin;
+    if (m_cvode_mem) {
+        CVodeSetInitStep(m_cvode_mem, hin);
+    }
+}
+
 void CVodesIntegrator::setMaxSteps(int nmax)
 {
     m_maxsteps = nmax;
@@ -216,6 +234,11 @@ void CVodesIntegrator::setMaxSteps(int nmax)
 int CVodesIntegrator::maxSteps()
 {
     return m_maxsteps;
+}
+
+void CVodesIntegrator::setUserJacobian(bool jac_flag)
+{
+    m_user_jac = jac_flag;
 }
 
 void CVodesIntegrator::setMaxErrTestFails(int n)
@@ -381,6 +404,9 @@ void CVodesIntegrator::applyOptions()
             #endif
             CVDlsSetLinearSolver(m_cvode_mem, (SUNLinearSolver) m_linsol,
                                  (SUNMatrix) m_linsol_matrix);
+            if (m_user_jac) {
+                CVDlsSetJacFn(m_cvode_mem, Jac);
+            }
         #else
             #if CT_SUNDIALS_USE_LAPACK
                 CVLapackDense(m_cvode_mem, N);
@@ -486,6 +512,14 @@ double CVodesIntegrator::step(double tout)
 
     }
     m_sens_ok = false;
+
+    // Save Jacobian
+    FILE* fp = fopen("jac.txt", "w");
+    SUNDenseMatrix_Print((SUNMatrix) m_linsol_matrix, fp);
+    fclose(fp);
+
+    // Compute analytical jacobian for the same time
+
     return m_time;
 }
 

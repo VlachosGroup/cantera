@@ -43,6 +43,9 @@ public:
     //! Set the maximum time step.
     void setMaxTimeStep(double maxstep);
 
+    //! Set the Initial time step.
+    void setInitTimeStep(double initstep);
+
     //! Set the maximum number of error test failures permitted by the CVODES
     //! integrator in a single time step.
     void setMaxErrTestFails(int nmax);
@@ -164,9 +167,11 @@ public:
     /*!
      *  @param[in] t Time at which to evaluate the Jacobian
      *  @param[in] y Global state vector at time *t*
-     *  @param[out] j Jacobian matrix, size neq() by neq().
+     *  @param[in] y Global state derivative vector at time *t*
+     *  @param[out] j Jacobian matrix (Column major), size neq() by neq().
      */
-    void evalJacobian(doublereal t, doublereal* y, Array2D* j);
+    virtual void evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
+                              doublereal* j);
 
     // overloaded methods of class FuncEval
     virtual size_t neq() {
@@ -281,6 +286,8 @@ protected:
 
     //! Maximum integrator internal timestep. Default of 0.0 means infinity.
     doublereal m_maxstep;
+    //! Initial internal timestep of integrator. Default of 0.0 means integrator determines the step.
+    doublereal m_initstep;
 
     int m_maxErrTestFails;
     bool m_verbose;
@@ -291,6 +298,7 @@ protected:
     vector_fp m_ydot;
     vector_fp m_yest;
     vector_fp m_advancelimits;
+    Array2D m_jac;
 };
 }
 

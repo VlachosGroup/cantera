@@ -123,12 +123,12 @@ public:
      * Evaluate the jacobian of the reactor governing equations. 
      * Called by ReactorNet::evalJacobian.
      * @param[in] t time.
-     * @param[in] y solution vector, length ReactorNet::neq()
-     * @param[out] jac Jacobain matrix , size ReactorNet::neq()*ReactorNet::neq()
-     * @param[in] start Starting location of the block corresponding to this reactor in the solution vector and the jacobian
+     * @param[in] y solution vector, length neq()
+     * @param[out] ydot rate of change of solution vector, length neq()
+     * @param[out] jac Jacobain matrix given. Size neq()*neq()
      */
-    virtual void evalJacEqs(doublereal t, doublereal* y,
-                            Array2D* jac, size_t start);
+    virtual void evalJacEqs(doublereal t, doublereal* y, doublereal* ydot,
+                            Array2D* jac);
 
     virtual void syncState();
 

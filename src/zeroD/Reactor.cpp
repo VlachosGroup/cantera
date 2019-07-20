@@ -247,8 +247,8 @@ void Reactor::evalEqs(doublereal time, doublereal* y,
     resetSensitivity(params);
 }
 
-void Reactor::evalJacEqs(doublereal time, doublereal* y,
-                         Array2D* jac, size_t start)
+void Reactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydot,
+                         Array2D* jac)
 {
 
     throw CanteraError("Reactor::evalJacEqs",

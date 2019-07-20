@@ -53,7 +53,9 @@ public:
     virtual void setMethod(MethodType t);
     virtual void setMaxStepSize(double hmax);
     virtual void setMinStepSize(double hmin);
+    virtual void setInitStepSize(double hin);
     virtual void setMaxSteps(int nmax);
+    virtual void setUserJacobian(bool jac_flag);
     virtual int maxSteps();
     virtual void setMaxErrTestFails(int n);
     virtual void setBandwidth(int N_Upper, int N_Lower) {
@@ -99,12 +101,14 @@ private:
     double m_abstols;
     double m_reltolsens, m_abstolsens;
     size_t m_nabs;
-    double m_hmax, m_hmin;
+    double m_hmax, m_hmin, m_hin;
     int m_maxsteps;
+
     int m_maxErrTestFails;
     N_Vector* m_yS;
     size_t m_np;
     int m_mupper, m_mlower;
+    bool m_user_jac;            //! Flag to denote user supplied Jacobian fn 
 
     //! Indicates whether the sensitivities stored in m_yS have been updated
     //! for at the current integrator time.

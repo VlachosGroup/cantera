@@ -308,7 +308,6 @@ void IdealGasPhase::_updateThermo() const
     // properties were computed, recompute them.
     if (cached.state1 != tnow) {
         m_spthermo.update(tnow, &m_cp0_R[0], &m_h0_RT[0], &m_s0_R[0]);
-        _updateThermoDerivatives();
         cached.state1 = tnow;
 
         // update the species Gibbs functions

@@ -128,7 +128,7 @@ public:
     }
 
     /*!
-     * @copydoc NasaPoly1::updateProperties
+     * @copydoc NasaPoly1::updateDerivatives
      *
      * Temperature Polynomial:
      *  tt[0] = t;
@@ -138,7 +138,7 @@ public:
      *  tt[4] = 1.0/t;
      *  tt[5] = std::log(t);
      */
-    virtual void updateDerivates(const doublereal* tt,
+    virtual void updateDerivatives(const doublereal* tt,
                                  doublereal* dCp_RdT, 
                                  doublereal* dS_RdT) const {
         doublereal ct0 = m_coeff[0]*tt[4]; // a0 / T
@@ -151,7 +151,7 @@ public:
         *dS_RdT = ct0 + ct1 + ct2 + ct3 + ct4; 
     }
 
-    virtual void updateDerivates(const doublereal temp,
+    virtual void updateDerivatives(const doublereal temp,
                                  doublereal* dCp_RdT, 
                                  doublereal* dS_RdT) const {
         double tPoly[6];

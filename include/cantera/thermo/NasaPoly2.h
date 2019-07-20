@@ -126,7 +126,7 @@ public:
     size_t nCoeffs() const { return 15; }
 
     //! @copydoc NasaPoly1::updateDerivatives
-    void updateDerivatives(const doublereal* tt,
+    virtual void updateDerivatives(const doublereal* tt,
                            doublereal* dCp_RdT, 
                            doublereal* dS_RdT) const {
         if (tt[0] <= m_midT) {
@@ -136,7 +136,7 @@ public:
         }
     }
 
-    void updateDerivatives(const doublereal temp,
+    virtual void updateDerivatives(const doublereal temp,
                            doublereal* dCp_RdT,
                            doublereal* dS_RdT) const {
         if (temp <= m_midT) {

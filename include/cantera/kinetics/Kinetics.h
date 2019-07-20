@@ -366,7 +366,9 @@ public:
      * @param dNetROPdT  Output vector of the T derivative of net 
      *                   ROP. Length: nReactions().
      */
-    virtual void getdNetROPdT(doublereal* dNetROPdT);
+    virtual void getdNetROPdT(doublereal* dNetROPdT){
+        throw NotImplementedError("Kinetics::getdNetROPdT");
+    }
 
     //!  Return the T derivative of forward rates of progress of the reactions
     /*!
@@ -377,7 +379,9 @@ public:
      * @param dFwdROPdT  Output vector containing T derivative of forward rates
      *                   of progress of the reactions. Length: nReactions().
      */
-    virtual void getdFwdROPdT(doublereal* dFwdROPdT);
+    virtual void getdFwdROPdT(doublereal* dFwdROPdT){
+        throw NotImplementedError("Kinetics::getdNetROPdT");
+    }
 
     //!  Return the T derivative of reverse rates of progress of the reactions
     /*!
@@ -387,7 +391,9 @@ public:
      * @param dRevROPdT  Output vector containing T derivative of reverse 
      *                   rates of progress of the reactions. Length: nReactions().
      */
-    virtual void getdRevROPdT(doublereal* dRevROPdT);
+    virtual void getdRevROPdT(doublereal* dRevROPdT){
+        throw NotImplementedError("Kinetics::getdNetROPdT");
+    }
 
     /**
      * Net rates of progress. Return the net (forward - reverse) rates of

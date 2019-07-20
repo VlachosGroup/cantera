@@ -19,7 +19,7 @@ ReactorNet::ReactorNet() :
     m_time(0.0), m_init(false), m_integrator_init(false),
     m_nv(0), m_rtol(1.0e-9), m_rtolsens(1.0e-4),
     m_atols(1.0e-15), m_atolsens(1.0e-6),
-    m_maxstep(0.0), m_maxErrTestFails(0),
+    m_maxstep(0.0), m_initstep(0.0), m_maxErrTestFails(0),
     m_verbose(false)
 {
     suppressErrors(true);
@@ -39,6 +39,12 @@ void ReactorNet::setInitialTime(double time)
 void ReactorNet::setMaxTimeStep(double maxstep)
 {
     m_maxstep = maxstep;
+    m_init = false;
+}
+
+void ReactorNet::setInitTimeStep(double initstep)
+{
+    m_initstep = initstep;
     m_init = false;
 }
 
@@ -110,6 +116,7 @@ void ReactorNet::initialize()
         writelog("Maximum time step:   {:14.6g}\n", m_maxstep);
     }
     m_integ->initialize(m_time, *this);
+    m_integ->setInitStepSize(m_initstep);
     m_integrator_init = true;
     m_init = true;
 }
@@ -199,8 +206,15 @@ double ReactorNet::step()
     } else if (!m_integrator_init) {
         reinitialize();
     }
-    m_time = m_integ->step(m_time + 1.0);
-    updateState(m_integ->solution());
+    /* Delete this code after testing jacobian*/
+    m_integ->step(m_time+1.0);
+    cout << "completed stepping with finite time difference" << endl;
+    m_integ->setUserJacobian(true);
+    reinitialize();
+    m_integ->step(m_time+1.0);
+    /* After testing delete above code and uncomment below code */ 
+    //m_time = m_integ->step(m_time + 1.0);
+    //updateState(m_integ->solution());
     return m_time;
 }
 
@@ -256,13 +270,27 @@ double ReactorNet::sensitivity(size_t k, size_t p)
     return m_integ->sensitivity(k, p) / denom;
 }
 
-void ReactorNet::evalJacobian(doublereal t, doublereal* y, Array2D* j)
+void ReactorNet::evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
+                              doublereal* jac)
 {
     // Assuming the jacobian entities are 0 if not defined or used
     // Typically ReactorNet contains a single reactor leading to a dense type jac matrix
     // If multiple reactors are defined, jac is a block diagonal matrix.
+    updateState(y);
     for (size_t n = 0; n < m_reactors.size(); n++) {
-        m_reactors[n]->evalJacEqs(t, y, j, m_start[n]);
+        size_t size = m_reactors[n]->neq();
+        cout << "Before resizing m_jac" << endl;
+        m_jac.resize(size, size);
+        cout << "After resizing m_jac" << endl;
+        m_reactors[n]->evalJacEqs(t, y + m_start[n], ydot + m_start[n], &m_jac);
+        cout << "After calling evalJacs " << endl;
+        cout << m_jac << endl;
+        auto jac_start = jac + neq() * m_start[n] + m_start[n];
+        for (size_t i = 0; i < size; i++){
+            copy(m_jac.ptrColumn(i), m_jac.ptrColumn(i+1), jac_start);
+            cout << i << " After copying Jac " << endl;
+            jac_start += neq();
+        }
     }
 }
 
