@@ -80,6 +80,14 @@ public:
         warn("setTolerances");
     }
 
+    //! Set error user Jacobian flag.
+    /*!
+     * @param user_jac_flag boolean value indicating whether to use user supplied jacobain
+     */
+    virtual void setUserJacobian(bool jac_flag) {
+        warn("setUserJacobian");
+    }
+
     //! Set the sensitivity error tolerances
     /*!
      * @param reltol scalar relative tolerance
@@ -176,6 +184,11 @@ public:
     //! Set the minimum step size
     virtual void setMinStepSize(double hmin) {
         warn("setMinStepSize");
+    }
+
+    //! Set the initial step size
+    virtual void setInitStepSize(double hin) {
+        warn("setInitStepSize");
     }
 
     //! Set the maximum permissible number of error test failures

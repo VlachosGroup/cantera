@@ -34,8 +34,8 @@ public:
     virtual void evalEqs(doublereal t, doublereal* y,
                          doublereal* ydot, doublereal* params);
 
-    virtual void evalJacEqs(doublereal t, doublereal* y,
-                            Array2D* jac, size_t start);
+    virtual void evalJacEqs(doublereal t, doublereal* y, doublereal* ydot,
+                            Array2D* jac);
 
     virtual void updateState(doublereal* y);
 

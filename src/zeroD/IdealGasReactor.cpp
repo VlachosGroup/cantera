@@ -143,12 +143,35 @@ void IdealGasReactor::evalEqs(doublereal time, doublereal* y,
 }
 
 
-void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, 
-                                 Array2D* jac, size_t start)
+void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydot,
+                                 Array2D* jac)
 {
     Array2D &J = *jac;
+    
+    const size_t m_ind = 0;
+    const size_t V_ind = 1;
+    const size_t T_ind = 2;
+    const size_t y_ind = 3; 
+
+    /* Volume related terms. 
+     * For Idea Gas Constant volume Reactor, these are trivial w.r.t. reactor */
+    J(V_ind, m_ind) = 0;
+    J(V_ind, V_ind) = 1;
+    J(V_ind, T_ind) = 0;
+    for (size_t i = 0; i < m_nsp; i++) J(V_ind, y_ind + i) =0;
+
+    /* Mass related terms */
+    J(m_ind, m_ind) = 1;
+    J(m_ind, V_ind) = 0;
 
     // Temperature Derivatives
+    // TODO: Implement A\sum_k W_k ds_k/dT 
+    J(m_ind, T_ind) = 0; 
+    // Mass fraction derivatives 
+    // TODO: Implement A\sum_j W_j ds_j/dY_k 
+    for (size_t i = 0; i < m_nsp; i++) J(m_ind, y_ind + i) =0;
+
+    /* Temperature related terms */
     // J(T_ind, T_ind) = $\dho Tdot / dho T$
     vector<double> dCvRdT(m_nsp);                       // Capital C/R
     double dcvRdT = 0;                                  // Small c/R
@@ -156,17 +179,23 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y,
     m_thermo->getdCp_RdT(dCvRdT.data());                // dC_p/R/dT=dC_v/R/dT
     const vector_fp& mw = m_thermo->molecularWeights(); 
     for (size_t i = 0; i < m_nsp; i++) {                // Compute dcvdT
-        dcvRdT += dCvRdT[i] / mw[i] * y[start + i];
+        dcvRdT += dCvRdT[i] / mw[i] * y[i];
     }
-
-    vector_fp dwdotdT(m_nsp);
+    cout << "After dcvrdt" << endl;
     auto inv_mcv = 1.0/(m_mass * m_thermo->cv_mass());
     //vector_fp dsdotdT(m_nsp);
 
+    m_work.resize(m_nsp);
+    cout << "Before getCp_R" << endl;
     m_thermo->getCp_R(m_work.data());                   // C_p/R
+    cout << "After getCp_R" << endl;
     m_thermo->getPartialMolarIntEnergies(m_uk.data());
+    cout << "After getPartialMolarIntEnergies" << endl;
     m_kin->getNetProductionRates(m_wdot.data());              
+    cout << "Before getNetProductionRateTDerivatives" << endl;
+    vector_fp dwdotdT(m_nsp);
     m_kin->getNetProductionRateTDerivatives(dwdotdT.data());
+    cout << "After getNetProductionRateTDerivatives" << endl;
     //double mdot_surf = evalSurfaces(time, ydot + m_nsp + 3); 
 
     double df1dT {0}, df1dT_2t{0};
@@ -178,25 +207,26 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y,
         df1dT += CvR;
     }
     df1dT *= inv_mcv * GasConstant; // First term of Eq. (46) of pyjac
+    cout << "After df1dT" << endl;
 
     for (size_t i = 0; i < m_nsp; i++) { 
         auto prod_rate = m_vol * dwdotdT[i]; //TODO: + dsdotdT 
         df1dT_2t +=  m_uk[i] *  prod_rate;
     }
     df1dT_2t *= inv_mcv;
+    cout << "After df1dT_2t" << endl;
     
 
-    size_t T_ind = start+2;
     J(T_ind, T_ind) = df1dT - df1dT_2t;
     cout << J(T_ind, T_ind) << endl;
 
     // J(k, T_ind) = $\dho Y_k/ dho T$
-    size_t y_ind = start + 3; 
     double  T = m_thermo->temperature();
     for (size_t i = 0; i < m_nsp; i++) {
         J(y_ind + i, T_ind) = mw[i] /m_mass * ( 
                 (m_vol*m_wdot[i]+m_sdot[i])/T  + dwdotdT[i]); //TODO: + dsdotdT
     }
+    cout << "After yind" << endl;
 
     // Mass fraction derivatives
     // J(T_ind, k) = $\dho Tdot / dho Y_k$

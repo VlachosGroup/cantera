@@ -49,6 +49,18 @@ public:
      */
     int eval_nothrow(double t, double* y, double* ydot);
 
+    /**
+     * Evaluate the Jacobian. Called by the integrator.
+     * @param[in]  t    time.
+     * @param[in]  y    solution vector, length neq()
+     * @param[in]  ydot rate of change of solution vector, length neq()
+     * @param[out] jac  Jacobian matrix (columnn major) vector, 
+     *                  length neq()*neq()
+     */
+    virtual void evalJacobian(double t, double* y, double* ydot, double* jac)=0;
+
+    int evalJacobian_nothrow(double t, double* y, double* ydot, double* jac);
+
     //! Fill in the vector *y* with the current state of the system
     virtual void getState(double* y) {
         throw NotImplementedError("FuncEval::getState");

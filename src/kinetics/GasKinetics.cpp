@@ -223,7 +223,6 @@ void GasKinetics::updateROPDerivatives()
 {
     updateTDerivativeFactors();
     updateYDerivativeFactors();
-    updateROP();
 
     for (size_t i = 0; i < nReactions(); i++){
         m_dFwdROPdT[i] = m_ropf[i] * 
@@ -236,7 +235,7 @@ void GasKinetics::updateROPDerivatives()
         m_dFwdROPdY.resize(nReactions(), m_kk);
     }
     if (!m_dRevROPdY.data().size()){
-        m_dNetROPdY.resize(nReactions(), m_kk);
+        m_dRevROPdY.resize(nReactions(), m_kk);
     }
     if (!m_dNetROPdY.data().size()){
         m_dNetROPdY.resize(nReactions(), m_kk);
