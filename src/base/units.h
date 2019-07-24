@@ -203,6 +203,7 @@ private:
         m_u["gm"] = 1.0e-3;
         m_u["g"] = 1.0e-3;
         m_u["kg"] = 1.0;
+        m_u["mg"] = 1.0e-6;
 
         // pressure
         m_u["atm"] = 1.01325e5;
