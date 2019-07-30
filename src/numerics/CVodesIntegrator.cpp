@@ -5,6 +5,7 @@
 
 #include "cantera/numerics/CVodesIntegrator.h"
 #include "cantera/base/stringUtils.h"
+#include "cantera/base/Array.h"
 
 #include <iostream>
 #include <stdio.h>
@@ -469,6 +470,7 @@ void CVodesIntegrator::applyOptions()
     if (m_maxErrTestFails > 0) {
         CVodeSetMaxErrTestFails(m_cvode_mem, m_maxErrTestFails);
     }
+    //CVodeSetMaxStepsBetweenJac(1);
 }
 
 void CVodesIntegrator::integrate(double tout)
@@ -493,6 +495,15 @@ void CVodesIntegrator::integrate(double tout)
 
 double CVodesIntegrator::step(double tout)
 {
+    // Compute analytical jacobian for the same time
+    vector<double> ydot(m_neq); 
+    m_func->eval_nothrow(m_time, NV_DATA_S(m_y), ydot.data());
+    Array2D jac;
+    jac.resize(m_neq, m_neq);
+    m_func->evalJacobian(m_time, NV_DATA_S(m_y), ydot.data(), jac.ptrColumn(0));
+    //cout << "Analytical jacobian " << endl;
+    //cout << jac;
+
     int flag = CVode(m_cvode_mem, tout, m_y, &m_time, CV_ONE_STEP);
     if (flag != CV_SUCCESS) {
         string f_errs = m_func->getErrors();
@@ -513,7 +524,10 @@ double CVodesIntegrator::step(double tout)
     SUNDenseMatrix_Print((SUNMatrix) m_linsol_matrix, fp);
     fclose(fp);
 
-    // Compute analytical jacobian for the same time
+    // Get the number of Jac evaluations
+    long int n_jac_evals;
+    CVDlsGetNumJacEvals(m_cvode_mem, &n_jac_evals);
+    cout << "no of jac evaluation " << n_jac_evals << endl;
 
     return m_time;
 }
