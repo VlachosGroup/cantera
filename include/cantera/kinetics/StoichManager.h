@@ -214,7 +214,7 @@ public:
     }
 
     void multiply(const doublereal* S, doublereal* R) const {
-        if (S[m_ic0] < 0 && S[m_ic1] < 0) {
+        if (S[m_ic0] < 0 && S[m_ic1] < 0) {          // Didn't understand the logic
             R[m_rxn] = 0;
         } else {
             R[m_rxn] *= S[m_ic0] * S[m_ic1];
@@ -308,16 +308,15 @@ public:
             if (k == m_ic0) {
                 R[m_rxn] *= S[m_ic1] * S[m_ic2];
                 return;
-            }
-            if (k == m_ic1) {
+            } else if (k == m_ic1) {
                 R[m_rxn] *= S[m_ic0] * S[m_ic2];
                 return;
-            }
-            if (k == m_ic2) {
+            } else if (k == m_ic2) {
                 R[m_rxn] *= S[m_ic0] * S[m_ic1];
                 return;
+            } else {
+                R[m_rxn] = 0; // k not part of reaction
             }
-            R[m_rxn] = 0; // k not part of reaction
         }
     }
 
@@ -416,13 +415,13 @@ public:
 
         for (size_t n = 0; n < m_n; n++) {
             double order = m_order[n];
-            if (sp_ind == n && order != 0.0) {
-                order -= 1;
-            }
             if (order != 0.0) {
                 double c = input[m_ic[n]];
                 if (c > 0.0) {
-                    output[m_rxn] *= std::pow(c, order);
+                    if (sp_ind == n) 
+                        output[m_rxn] *= order * std::pow(c, order - 1);
+                    else 
+                        output[m_rxn] *= std::pow(c, order);
                 } else {
                     output[m_rxn] = 0.0;
                 }

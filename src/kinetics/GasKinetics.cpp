@@ -63,19 +63,18 @@ void GasKinetics::updateTDerivativeFactors()
     doublereal T = thermo().temperature();
     doublereal logT = log(T);
 
-    if (T != m_temp) {
-        if (!m_rfn_dTMult.empty()) {
-            m_rates.update_TDerivative(T, logT, m_rfn_dTMult.data());
-        }
-        vector_fp dbdt(m_kk);
-        thermo().getdBdT(dbdt.data());
-        getReactionDelta(dbdt.data(),  m_dBdT.data());
+    if (!m_rfn_dTMult.empty()) {
+        m_rates.update_TDerivative(T, logT, m_rfn_dTMult.data());
     }
+    vector_fp dbdt(m_kk);
+    thermo().getdBdT(dbdt.data());
+    getReactionDelta(dbdt.data(),  m_dBdT.data());
+
 }
 
 void GasKinetics::updateYDerivativeFactors()
 {
-    update_rates_C();
+    //update_rates_C();
 }
 
 void GasKinetics::update_rates_C()
@@ -170,6 +169,10 @@ void GasKinetics::processFalloffReactions()
     }
 }
 
+void GasKinetics::processFalloffReactionDerivatives()
+{
+
+}
 void GasKinetics::updateROP()
 {
     update_rates_C();
@@ -224,17 +227,41 @@ void GasKinetics::updateROPDerivatives()
     updateTDerivativeFactors();
     updateYDerivativeFactors();
 
+
+
     for (size_t i = 0; i < nReactions(); i++){
+        /*
         m_dFwdROPdT[i] = m_ropf[i] * 
             (m_rfn_dTMult[i] - m_reactant_stoichsum[i]/m_temp);
         m_dRevROPdT[i] = m_ropr[i] * 
             (m_rfn_dTMult[i] - m_product_stoichsum[i]/m_temp - m_dBdT[i]);
+        */
+        m_dNetROPdT[i] = m_ropf[i] * 
+            (m_rfn_dTMult[i] - m_reactant_stoichsum[i]/m_temp);
+        m_dNetROPdT[i] -= m_ropr[i] * 
+            (m_rfn_dTMult[i] - m_product_stoichsum[i]/m_temp - m_dBdT[i]);
     }
 
+    // multiply ropf by enhanced 3b conc for all 3b rxns
+    if (!concm_3b_values.empty()) {
+        m_3b_concm.multiply(m_dNetROPdT.data(), concm_3b_values.data());
+
+        doublereal invT = 1.0/thermo().temperature();
+        if (!concm_3b_Tderivatives.size()){
+            concm_3b_Tderivatives.resize(concm_3b_values.size());
+        }
+        for (size_t i = 0; i < concm_3b_values.size(); i++){ // Eq. (79) of pyjac
+            concm_3b_Tderivatives[i] = -concm_3b_values[i] * invT;
+        }
+        //TODO: Add R_i \partial c_i / \partial T to c_i * m_dNetROPdT
+    }
+
+    /*
     if (!m_dFwdROPdY.data().size()){
         m_dFwdROPdY.resize(nReactions(), m_kk);
     }
-    if (!m_dRevROPdY.data().size()){
+    */
+    if (!m_dRevROPdY.data().size()){   //TODO: Push these to class initialization
         m_dRevROPdY.resize(nReactions(), m_kk);
     }
     if (!m_dNetROPdY.data().size()){
@@ -244,29 +271,64 @@ void GasKinetics::updateROPDerivatives()
     auto W = thermo().meanMolecularWeight();
     const auto weights = thermo().molecularWeights();
     auto den = thermo().density();
-    for (size_t j = 0; j < m_kk; j++){    // Eq. 76 of pyjac fwd 
-        m_dFwdROPdY.setColumn(j, m_rfn.data());
-        m_reactantStoich.derivative_multiply(m_conc.data(), m_dFwdROPdY.ptrColumn(j), j);
-        for (size_t i = 0; i < nReactions(); i++){    
-            m_dFwdROPdY(i, j) *=  den / weights[j];
-            m_dFwdROPdY(i, j) -= m_ropf[i] * W / weights[j] * m_reactant_stoichsum[i];
+    for (size_t j = 0; j < m_kk; j++){    // Eq. 76 of pyjac fwd  
+        m_dNetROPdY.setColumn(j, m_rfn.data());
+        m_reactantStoich.derivative_multiply(
+                m_conc.data(), m_dNetROPdY.ptrColumn(j), j);
+        auto den_by_wght = den / weights[j];
+        auto muwght_by_wght = W / weights[j] ;
+        for (size_t i = 0; i < nReactions(); i++){
+            m_dNetROPdY(i, j) *=  den_by_wght;
+            m_dNetROPdY(i, j) -= m_ropf[i] * m_reactant_stoichsum[i] * 
+                                 muwght_by_wght;
         }
     }
 
     for (size_t j = 0; j < m_kk; j++){    // Eq. 76 of pyjac rev
         m_dRevROPdY.setColumn(j, m_rfn.data());
-        m_revProductStoich.derivative_multiply(m_conc.data(), m_dRevROPdY.ptrColumn(j), j);
-        for (size_t i = 0; i < nReactions(); i++){    
-            m_dRevROPdY(i, j) *=  den / weights[j] * m_rkcn[i];
-            m_dRevROPdY(i, j) = -m_ropr[i] * W / weights[j] * m_product_stoichsum[i];
+        m_revProductStoich.derivative_multiply(
+                m_conc.data(), m_dRevROPdY.ptrColumn(j), j);
+        auto den_by_wght = den / weights[j];
+        auto muwght_by_wght = W / weights[j] ;
+        for (size_t i = 0; i < nReactions(); i++){
+            m_dRevROPdY(i, j) *=  den_by_wght * m_rkcn[i];
+            m_dRevROPdY(i, j) -= m_ropr[i] * m_product_stoichsum[i] * 
+                                 muwght_by_wght;
         }
     }
 
-    for (size_t j = 0; j < m_kk; j++){    // Eq. 76 of pyjac
-        for (size_t i = 0; i < nReactions(); i++){    
-            m_dNetROPdY(i, j) = m_dFwdROPdY(i, j) - m_dRevROPdY(i, j);
+    // Temporary arrays
+    vector_fp work2;
+    if (!concm_3b_values.empty()) 
+        work2.resize(concm_3b_values.size());
+
+    for (size_t j = 0; j < m_kk; j++){    
+        for (size_t i = 0; i < nReactions(); i++){
+            m_dNetROPdY(i, j) -= m_dRevROPdY(i, j);
+        }
+
+        if (!concm_3b_values.empty()) {     // Eq. 58 of pyjac net
+            m_3b_concm.multiply(m_dNetROPdY.ptrColumn(j), concm_3b_values.data());
+
+            m_3b_concm.getEfficiencies(j, work2.data()); 
+            auto den_by_wtj = W / weights[j];
+            for (size_t i = 0; i < concm_3b_values.size(); i++) {
+                work2[i] *= den_by_wtj;     // 2nd term in Eq.(80) of pyjac
+            }
+            vector_fp work1(m_ropnet); 
+            m_3b_concm.multiply(work1.data(), work2.data());
+
+            for (size_t i = 0; i < nReactions(); i++){
+                m_dNetROPdY(i, j) += work1[i];
+            }
         }
     }
+
+
+    if (m_falloff_high_rates.nReactions()) {
+        processFalloffReactionDerivatives();
+    }
+
 }
 
 void GasKinetics::getFwdRateConstants(doublereal* kfwd)
