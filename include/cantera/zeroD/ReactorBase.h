@@ -25,7 +25,7 @@ const int FlowReactorType = 3;
 const int ConstPressureReactorType = 4;
 const int IdealGasReactorType = 5;
 const int IdealGasConstPressureReactorType = 6;
-const int ConstTPV_Type = 7;
+const int GasOnlyReactorType = 7;
 
 enum class SensParameterType {
     reaction,

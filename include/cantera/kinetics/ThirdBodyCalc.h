@@ -43,9 +43,34 @@ public:
         }
     }
 
+    // Return the alpha_{i,j} for given species index j. 
+    // Used to compute analytic derivative
+    void getEfficiencies(const size_t j, double* work) {
+        std::fill (work, work + workSize(), 0);
+        for (size_t i = 0; i < m_species.size(); i++) {
+            auto it = find(m_species[i].begin(), m_species[i].end(), j);
+            if (it != m_species[i].end()) {
+                auto ind = distance(m_species[i].begin(), it);
+                work[i] = m_eff[i][ind];
+            } 
+        }
+    }
+
     void multiply(double* output, const double* work) {
         for (size_t i = 0; i < m_reaction_index.size(); i++) {
             output[m_reaction_index[i]] *= work[i];
+        }
+    }
+
+    void add(double* output, const double* work, double scale_factor=1.0) {
+        for (size_t i = 0; i < m_reaction_index.size(); i++) {
+            output[m_reaction_index[i]] += work[m_reaction_index[i]] * scale_factor;
+        }
+    }
+
+    void add(double* output, const double* work, const double* scale) {
+        for (size_t i = 0; i < m_reaction_index.size(); i++) {
+            output[m_reaction_index[i]] += work[m_reaction_index[i]] * scale[i];
         }
     }
 

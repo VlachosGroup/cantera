@@ -611,9 +611,11 @@ bool Kinetics::addReaction(shared_ptr<Reaction> r)
     m_dBdT.push_back(0.0);
 
     double rstoich_sum {0}, pstoich_sum {0};
-    for (const auto & elem : rstoich) rstoich_sum += elem; 
+    for (const auto & elem : rstoich) 
+        rstoich_sum += elem; 
     m_reactant_stoichsum.push_back(rstoich_sum);
-    for (const auto & elem : pstoich) pstoich_sum += elem; 
+    for (const auto & elem : pstoich) 
+        pstoich_sum += elem; 
     m_product_stoichsum.push_back(pstoich_sum);
 
     return true;

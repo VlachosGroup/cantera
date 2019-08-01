@@ -134,6 +134,7 @@ void ReactorNet::reinitialize()
 
 void ReactorNet::advance(doublereal time)
 {
+    m_integ->setUserJacobian(true);
     if (!m_init) {
         initialize();
     } else if (!m_integrator_init) {
@@ -209,9 +210,9 @@ double ReactorNet::step()
     /* Delete this code after testing jacobian*/
     m_integ->step(m_time+1.0);
     cout << "completed stepping with finite time difference" << endl;
-    m_integ->setUserJacobian(true);
-    reinitialize();
-    m_integ->step(m_time+1.0);
+    //m_integ->setUserJacobian(true);
+    //reinitialize();
+    //m_integ->step(m_time+1.0);
     /* After testing delete above code and uncomment below code */ 
     //m_time = m_integ->step(m_time + 1.0);
     //updateState(m_integ->solution());
@@ -270,6 +271,8 @@ double ReactorNet::sensitivity(size_t k, size_t p)
     return m_integ->sensitivity(k, p) / denom;
 }
 
+
+
 void ReactorNet::evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
                               doublereal* jac)
 {
@@ -279,9 +282,9 @@ void ReactorNet::evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
     updateState(y);
     for (size_t n = 0; n < m_reactors.size(); n++) {
         size_t size = m_reactors[n]->neq();
-        cout << "Before resizing m_jac" << endl;
+        //cout << "Before resizing m_jac" << endl;
         m_jac.resize(size, size);
-        cout << "After resizing m_jac" << endl;
+        //cout << "After resizing m_jac" << endl;
         m_reactors[n]->evalJacEqs(t, y + m_start[n], ydot + m_start[n], &m_jac);
         cout << "After calling evalJacs " << endl;
         cout << m_jac << endl;
@@ -294,10 +297,15 @@ void ReactorNet::evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
     }
 }
 
+
+
 /*
 void ReactorNet::evalJacobian(doublereal t, doublereal* y,
-                              doublereal* ydot, doublereal* p, Array2D* j)
+                              //doublereal* ydot, doublereal* p, Array2D* j)
+                              doublereal* ydot, doublereal* j)
 {
+    vector<double> tmp;
+    doublereal* p = tmp.data();
     //evaluate the unperturbed ydot
     eval(t, y, ydot, p);
     for (size_t n = 0; n < m_nv; n++) {
@@ -312,12 +320,17 @@ void ReactorNet::evalJacobian(doublereal t, doublereal* y,
 
         // compute nth column of Jacobian
         for (size_t m = 0; m < m_nv; m++) {
-            j->value(m,n) = (m_ydot[m] - ydot[m])/dy;
+            //j->value(m,n) = (m_ydot[m] - ydot[m])/dy;
+            *(j + (m_nv * n) + m) = (m_ydot[m] - ydot[m])/dy;
+            cout <<  (m_ydot[m] - ydot[m])/dy << " ";
         }
+        cout <<  endl;
         y[n] = ysave;
     }
 }
 */
+
+
 
 
 void ReactorNet::updateState(doublereal* y)

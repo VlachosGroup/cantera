@@ -73,6 +73,18 @@ public:
     }
 
     /**
+     * Update the cached temperature-dependent intermediate
+     * results associated with derivatives for all installed falloff functions.
+     * @param t Temperature [K].
+     * @param work Work array. Must be dimensioned at least workSize().
+     */
+    void updateTempDerivative(doublereal t, doublereal* work) {
+        for (size_t i = 0; i < m_rxn.size(); i++) {
+            m_falloff[i]->updateTempDerivative(t, work + m_offset[i]);
+        }
+    }
+
+    /**
      * Given a vector of reduced pressures for each falloff reaction,
      * replace each entry by the value of the falloff function.
      */
@@ -90,6 +102,31 @@ public:
             }
         }
     }
+
+    /**
+     * Given vectors of reduced pressures, and Fcent values
+     * compute \f$ \partial F_i / \partial F_{cent} \f$
+     */
+    void dF_dFcent(const doublereal* pr, const doublereal* lnfcent, 
+                   doublereal* df_dfcent) {
+        for (size_t i = 0; i < m_rxn.size(); i++) {
+            df_dfcent[i] = m_falloff[i]->dF_dFcent(pr[i], lnfcent[i]);
+        }
+    }
+
+    /**
+     * Given vectors of reduced pressures, and Fcent values
+     * compute \f$ \partial F_i / \partial P_r \f$
+     */
+    void dF_dPr(const doublereal* pr, const doublereal* lnfcent, 
+                doublereal* df_dpr) {
+        for (size_t i = 0; i < m_rxn.size(); i++) {
+            df_dpr[i] = m_falloff[i]->dF_dPr(pr[i], lnfcent[i]);
+        }
+    }
+
+
+
 
 protected:
     std::vector<size_t> m_rxn;

@@ -49,6 +49,14 @@ public:
      */
     virtual void updateTemp(doublereal T, doublereal* work) const {}
 
+    //! Update the temperature parameters of derivatives in the representation
+    /*!
+     *   @param T         Temperature (Kelvin)
+     *   @param work      Vector of working space, length 1, representing the
+     *                    temperature-dependent part of the parameterization.
+     */
+    virtual void updateTempDerivative(doublereal T, doublereal* work) const;
+
     /**
      * The falloff function. This is defined so that the rate coefficient is
      *
@@ -68,6 +76,58 @@ public:
      */
     virtual doublereal F(doublereal pr, const doublereal* work) const {
         return 1.0;
+    }
+
+    /**
+     * Temperature derivative of the falloff function. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param work array of size workSize() containing cached
+     *             temperature-dependent intermediate results from a prior call
+     *             to updateTemp.
+     * @returns the value of the T derivative of falloff function 
+     *          \f$ \partial F/\partial T \f$ defined above
+     */
+    virtual doublereal dFdT(doublereal pr, const doublereal* work) const {
+        return 0.0;
+    }
+
+    /**
+     * Derivative of the falloff function w.r.t. Fcent 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param logFcent obtained from call to updateTemp.
+     * @returns the value of the derivative of falloff function w.r.t Fcent
+     */
+    virtual doublereal dF_dFcent(doublereal pr, doublereal logFcent) const {
+        return 0;
+    }
+
+    /**
+     * Derivative of the falloff function w.r.t. Pr
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param logFcent obtained from call to updateTemp.
+     * @returns the value of the derivative of falloff function w.r.t Pr
+     */
+    virtual doublereal dF_dPr(doublereal pr, doublereal logFcent) const {
+        return 0;
+    }
+
+
+    /**
+     * Derivative of the falloff function w.r.t. mass fraction of species j. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param work array of size workSize() containing cached
+     *             temperature-dependent intermediate results from a prior call
+     *             to updateTemp.
+     * @param j Index of the species (integer).
+     * @returns the value of the Y derivative of falloff function 
+     *          \f$ \partial F/\partial T \f$ defined above
+     */
+    virtual doublereal dFdY(doublereal pr, const doublereal* work, size_t j) const {
+        return 0.0;
     }
 
     //! The size of the work array required.
@@ -151,7 +211,58 @@ public:
      */
     virtual void updateTemp(doublereal T, doublereal* work) const;
 
+    //! Update the temperature parameters of derivatives in the representation
+    /*!
+     *   @param T         Temperature (Kelvin)
+     *   @param work      Vector of working space, length 1, representing the
+     *                    temperature-dependent part of the parameterization.
+     */
+    virtual void updateTempDerivative(doublereal T, doublereal* work) const;
+
     virtual doublereal F(doublereal pr, const doublereal* work) const;
+
+    /**
+     * Derivative of the falloff function w.r.t. Fcent. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param logFcent obtained from call to updateTemp.
+     * @returns the value of the derivative of falloff function w.r.t Fcent
+     */
+    virtual doublereal dF_dFcent(doublereal pr, doublereal logFcent) const; 
+
+    /**
+     * Derivative of the falloff function w.r.t. Pr. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param logFcent obtained from call to updateTemp.
+     * @returns the value of the derivative of falloff function w.r.t Pr
+     */
+    virtual doublereal dF_dPr(doublereal pr, doublereal logFcent) const; 
+
+    /**
+     * Temperature derivative of the falloff function. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param work array of size workSize() containing cached
+     *             temperature-dependent intermediate results from a prior call
+     *             to updateTemp.
+     * @returns the value of the T derivative of falloff function 
+     *          \f$ \partial F/\partial T \f$ defined above
+     */
+    virtual doublereal dFdT(doublereal pr, const doublereal* work) const; 
+
+    /**
+     * Derivative of the falloff function w.r.t. mass fraction of species j. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param work array of size workSize() containing cached
+     *             temperature-dependent intermediate results from a prior call
+     *             to updateTemp.
+     * @param j Index of the species (integer).
+     * @returns the value of the Y derivative of falloff function 
+     *          \f$ \partial F/\partial T \f$ defined above
+     */
+    virtual doublereal dFdY(doublereal pr, const doublereal* work, size_t j) const;
 
     virtual size_t workSize() {
         return 1;
@@ -231,7 +342,58 @@ public:
      */
     virtual void updateTemp(doublereal T, doublereal* work) const;
 
+    //! Update the temperature parameters of derivatives in the representation
+    /*!
+     *   @param T         Temperature (Kelvin)
+     *   @param work      Vector of working space, length 1, representing the
+     *                    temperature-dependent part of the parameterization.
+     */
+    virtual void updateTempDerivative(doublereal T, doublereal* work) const;
+
     virtual doublereal F(doublereal pr, const doublereal* work) const;
+
+    /**
+     * Derivative of the falloff function w.r.t. Fcent. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param logFcent obtained from call to updateTemp.
+     * @returns the value of the derivative of falloff function w.r.t Fcent
+     */
+    virtual doublereal dF_dFcent(doublereal pr, doublereal logFcent) const; 
+
+    /**
+     * Derivative of the falloff function w.r.t. Pr. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param logFcent obtained from call to updateTemp.
+     * @returns the value of the derivative of falloff function w.r.t Pr
+     */
+    virtual doublereal dF_dPr(doublereal pr, doublereal logFcent) const; 
+
+    /**
+     * Temperature derivative of the falloff function. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param work array of size workSize() containing cached
+     *             temperature-dependent intermediate results from a prior call
+     *             to updateTemp.
+     * @returns the value of the T derivative of falloff function 
+     *          \f$ \partial F/\partial T \f$ defined above
+     */
+    virtual doublereal dFdT(doublereal pr, const doublereal* work) const; 
+
+    /**
+     * Derivative of the falloff function w.r.t. mass fraction of species j. 
+     *
+     * @param pr reduced pressure (dimensionless).
+     * @param work array of size workSize() containing cached
+     *             temperature-dependent intermediate results from a prior call
+     *             to updateTemp.
+     * @param j Index of the species (integer).
+     * @returns the value of the Y derivative of falloff function 
+     *          \f$ \partial F/\partial T \f$ defined above
+     */
+    virtual doublereal dFdY(doublereal pr, const doublereal* work, size_t j) const;
 
     virtual size_t workSize() {
         return 2;
