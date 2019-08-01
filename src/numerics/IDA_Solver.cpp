@@ -360,12 +360,17 @@ void IDA_Solver::init(doublereal t0)
     m_y = N_VNew_Serial(m_neq);
     m_ydot = N_VNew_Serial(m_neq);
     m_constraints = N_VNew_Serial(m_neq);
+    N_VConst(0.0, m_y);
+    N_VConst(0.0, m_ydot);
+    N_VConst(0.0, m_constraints);
 
+    /*
     for (int i=0; i<m_neq; i++) {
         NV_Ith_S(m_y, i) = 0.0;
         NV_Ith_S(m_ydot, i) = 0.0;
         NV_Ith_S(m_constraints, i) = 0.0;
     }
+    */
 
     // get the initial conditions
     m_resid.getInitialConditions(m_t0, NV_DATA_S(m_y), NV_DATA_S(m_ydot));

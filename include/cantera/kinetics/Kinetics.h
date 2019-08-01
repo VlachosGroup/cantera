@@ -884,7 +884,7 @@ protected:
 
     // Update internal derivatives of rate-of-progress variables 
     // #m_dropfdt and #m_droprdt.
-    virtual void updateROPDerivatives() {
+    virtual void updateROPDerivatives(bool constPressure = false) {
         throw NotImplementedError("Kinetics::updateROP");
     }
 

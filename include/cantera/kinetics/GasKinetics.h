@@ -57,7 +57,7 @@ public:
 
     void updateROP();
 
-    virtual void updateROPDerivatives();
+    virtual void updateROPDerivatives(bool constPressure = false);
 
     //! Update temperature-dependent portions of reaction rates and falloff
     //! functions.
@@ -101,11 +101,28 @@ protected:
 
     doublereal m_pres; //!< Last pressure at which rates were evaluated
     vector_fp falloff_work;
+    vector_fp falloff_pr;
     vector_fp concm_3b_values;
     vector_fp concm_falloff_values;
     //!@}
+    //
+    //! @name Reaction rate derivative data
+    //!@{
+    vector_fp concm_3b_dT;
+    Array2D concm_3b_dY;
+
+    vector_fp m_rfn_low_dT;
+    vector_fp m_rfn_high_dT;
+    vector_fp falloff_work_dT;
+    vector_fp m_pr_dT;
+    vector_fp m_dc_dT;
+    Array2D m_pr_dY;
+    Array2D m_dc_dY;
+    //!@}
 
     void processFalloffReactions();
+    void processFalloffReactionFactors(doublereal* values);
+    void processFalloffReactionDerivatives();
 
     void addThreeBodyReaction(ThreeBodyReaction& r);
     void addFalloffReaction(FalloffReaction& r);
