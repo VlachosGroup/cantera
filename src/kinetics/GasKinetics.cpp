@@ -175,56 +175,60 @@ void GasKinetics::processFalloffReactionFactors(doublereal* values)
     m_falloffn.pr_to_falloff(pr.data(), falloff_work.data());
 }
 
-void GasKinetics::processFalloffReactions()
+void GasKinetics::computeFalloffPrefactors()
 {
-    // use m_ropr for temporary storage of reduced pressure
-    vector_fp& pr = m_ropr;
-
     for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
-        pr[i] = concm_falloff_values[i] * m_rfn_low[i] / (m_rfn_high[i] + SmallNumber);
-        AssertFinite(pr[i], "GasKinetics::processFalloffReactions",
+        falloff_pr[i] = concm_falloff_values[i] * m_rfn_low[i] / (m_rfn_high[i] + SmallNumber);
+        AssertFinite(falloff_pr[i], "GasKinetics::processFalloffReactions",
                      "pr[{}] is not finite.", i);
     }
 
-    m_falloffn.pr_to_falloff(pr.data(), falloff_work.data());
-
+    m_falloffn.pr_to_falloff(falloff_pr.data(), falloff_work.data());
+}
+void GasKinetics::processFalloffReactions()
+{
+    computeFalloffPrefactors();
     for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
         if (reactionType(m_fallindx[i]) == FALLOFF_RXN) {
-            pr[i] *= m_rfn_high[i];
+            m_ropf[m_fallindx[i]] = falloff_pr[i] * m_rfn_high[i];
         } else { // CHEMACT_RXN
-            pr[i] *= m_rfn_low[i];
+            m_ropf[m_fallindx[i]] = falloff_pr[i] * m_rfn_low[i];
         }
-        m_ropf[m_fallindx[i]] = pr[i];
     }
 }
 
 void GasKinetics::processFalloffReactionDerivatives()
 {
     // use m_ropr for temporary storage of reduced pressure
-    vector_fp& pr = m_ropr;
+    //vector_fp& pr = m_ropr;
     /*
-    if (!m_pr_dT.size() && m_falloff_low_rates.nReactions())
-        m_pr_dT.resize(m_falloff_low_rates.nReactions());
+    if (!m_dPr_dT.size() && m_falloff_low_rates.nReactions())
+        m_dPr_dT.resize(m_falloff_low_rates.nReactions());
     */
-    if (!m_pr_dY.size() && m_falloff_low_rates.nReactions()) 
-        m_pr_dY.resize(m_falloff_low_rates.nReactions(), m_kk);
 
     double invT = 1.0/thermo().temperature();
     for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
-        pr[i] = concm_falloff_values[i] * m_rfn_low[i] / (m_rfn_high[i] + SmallNumber);
+        falloff_pr[i] = concm_falloff_values[i] * m_rfn_low[i] / (m_rfn_high[i] + SmallNumber);
         AssertFinite(pr[i], "GasKinetics::processFalloffReactions",
                      "pr[{}] is not finite.", i);
-        pr_dT[i] = (m_rfn_low_dT - m_rfn_high_dT - invT) * pr[i];
+        m_dPr_dT[i] = (m_rfn_low_dT[i] - m_rfn_high_dT[i] - invT) * falloff_pr[i];
     }
 
     auto W = thermo().meanMolecularWeight();
     const auto weights = thermo().molecularWeights();
     auto density = thermo().density();
-    for (size_t j = 0; i < m_kk; j++) {
-        m_falloff_concm.getEfficiencies(j, m_pr_dY.ptrColumn(j)); 
+    vector_fp work(m_falloff_low_rates.nReactions());
+    for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
+        work[i] = m_rfn_low[i] / (m_rfn_high[i] + SmallNumber) * density; 
+    }
+
+    if (!m_dPr_dY.data().size() && m_falloff_low_rates.nReactions()) 
+        m_dPr_dY.resize(m_falloff_low_rates.nReactions(), m_kk);
+    for (size_t j = 0; j < m_kk; j++) {
+        m_falloff_concm.getEfficiencies(j, m_dPr_dY.ptrColumn(j)); 
         for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
-            m_pr_dY(i, j) = m_rfn_low[i] / (m_rfn_high[i] + SmallNumber) * 
-                            density / weights[j]; // TODO: For non-const vol reactors add the first term of pyjac (85)
+            // TODO: For non-const vol reactors add the first term of pyjac (85)
+            m_dPr_dY(i, j) *= work[i] / weights[j]; 
         }
     }
     
@@ -232,12 +236,11 @@ void GasKinetics::processFalloffReactionDerivatives()
     if (!m_dc_dT.size() && m_falloff_low_rates.nReactions())
         m_dc_dT.resize(m_falloff_low_rates.nReactions());
     */
-    if (!m_dc_dY.size() && m_falloff_low_rates.nReactions()) 
-        m_dcpr_dY.resize(m_falloff_low_rates.nReactions(), m_kk);
 
-    vector_fp work(m_falloff_low_rates.nReactions());
-    vector_fp work2(m_falloff_low_rates.nReactions());
-    for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
+    //vector_fp work2(m_falloff_low_rates.nReactions());
+    m_falloffn.dc_dPr(falloff_pr.data(), work.data());
+    /*
+     * for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
         if (m_reactionType[i] == FALLOFF_RXN) {
             // Pr / (1 + Pr) * F
             work[i] = 1.0/(pr*(1.0 + pr));
@@ -246,15 +249,18 @@ void GasKinetics::processFalloffReactionDerivatives()
             work[i] = -1.0/(1.0 + pr);
         }
     }
-    m_falloffn.dF_dPr(pr.data(), falloff_work.data(), work2.data());
+    */
+
+    m_falloffn.dF_dPr(falloff_pr.data(), falloff_work.data(), m_dc_dPr.data());
     for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
-        work2[i] += work[i];
+        m_dc_dPr[i] += work[i];
     }
 
-    for (size_t j = 0; i < m_kk; j++) {
-        m_falloff_concm.getEfficiencies(j, m_pr_dY.ptrColumn(j)); 
+    if (!m_dc_dY.data().size() && m_falloff_low_rates.nReactions()) 
+        m_dc_dY.resize(m_falloff_low_rates.nReactions(), m_kk);
+    for (size_t j = 0; j < m_kk; j++) {
         for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
-            m_dc_dY(i, j) = work2[i] *  m_pr_dY(i,j);
+            m_dc_dY(i, j) = m_dc_dPr[i] *  m_dPr_dY(i,j);
         }
     }
 }
@@ -312,6 +318,7 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
 {
     updateROP();
     updateTDerivativeFactors();
+    processFalloffReactionDerivatives();
 
     // Temperature derivatives
     doublereal invT = 1.0/m_temp;
@@ -332,6 +339,7 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
 
     // Mass fraction derivatives
     updateYDerivativeFactors();
+
     /*
     if (!m_dFwdROPdY.data().size()){
         m_dFwdROPdY.resize(nReactions(), m_kk);
@@ -352,12 +360,13 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
     // Process Fallof reaction rate constants
     for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
         if (reactionType(m_fallindx[i]) == FALLOFF_RXN) {
-            rfn_tmp(m_fallindx[i], j) = m_rfn_high[i];
+            rfn_tmp[m_fallindx[i]] = m_rfn_high[i];
         } else { // CHEMACT_RXN
-            rfn_tmp(m_fallindx[i], j) = m_rfn_low[i];
+            rfn_tmp[m_fallindx[i]] = m_rfn_low[i];
         }
     }
-
+    
+    computeFalloffPrefactors();
     for (size_t j = 0; j < m_kk; j++){    // Fwd part of Eq. 76 of pyjac fwd  
         m_dNetROPdY.setColumn(j, rfn_tmp.data());
         m_reactantStoich.derivative_multiply(
@@ -370,6 +379,11 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
         if (!concm_3b_values.empty()) {     // Eq. 58 of pyjac net
             m_3b_concm.multiply(m_dNetROPdY.ptrColumn(j), concm_3b_values.data());
         }
+        // Process Falloff prefactors
+        for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
+            m_dNetROPdY(m_fallindx[i], j) *= falloff_pr[i];
+        }
+
         if (constPressure){
             for (size_t i = 0; i < nReactions(); i++){
                 m_dNetROPdY(i, j) -= m_ropf[i] * m_reactant_stoichsum[i] * 
@@ -387,8 +401,13 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
         for (size_t i = 0; i < nReactions(); i++){
             m_dRevROPdY(i, j) *=  den_by_wght * m_rkcn[i];
         }
-        if (!concm_3b_values.empty()) {     // Eq. 58 of pyjac net
+        // Eq. 58 of pyjac net
+        if (!concm_3b_values.empty()) {  // Process 3b reactions
             m_3b_concm.multiply(m_dRevROPdY.ptrColumn(j), concm_3b_values.data());
+        }
+        // Process Falloff prefactors
+        for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
+            m_dRevROPdY(m_fallindx[i], j) *= falloff_pr[i];
         }
         if (constPressure){
             for (size_t i = 0; i < nReactions(); i++){
@@ -406,8 +425,10 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
         for (size_t i = 0; i < nReactions(); i++){
             m_dNetROPdY(i, j) -= m_dRevROPdY(i, j);
         }
+    }
 
-        if (!concm_3b_values.empty()) {     // Eq. 58 of pyjac net
+    if (!concm_3b_values.empty()) {     // Eq. 58 of pyjac net
+        for (size_t j = 0; j < m_kk; j++){    
             //m_3b_concm.multiply(m_dNetROPdY.ptrColumn(j), concm_3b_values.data());
 
             m_3b_concm.getEfficiencies(j, work2.data()); 
@@ -426,9 +447,16 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
         }
     }
 
-    if (m_falloff_high_rates.nReactions()) {
-        processFalloffReactionDerivatives();
+        // Process Falloff reaction values
+    for (size_t j = 0; j < m_kk; j++){    
+        for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
+            m_dNetROPdY(m_fallindx[i], j) += m_dc_dY(i, j) * m_ropnet[i];
+        }
     }
+
+    /*if (m_falloff_high_rates.nReactions()) {
+        processFalloffReactionDerivatives();
+    }*/
 
 }
 
@@ -496,6 +524,7 @@ void GasKinetics::addFalloffReaction(FalloffReaction& r)
     m_rfn_high.push_back(0.0);
     m_falloff_low_rates.install(nfall, r.low_rate);
     m_rfn_low.push_back(0.0);
+    falloff_pr.push_back(0.0);
 
     // add this reaction number to the list of falloff reactions
     m_fallindx.push_back(nReactions()-1);
@@ -505,8 +534,9 @@ void GasKinetics::addFalloffReaction(FalloffReaction& r)
     m_rfn_low_dT.push_back(0.0);
     m_rfn_high_dT.push_back(0.0);
     falloff_work_dT.push_back(0.0);
-    m_pr_dT.push_back(0.0);
+    m_dPr_dT.push_back(0.0);
     m_dc_dT.push_back(0.0);
+    m_dc_dPr.push_back(0.0);
 
     // install the enhanced third-body concentration calculator
     map<size_t, double> efficiencies;

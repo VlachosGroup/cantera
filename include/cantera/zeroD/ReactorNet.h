@@ -173,6 +173,9 @@ public:
     virtual void evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
                               doublereal* j);
 
+    virtual void evalJacobianFD(doublereal t, doublereal* y, doublereal* ydot,
+                              doublereal* j);
+
     // overloaded methods of class FuncEval
     virtual size_t neq() {
         return m_nv;

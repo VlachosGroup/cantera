@@ -286,12 +286,12 @@ void ReactorNet::evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
         m_jac.resize(size, size);
         //cout << "After resizing m_jac" << endl;
         m_reactors[n]->evalJacEqs(t, y + m_start[n], ydot + m_start[n], &m_jac);
-        cout << "After calling evalJacs " << endl;
-        cout << m_jac << endl;
+        //cout << "After calling evalJacs " << endl;
+        //cout << m_jac << endl;
         auto jac_start = jac + neq() * m_start[n] + m_start[n];
         for (size_t i = 0; i < size; i++){
             copy(m_jac.ptrColumn(i), m_jac.ptrColumn(i+1), jac_start);
-            cout << i << " After copying Jac " << endl;
+            //cout << i << " After copying Jac " << endl;
             jac_start += neq();
         }
     }
@@ -299,36 +299,61 @@ void ReactorNet::evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
 
 
 
-/*
-void ReactorNet::evalJacobian(doublereal t, doublereal* y,
+
+void ReactorNet::evalJacobianFD(doublereal t, doublereal* y,
                               //doublereal* ydot, doublereal* p, Array2D* j)
                               doublereal* ydot, doublereal* j)
 {
+    auto central_diff = true;
     vector<double> tmp;
     doublereal* p = tmp.data();
-    //evaluate the unperturbed ydot
-    eval(t, y, ydot, p);
-    for (size_t n = 0; n < m_nv; n++) {
-        // perturb x(n)
-        double ysave = y[n];
-        double dy = m_atol[n] + fabs(ysave)*m_rtol;
-        y[n] = ysave + dy;
-        dy = y[n] - ysave;
 
-        // calculate perturbed residual
-        eval(t, y, m_ydot.data(), p);
+    if (central_diff) {
+        for (size_t n = 0; n < m_nv; n++) {
+            // perturb x(n) and evaluate residual
+            double ysave = y[n];
+            double dy = m_atol[n] + fabs(ysave)*m_rtol;
+            y[n] = ysave + dy;
+            eval(t, y, m_ydot.data(), p);
+            y[n] = ysave - dy;
+            eval(t, y, ydot, p);
+            //dy = 2*(y[n] - ysave);
 
-        // compute nth column of Jacobian
-        for (size_t m = 0; m < m_nv; m++) {
-            //j->value(m,n) = (m_ydot[m] - ydot[m])/dy;
-            *(j + (m_nv * n) + m) = (m_ydot[m] - ydot[m])/dy;
-            cout <<  (m_ydot[m] - ydot[m])/dy << " ";
+            // compute nth column of Jacobian
+            for (size_t m = 0; m < m_nv; m++) {
+                //j->value(m,n) = (m_ydot[m] - ydot[m])/dy;
+                *(j + (m_nv * n) + m) = (m_ydot[m] - ydot[m])/(2*dy);
+                //cout <<  (m_ydot[m] - ydot[m])/dy << " ";
+            }
+            //cout <<  endl;
+            y[n] = ysave;
         }
-        cout <<  endl;
-        y[n] = ysave;
+
+    } else {
+        //evaluate the unperturbed ydot
+        eval(t, y, ydot, p);
+        for (size_t n = 0; n < m_nv; n++) {
+            // perturb x(n)
+            double ysave = y[n];
+            double dy = m_atol[n] + fabs(ysave)*m_rtol;
+            y[n] = ysave + dy;
+            dy = y[n] - ysave;
+
+            // calculate perturbed residual
+            eval(t, y, m_ydot.data(), p);
+
+            // compute nth column of Jacobian
+            for (size_t m = 0; m < m_nv; m++) {
+                //j->value(m,n) = (m_ydot[m] - ydot[m])/dy;
+                *(j + (m_nv * n) + m) = (m_ydot[m] - ydot[m])/dy;
+                //cout <<  (m_ydot[m] - ydot[m])/dy << " ";
+            }
+            //cout <<  endl;
+            y[n] = ysave;
+        }
     }
 }
-*/
+
 
 
 

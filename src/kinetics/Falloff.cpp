@@ -88,39 +88,42 @@ double Troe::F(double pr, const double* work) const
     return pow(10.0, lgf);
 }
 
-double Troe::dF_dFcent(double pr, double logFcent) const
+double Troe::dF_dFcent(double pr, double log10Fcent) const
 {
-    double Fi = F(pr, &logFcent);
-    auto Fcent = pow(10.0, logFcent);
+    //double Fi = F(pr, &logFcent);
+    auto Fcent = pow(10.0, log10Fcent);
     auto logpr = log10(std::max(pr, SmallNumber)); 
-    double invFcentln10 = 1.0/(Fcent * log(10));
-    double A = logpr - 0.67 * logFcent - 0.4;
-    double B = 0.806 - 1.1762 * logFcent - 0.14 * logpr;
+    double invFcent = 1.0/(Fcent);
+    double A = logpr - 0.67 * log10Fcent - 0.4;
+    double B = 0.806 - 1.1762 * log10Fcent - 0.14 * logpr;
     double Bcube = B * B * B;
     double AbyBsq = A * A / (B * B);
-    double One_1pAbyBsq = 1.0/(1 +  A * A / (B * B));
-    return Fi * One_1pAbyBsq * (
-                1.0 / Fcent  - log(Fcent) * 2*A/Bcube * One_1pAbyBsq * 
-                               invFcentln10 * (-0.67 * B + 1.1762 * A));
+    double One_1pAbyBsq = 1.0/(1 +  AbyBsq);
+    return One_1pAbyBsq * (            // Fi removed
+                1.0 / Fcent  - log10Fcent * 2*A/Bcube * One_1pAbyBsq * 
+                               invFcent * (-0.67 * B + 1.1762 * A));
 }
 
 // Eq.(94) of pyjac.
 // In the final value F_i is omitted because it gets cancelled in Eq.(87)
-double Troe::dF_dPr(double pr, double logFcent) const
+double Troe::dF_dPr(double pr, double log10Fcent) const
 {
-    double Fi = F(pr, &logFcent);
-    auto Fcent = pow(10.0, logFcent);
+    //double Fi = F(pr, &logFcent);
+    // ln Fc = log_10 Fc * ln10
+    //auto Fcent = pow(10.0, logFcent);
     auto logpr = log10(std::max(pr, SmallNumber)); 
-    double invPrln10 = 1.0/(pr * log(10));
-    double A = logpr - 0.67 * logFcent - 0.4;
-    double B = 0.806 - 1.1762 * logFcent - 0.14 * logpr;
+    //double invPrln10 = 1.0/(pr * log(10));
+    //double invPr= 1.0/pr;
+    double A = logpr - 0.67 * log10Fcent - 0.4;
+    double B = 0.806 - 1.1762 * log10Fcent - 0.14 * logpr;
     double Bcube = B * B * B;
     double AbyBsq = A * A / (B * B);
-    double One_1pAbyBsq = 1.0/(1 +  A * A / (B * B));
-    return -One_1pAbyBBsq * One_1pAbyBsq * log(Fcent) * 2*A/Bcube *  // Fi is removed
-                 invPrln10 * (B + 0.14 * A);
+    double One_1pAbyBsq = 1.0/(1 +  AbyBsq);
+    return -One_1pAbyBsq * One_1pAbyBsq * log10Fcent * 2*A *  // Fi is removed
+                 (B + 0.14 * A) / (Bcube * pr) ;
 }
 
+/*
 double Troe::dFdT(double pr, double dprdT, double logFcent, double dFcent) const
 {
     throw CanteraError("Troe::dFdT", "Not implemented."); 
@@ -142,7 +145,7 @@ double Troe::dFdY(double pr, const double* work, size_t j) const
     double lgf = (*work) / (1.0 + f1 * f1);
     return pow(10.0, lgf);
 }
-
+*/
 void Troe::getParameters(double* params) const {
     params[0] = m_a;
     params[1] = 1.0/m_rt3;
@@ -205,11 +208,12 @@ double SRI::dF_dFcent(double pr, double logFcent) const
     throw CanteraError("SRI::dF_dFcent", "Not implemented."); 
 }
 
-double Troe::dF_dPr(double pr, double logFcent) const
+double SRI::dF_dPr(double pr, double logFcent) const
 {
     throw CanteraError("SRI::dF_dPr", "Not implemented."); 
 }
 
+/*
 double SRI::dFdT(double pr, double dprdT, double logFcent, double dFcent) const
 {
     throw CanteraError("SRI::dFdT", "Not implemented."); 
@@ -219,6 +223,7 @@ double SRI::dFdY(double pr, const double* work, size_t j) const
 {
     throw CanteraError("SRI::dFdY", "Not implemented."); 
 }
+*/
 
 void SRI::getParameters(double* params) const
 {

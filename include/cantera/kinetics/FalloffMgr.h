@@ -125,7 +125,26 @@ public:
         }
     }
 
+    /**
+     * Given vectors of reduced pressures, compute 
+     * \f$ \partial c_i / \partial P_r \f$
+     */
+    void dc_dPr(const doublereal* pr, doublereal* dc_dpr) {
+        for (size_t i = 0; i < m_rxn.size(); i++) {
+            if (m_reactionType[i] == FALLOFF_RXN) {
+                // 1 / (Pr * (1 + Pr)) 
+                dc_dpr[i] = 1.0/(pr[i]*(1.0 + pr[i]));
+            } else {
+                 // 1 / (1 + Pr) 
+                dc_dpr[i] = -1.0/(1.0 + pr[i]);
+            }
+        }
+    }
 
+
+
+
+protected:
 
 
 protected:

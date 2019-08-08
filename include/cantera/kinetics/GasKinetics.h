@@ -114,13 +114,15 @@ protected:
     vector_fp m_rfn_low_dT;
     vector_fp m_rfn_high_dT;
     vector_fp falloff_work_dT;
-    vector_fp m_pr_dT;
+    vector_fp m_dPr_dT;
     vector_fp m_dc_dT;
-    Array2D m_pr_dY;
+    vector_fp m_dc_dPr;
+    Array2D m_dPr_dY;
     Array2D m_dc_dY;
     //!@}
 
     void processFalloffReactions();
+    void computeFalloffPrefactors();
     void processFalloffReactionFactors(doublereal* values);
     void processFalloffReactionDerivatives();
 
