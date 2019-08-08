@@ -143,6 +143,10 @@ public:
                               doublereal* jac){
              throw NotImplementedError("ImplicitSurfChem::evalJacobian");
     }
+    virtual void evalJacobianFD(doublereal t, doublereal* y, doublereal* ydot,
+                              doublereal* jac){
+             throw NotImplementedError("ImplicitSurfChem::evalJacobian");
+    }
 
 
     //! Get the current state of the solution vector

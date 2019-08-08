@@ -54,7 +54,7 @@ public:
      *   @param work      Vector of working space, length 1, representing the
      *                    temperature-dependent part of the parameterization.
      */
-    virtual void updateTempDerivative(doublereal T, doublereal* work) const;
+    virtual void updateTempDerivative(doublereal T, doublereal* work) const {}
 
     /**
      * The falloff function. This is defined so that the rate coefficient is
@@ -77,6 +77,7 @@ public:
         return 1.0;
     }
 
+
     /**
      * Temperature derivative of the falloff function. 
      *
@@ -87,9 +88,9 @@ public:
      * @returns the value of the T derivative of falloff function 
      *          \f$ \partial F/\partial T \f$ defined above
      */
-    virtual doublereal dFdT(doublereal pr, const doublereal* work) const {
-        return 0.0;
-    }
+    //virtual doublereal dFdT(doublereal pr, const doublereal* work) const {
+    //    return 0.0;
+    //}
 
     /**
      * Derivative of the falloff function w.r.t. Fcent 
@@ -125,9 +126,9 @@ public:
      * @returns the value of the Y derivative of falloff function 
      *          \f$ \partial F/\partial T \f$ defined above
      */
-    virtual doublereal dFdY(doublereal pr, const doublereal* work, size_t j) const {
+    /*virtual doublereal dFdY(doublereal pr, const doublereal* work, size_t j) const {
         return 0.0;
-    }
+    }*/
 
     //! The size of the work array required.
     virtual size_t workSize() {
@@ -238,7 +239,7 @@ public:
      * @returns the value of the T derivative of falloff function 
      *          \f$ \partial F/\partial T \f$ defined above
      */
-    virtual doublereal dFdT(doublereal pr, const doublereal* work) const; 
+    //virtual doublereal dFdT(doublereal pr, const doublereal* work) const; 
 
     /**
      * Derivative of the falloff function w.r.t. mass fraction of species j. 
@@ -251,7 +252,7 @@ public:
      * @returns the value of the Y derivative of falloff function 
      *          \f$ \partial F/\partial T \f$ defined above
      */
-    virtual doublereal dFdY(doublereal pr, const doublereal* work, size_t j) const;
+    //virtual doublereal dFdY(doublereal pr, const doublereal* work, size_t j) const;
 
     virtual size_t workSize() {
         return 1;
@@ -363,7 +364,7 @@ public:
      * @returns the value of the T derivative of falloff function 
      *          \f$ \partial F/\partial T \f$ defined above
      */
-    virtual doublereal dFdT(doublereal pr, const doublereal* work) const; 
+    //virtual doublereal dFdT(doublereal pr, const doublereal* work) const; 
 
     /**
      * Derivative of the falloff function w.r.t. mass fraction of species j. 
@@ -376,7 +377,7 @@ public:
      * @returns the value of the Y derivative of falloff function 
      *          \f$ \partial F/\partial T \f$ defined above
      */
-    virtual doublereal dFdY(doublereal pr, const doublereal* work, size_t j) const;
+    //virtual doublereal dFdY(doublereal pr, const doublereal* work, size_t j) const;
 
     virtual size_t workSize() {
         return 2;

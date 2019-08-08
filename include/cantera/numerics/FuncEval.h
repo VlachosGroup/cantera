@@ -59,6 +59,8 @@ public:
      */
     virtual void evalJacobian(double t, double* y, double* ydot, double* jac)=0;
 
+    virtual void evalJacobianFD(double t, double* y, double* ydot, double* jac)=0;
+
     int evalJacobian_nothrow(double t, double* y, double* ydot, double* jac);
 
     //! Fill in the vector *y* with the current state of the system

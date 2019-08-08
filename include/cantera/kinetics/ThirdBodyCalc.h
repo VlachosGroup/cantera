@@ -51,8 +51,10 @@ public:
             auto it = find(m_species[i].begin(), m_species[i].end(), j);
             if (it != m_species[i].end()) {
                 auto ind = distance(m_species[i].begin(), it);
-                work[i] = m_eff[i][ind];
-            } 
+                work[i] = m_eff[i][ind] + m_default[i];
+            } else {
+                work[i] = m_default[i];
+            }
         }
     }
 
