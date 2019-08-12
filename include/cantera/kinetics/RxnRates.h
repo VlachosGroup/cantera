@@ -321,7 +321,29 @@ public:
      * rate constant derivative w.r.t. temperature. 
      */
     doublereal updateRCDerivative(doublereal logT, doublereal recipT) const {
-        throw NotImplementedError("SurfaeArrhenius::updateRCDerivative");
+        auto k = updateRC(logT, recipT);
+        double k1_der, log_k2_der;
+        if (ilow1_ == ilow2_) {
+            k1_der = rates_[ilow1_].updateRCDerivative(logT, recipT);
+        } else {
+            double k_der = 1e-300; // non-zero to make log(k) finite
+            for (size_t i = ilow1_; i < ilow2_; i++) {
+                k_der += rates_[i].updateRCDerivative(logT, recipT);
+            }
+            k1_der = k_der;
+        }
+
+        if (ihigh1_ == ihigh2_) {
+            k2_der = rates_[ihigh1_].updateRCDerivative(logT, recipT);
+        } else {
+            double k_der = 1e-300; // non-zero to make log(k) finite
+            for (size_t i = ihigh1_; i < ihigh2_; i++) {
+                k_der += rates_[i].updateRCDerivative(logT, recipT);
+            }
+            k2_der = k_der;
+        }
+
+        return k * (k1_der + (k2_der - k1_der) * (logP_-logP1_) * rDeltaP_);
     }
 
     //! Check to make sure that the rate expression is finite over a range of
@@ -458,7 +480,7 @@ public:
      * rate constant derivative w.r.t. temperature. 
      */
     doublereal updateRCDerivative(doublereal logT, doublereal recipT) const {
-        throw NotImplementedError("SurfaeArrhenius::updateRCDerivative");
+        throw NotImplementedError("Chebyshev::updateRCDerivative");
     }
 
     //! Minimum valid temperature [K]
