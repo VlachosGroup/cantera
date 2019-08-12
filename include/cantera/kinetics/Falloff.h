@@ -99,7 +99,7 @@ public:
      * @param logFcent obtained from call to updateTemp.
      * @returns the value of the derivative of falloff function w.r.t Fcent
      */
-    virtual doublereal dF_dFcent(doublereal pr, doublereal logFcent) const {
+    virtual doublereal dF_dFcent(doublereal pr, const doublereal* log10Fcent) const {
         return 0;
     }
 
@@ -110,7 +110,7 @@ public:
      * @param logFcent obtained from call to updateTemp.
      * @returns the value of the derivative of falloff function w.r.t Pr
      */
-    virtual doublereal dF_dPr(doublereal pr, doublereal logFcent) const {
+    virtual doublereal dF_dPr(doublereal pr, const doublereal* log10Fcent) const {
         return 0;
     }
 
@@ -218,7 +218,7 @@ public:
      * @param logFcent obtained from call to updateTemp.
      * @returns the value of the derivative of falloff function w.r.t Fcent
      */
-    virtual doublereal dF_dFcent(doublereal pr, doublereal logFcent) const; 
+    virtual doublereal dF_dFcent(doublereal pr, const doublereal* log10Fcent) const; 
 
     /**
      * Derivative of the falloff function w.r.t. Pr. 
@@ -227,7 +227,7 @@ public:
      * @param logFcent obtained from call to updateTemp.
      * @returns the value of the derivative of falloff function w.r.t Pr
      */
-    virtual doublereal dF_dPr(doublereal pr, doublereal logFcent) const; 
+    virtual doublereal dF_dPr(doublereal pr, const doublereal* log10Fcent) const; 
 
     /**
      * Temperature derivative of the falloff function. 
@@ -340,19 +340,19 @@ public:
      * Derivative of the falloff function w.r.t. Fcent. 
      *
      * @param pr reduced pressure (dimensionless).
-     * @param logFcent obtained from call to updateTemp.
+     * @param work obtained from call to updateTemp.
      * @returns the value of the derivative of falloff function w.r.t Fcent
      */
-    virtual doublereal dF_dFcent(doublereal pr, doublereal logFcent) const; 
+    virtual doublereal dF_dFcent(doublereal pr, const doublereal* work) const; 
 
     /**
      * Derivative of the falloff function w.r.t. Pr. 
      *
      * @param pr reduced pressure (dimensionless).
-     * @param logFcent obtained from call to updateTemp.
+     * @param work obtained from call to updateTemp.
      * @returns the value of the derivative of falloff function w.r.t Pr
      */
-    virtual doublereal dF_dPr(doublereal pr, doublereal logFcent) const; 
+    virtual doublereal dF_dPr(doublereal pr, const doublereal* work) const; 
 
     /**
      * Temperature derivative of the falloff function. 

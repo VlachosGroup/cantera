@@ -12,6 +12,8 @@
 #include "FalloffFactory.h"
 #include "cantera/base/global.h"
 
+#include <iostream>
+
 namespace Cantera
 {
 
@@ -107,10 +109,10 @@ public:
      * Given vectors of reduced pressures, and Fcent values
      * compute \f$ \partial F_i / \partial F_{cent} \f$
      */
-    void dF_dFcent(const doublereal* pr, const doublereal* lnfcent, 
+    void dF_dFcent(const doublereal* pr, const doublereal* work, 
                    doublereal* df_dfcent) {
         for (size_t i = 0; i < m_rxn.size(); i++) {
-            df_dfcent[i] = m_falloff[i]->dF_dFcent(pr[i], lnfcent[i]);
+            df_dfcent[i] = m_falloff[i]->dF_dFcent(pr[i], (work + m_offset[i]));
         }
     }
 
@@ -118,10 +120,10 @@ public:
      * Given vectors of reduced pressures, and Fcent values
      * compute \f$ \partial F_i / \partial P_r \f$
      */
-    void dF_dPr(const doublereal* pr, const doublereal* lnfcent, 
+    void dF_dPr(const doublereal* pr, const doublereal* work, 
                 doublereal* df_dpr) {
         for (size_t i = 0; i < m_rxn.size(); i++) {
-            df_dpr[i] = m_falloff[i]->dF_dPr(pr[i], lnfcent[i]);
+            df_dpr[i] = m_falloff[i]->dF_dPr(pr[i], (work + m_offset[i]));
         }
     }
 
@@ -140,12 +142,6 @@ public:
             }
         }
     }
-
-
-
-
-protected:
-
 
 protected:
     std::vector<size_t> m_rxn;

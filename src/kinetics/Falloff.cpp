@@ -10,6 +10,8 @@
 #include "cantera/base/ctexceptions.h"
 #include "cantera/kinetics/Falloff.h"
 
+using namespace std;
+
 namespace Cantera
 {
 
@@ -78,9 +80,10 @@ double Troe::F(double pr, const double* work) const
     return pow(10.0, lgf);
 }
 
-double Troe::dF_dFcent(double pr, double log10Fcent) const
+//TODO: Change the name (get rid of Fcent and use generic one applicable for all falloff classes
+double Troe::dF_dFcent(double pr, const double* work) const
 {
-    //double Fi = F(pr, &logFcent);
+    auto log10Fcent = *work;
     auto Fcent = pow(10.0, log10Fcent);
     auto logpr = log10(std::max(pr, SmallNumber)); 
     double invFcent = 1.0/(Fcent);
@@ -96,14 +99,10 @@ double Troe::dF_dFcent(double pr, double log10Fcent) const
 
 // Eq.(94) of pyjac.
 // In the final value F_i is omitted because it gets cancelled in Eq.(87)
-double Troe::dF_dPr(double pr, double log10Fcent) const
+double Troe::dF_dPr(double pr, const double* work) const
 {
-    //double Fi = F(pr, &logFcent);
-    // ln Fc = log_10 Fc * ln10
-    //auto Fcent = pow(10.0, logFcent);
+    auto log10Fcent = *work;
     auto logpr = log10(std::max(pr, SmallNumber)); 
-    //double invPrln10 = 1.0/(pr * log(10));
-    //double invPr= 1.0/pr;
     double A = logpr - 0.67 * log10Fcent - 0.4;
     double B = 0.806 - 1.1762 * log10Fcent - 0.14 * logpr;
     double Bcube = B * B * B;
@@ -193,14 +192,16 @@ double SRI::F(double pr, const double* work) const
     return pow(*work, xx) * work[1];
 }
 
-double SRI::dF_dFcent(double pr, double logFcent) const
+double SRI::dF_dFcent(double pr, const double* work) const
 {
     throw CanteraError("SRI::dF_dFcent", "Not implemented."); 
 }
 
-double SRI::dF_dPr(double pr, double logFcent) const
+double SRI::dF_dPr(double pr, const double* work) const
 {
-    throw CanteraError("SRI::dF_dPr", "Not implemented."); 
+    double lpr = log10(max(pr,SmallNumber));
+    double xx = 1.0/(1.0 + lpr*lpr);
+    return -xx * xx * log(max(*work, SmallNumber)) * 2 * lpr / (pr  * log(10));
 }
 
 /*
