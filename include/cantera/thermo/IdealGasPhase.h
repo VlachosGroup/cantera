@@ -530,7 +530,7 @@ public:
     virtual void getCp_R(doublereal* cpr) const;
     virtual void getdCp_RdT(doublereal* dCpRdT) const; 
     virtual void getdS_RdT(doublereal* dS_RdT) const;
-    virtual void getdBdT(doublereal* dS_RdT) const;
+    virtual void getdBdT(doublereal* dB_RdT) const;
 
 
     virtual void getStandardVolumes(doublereal* vol) const;

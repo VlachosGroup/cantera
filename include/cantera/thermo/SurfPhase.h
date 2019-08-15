@@ -318,6 +318,10 @@ public:
         return m_speciesSize[k];
     }
 
+    virtual const vector_fp& sizes() const {
+        return m_speciesSize;
+    }
+
     //! Set the site density of the surface phase (kmol m-2)
     /*!
      *  @param n0 Site density of the surface phase (kmol m-2)
@@ -332,6 +336,7 @@ public:
 
     virtual void getdCp_RdT(doublereal* dCpRdT) const; 
     virtual void getdS_RdT(doublereal* dS_RdT) const;
+    virtual void getdBdT(doublereal* dB_RdT) const;
 
     //! Return the thermodynamic pressure (Pa).
     virtual doublereal pressure() const {
@@ -424,6 +429,10 @@ protected:
 
     //! Temporary storage for the temp derivatives of reference state heat capacities
     mutable vector_fp m_dCp0_RdT;
+
+    //! Temporary storage for temp derivatives of -ve dimensionless reference
+    //! state gibb energies
+    mutable vector_fp m_dB0dT;
 
     //! Temporary storage for the reference state Gibbs energies
     mutable vector_fp m_mu0;

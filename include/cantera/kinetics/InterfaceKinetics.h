@@ -208,6 +208,8 @@ public:
      */
     virtual void updateROP();
 
+    virtual void updateROPDerivatives(bool constPressure = false);
+
     //! Update properties that depend on temperature
     /*!
      *  Current objects that this function updates:
@@ -217,6 +219,8 @@ public:
      *       updateKc();
      */
     void _update_rates_T();
+
+    void updateTDerivativeFactors();
 
     //! Update properties that depend on the electric potential
     void _update_rates_phi();

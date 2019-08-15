@@ -306,7 +306,7 @@ public:
      */
     doublereal updateRCDerivative(doublereal logT, doublereal recipT) const {
         auto k = updateRC(logT, recipT);
-        double k1_der, log_k2_der;
+        double k1_der, k2_der;
         if (ilow1_ == ilow2_) {
             k1_der = rates_[ilow1_].updateRCDerivative(logT, recipT);
         } else {

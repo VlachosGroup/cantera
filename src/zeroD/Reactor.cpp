@@ -251,7 +251,6 @@ void Reactor::evalEqs(doublereal time, doublereal* y,
 void Reactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydot,
                          Array2D* jac)
 {
-
     throw CanteraError("Reactor::evalJacEqs",
                        "Not implemented");
     /*
@@ -362,6 +361,55 @@ double Reactor::evalSurfaces(double t, double* ydot)
         }
     }
     return mdot_surf;
+}
+
+double Reactor::evalSurfaceDerivatives(double t, double* ydot, Array2D* jac)
+{
+    Array2D &J = *jac;
+    //double msdot = evalSurfaces(double t, double* ydot);
+    const size_t y_ind = 3;
+    size_t loc = 0; // offset into ydot
+    const vector_fp& mw = m_thermo->molecularWeights();
+    cout << "m_nsp " << m_nsp << endl;
+
+    for (auto S : m_surfaces) {
+        Kinetics* kin = S->kinetics();
+        SurfPhase* surf = S->thermo();
+        double wallarea = S->area();
+
+        size_t nk = surf->nSpecies();
+        size_t ns = kin->surfacePhaseIndex();
+        size_t surfloc = kin->kineticsSpeciesIndex(0,ns);
+        double rs0 = 1.0/surf->siteDensity();
+
+        //double sum = 0.0;
+        m_work.resize(m_nsp + nk);
+        for (size_t k = 0; k < m_nsp; k++) {
+            kin->getNetProductionRateYDerivatives(m_work.data(), k);
+            //double wt_frac = m_thermo->meanMolecularWeight() / mw[k];
+             for (size_t j = 0; j < m_nsp; j++) {
+                 J(y_ind+j, y_ind+k) += mw[j] * wallarea / m_mass * m_work[j];
+                 J(0, y_ind+k) += mw[j] * wallarea * m_work[j];
+             }
+             for (size_t j = m_nsp; j < m_nsp + nk; j++) {
+                 J(y_ind+loc+j, y_ind+k) = m_work[j] * rs0*surf->size(j - m_nsp);
+             }
+        }
+
+        for (size_t k = m_nsp; k < m_nsp+nk; k++) {
+            kin->getNetProductionRateYDerivatives(m_work.data(), k);
+            //double wt_frac = m_thermo->meanMolecularWeight() / mw[k];
+             for (size_t j = 0; j < m_nsp; j++) {
+                 J(y_ind+j, y_ind+loc+k) = mw[j] * wallarea / m_mass * m_work[j];
+                 J(0, y_ind+loc+k) += mw[j] * wallarea * m_work[j];
+             }
+             for (size_t j = m_nsp; j < m_nsp + nk; j++) {
+                 J(y_ind+loc+j, y_ind+loc+k) = m_work[j] * rs0*surf->size(j - m_nsp);
+             }
+        }
+
+        loc += nk;
+    }
 }
 
 void Reactor::addSensitivityReaction(size_t rxn)
