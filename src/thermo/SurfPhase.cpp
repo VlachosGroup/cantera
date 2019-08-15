@@ -196,6 +196,12 @@ void SurfPhase::getdS_RdT(doublereal* dS_RdT) const
     copy(m_dS0_RdT.begin(), m_dS0_RdT.end(), dS_RdT);
 }
 
+void SurfPhase::getdBdT(doublereal* dBdT) const
+{
+    _updateThermoDerivatives();
+    copy(m_dB0dT.begin(), m_dB0dT.end(), dBdT);
+}
+
 void SurfPhase::getGibbs_RT_ref(doublereal* grt) const
 {
     getGibbs_RT(grt);
@@ -321,7 +327,6 @@ void SurfPhase::_updateThermo(bool force) const
     doublereal tnow = temperature();
     if (m_tlast != tnow || force) {
         m_spthermo.update(tnow, m_cp0.data(), m_h0.data(), m_s0.data());
-        _updateThermoDerivatives(force);
         m_tlast = tnow;
         for (size_t k = 0; k < m_kk; k++) {
             m_h0[k] *= GasConstant * tnow;
@@ -336,8 +341,12 @@ void SurfPhase::_updateThermo(bool force) const
 void SurfPhase::_updateThermoDerivatives(bool force) const
 {
     doublereal tnow = temperature();
-    if (m_tlast != tnow || force) {
-        m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
+    //if (m_tlast != tnow || force) {
+    //}
+    _updateThermo(force);
+    m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
+    for (size_t i = 0; i < m_kk; i++) {
+        m_dB0dT[i] = m_dS0_RdT[i] - m_cp0[i]/GasConstant;
     }
 }
 

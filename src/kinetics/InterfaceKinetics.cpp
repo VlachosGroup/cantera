@@ -82,6 +82,22 @@ void InterfaceKinetics::_update_rates_T()
     }
 }
 
+void InterfaceKinetics::updateTDerivativeFactors(){
+    doublereal T = thermo(surfacePhaseIndex()).temperature();
+    doublereal logT = log(T);
+    m_rates.update_TDerivative(T, logT, m_rfn_dTMult.data());
+    //applyStickingCorrectionDerivatives(T, m_rfn_dTMult.data());
+
+    if (m_has_electrochem_rxns) {
+        //applyVoltageKfwdCorrectionDerivative(m_rfn_dTMult.data());
+    }
+
+    vector_fp dbdt(m_kk);
+    thermo(surfacePhaseIndex()).getdBdT(dbdt.data());
+    getReactionDelta(dbdt.data(),  m_dBdT.data());
+}
+
+
 void InterfaceKinetics::_update_rates_phi()
 {
     // Store electric potentials for each phase in the array m_phi[].
@@ -396,6 +412,110 @@ void InterfaceKinetics::updateROP()
         }
     }
     m_ROP_ok = true;
+}
+
+void InterfaceKinetics::updateROPDerivatives(bool constPressure)
+{
+    updateROP();
+    // Mass fraction derivatives
+    // Size is gas phase species + surface phase species
+    size_t sp_sz = 0;
+    if (!m_dRevROPdY.data().size()){   //TODO: Push these to class initialization
+        sp_sz += thermo().nSpecies();
+        sp_sz += thermo(surfacePhaseIndex()).nSpecies();
+        m_dRevROPdY.resize(nReactions(), sp_sz);
+    }
+    if (!m_dNetROPdY.data().size()){
+        m_dNetROPdY.resize(nReactions(), sp_sz);
+    }
+
+    // WOrk with gas phase
+    auto W = thermo().meanMolecularWeight();
+    const auto weights = thermo().molecularWeights();
+    auto den = thermo().density();
+
+    for (size_t j = 0; j < thermo().nSpecies(); j++){    
+        m_dNetROPdY.setColumn(j, m_rfn.data());
+        m_reactantStoich.derivative_multiply(
+                m_actConc.data(), m_dNetROPdY.ptrColumn(j), j);
+
+        auto den_by_wght = den / weights[j];
+        auto muwght_by_wght = W / weights[j] ;
+        for (size_t i = 0; i < nReactions(); i++){
+            m_dNetROPdY(i, j) *=  den_by_wght;
+        }
+
+        if (constPressure){     // Do this on gas phase only 
+            for (size_t i = 0; i < nReactions(); i++){
+                m_dNetROPdY(i, j) -= m_ropf[i] * m_reactant_stoichsum[i] *
+                                     muwght_by_wght;
+            }
+        }
+    }
+
+    for (size_t j = 0; j < thermo().nSpecies(); j++){    // Rev part of Eq. 76 of pyjac
+        m_dRevROPdY.setColumn(j, m_rfn.data());
+        m_revProductStoich.derivative_multiply(
+                m_actConc.data(), m_dRevROPdY.ptrColumn(j), j);
+
+        auto den_by_wght = den / weights[j];
+        auto muwght_by_wght = W / weights[j] ;
+        for (size_t i = 0; i < nReactions(); i++){
+            m_dRevROPdY(i, j) *=  den_by_wght * m_rkcn[i];;
+        }
+        
+        // Eq. 58 of pyjac net
+        if (constPressure){     // Do this on gas phase only 
+            for (size_t i = 0; i < nReactions(); i++){
+                m_dRevROPdY(i, j) -= m_ropr[i] * m_product_stoichsum[i] *
+                                     muwght_by_wght;
+            }
+        }
+    }
+
+    for (size_t j = 0; j < thermo().nSpecies(); j++){
+        for (size_t i = 0; i < nReactions(); i++) {
+            m_dNetROPdY(i, j) -= m_dRevROPdY(i, j);
+        }
+    }
+
+    // WOrk with surface phase. Here site fractions is the state variable
+    auto Gamma = m_surf->siteDensity();
+    const auto sizes = m_surf->sizes();
+
+    for (size_t k = 0; k < thermo(surfacePhaseIndex()).nSpecies(); k++){    
+        size_t j = k + m_start[surfacePhaseIndex()];
+        size_t j1 = k + thermo().nSpecies();
+        m_dNetROPdY.setColumn(j1, m_rfn.data());
+        m_reactantStoich.derivative_multiply(
+                m_actConc.data(), m_dNetROPdY.ptrColumn(j1), j);
+
+        auto mult_fctr  = Gamma / sizes[k];
+        for (size_t i = 0; i < nReactions(); i++){
+            m_dNetROPdY(i, j1) *=  mult_fctr;
+        }
+    }
+
+    for (size_t k = 0; k < thermo(surfacePhaseIndex()).nSpecies(); k++){    // Rev part of Eq. 76 of pyjac
+        size_t j = k + m_start[surfacePhaseIndex()];
+        size_t j1 = k + thermo().nSpecies();
+
+        m_dRevROPdY.setColumn(j1, m_rfn.data());
+        m_revProductStoich.derivative_multiply(
+                m_actConc.data(), m_dRevROPdY.ptrColumn(j1), j);
+
+        auto mult_fctr  = Gamma / sizes[k];
+        for (size_t i = 0; i < nReactions(); i++){
+            m_dRevROPdY(i, j1) *=  mult_fctr;;
+        }
+    }
+
+    for (size_t k = 0; k < thermo(surfacePhaseIndex()).nSpecies(); k++){
+        size_t j1 = k + thermo().nSpecies();
+        for (size_t i = 0; i < nReactions(); i++) {
+            m_dNetROPdY(i, j1) -= m_dRevROPdY(i, j1);
+        }
+    }
 }
 
 void InterfaceKinetics::getDeltaGibbs(doublereal* deltaG)

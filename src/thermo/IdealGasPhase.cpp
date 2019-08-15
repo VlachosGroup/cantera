@@ -318,8 +318,8 @@ void IdealGasPhase::_updateThermo() const
 }
 void IdealGasPhase::_updateThermoDerivatives() const
 {
-    static const int cacheId = m_cache.getId();
-    CachedScalar cached = m_cache.getScalar(cacheId);
+    static const int cacheId1 = m_cache.getId();
+    CachedScalar cached = m_cache.getScalar(cacheId1);
     doublereal tnow = temperature();
 
     // If the temperature has changed since the last time these
@@ -327,6 +327,7 @@ void IdealGasPhase::_updateThermoDerivatives() const
     if (cached.state1 != tnow) {
         _updateThermo();
         m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
+        cached.state1 = tnow;
         for (size_t i = 0; i < m_kk; i++) {
             m_dB0dT[i] = m_dS0_RdT[i] - m_cp0_R[i];
         }

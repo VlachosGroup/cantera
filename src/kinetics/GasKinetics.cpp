@@ -308,11 +308,6 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
     // Mass fraction derivatives
     updateYDerivativeFactors();
 
-    /*
-    if (!m_dFwdROPdY.data().size()){
-        m_dFwdROPdY.resize(nReactions(), m_kk);
-    }
-    */
     if (!m_dRevROPdY.data().size()){   //TODO: Push these to class initialization
         m_dRevROPdY.resize(nReactions(), m_kk);
     }
