@@ -419,8 +419,20 @@ void InterfaceKinetics::updateROPDerivatives(bool constPressure)
     // Mass fraction derivatives
     // Size is gas phase species + surface phase species
     size_t sp_sz = 0;
+    size_t gasPhaseIndex = -1;
+    for( size_t i = 0; i < nPhases(); i++){
+        if (thermo(i).type() == "IdealGas"){
+            gasPhaseIndex = i;
+            break;
+        }
+    }
+    if (gasPhaseIndex < 0){
+        throw CanteraError("InterfaceKinetics::updateROPDerivatives",
+                           "Gas phase not found");
+    }
+
     if (!m_dRevROPdY.data().size()){   //TODO: Push these to class initialization
-        sp_sz += thermo().nSpecies();
+        sp_sz += thermo(gasPhaseIndex).nSpecies();
         sp_sz += thermo(surfacePhaseIndex()).nSpecies();
         m_dRevROPdY.resize(nReactions(), sp_sz);
     }
@@ -429,22 +441,23 @@ void InterfaceKinetics::updateROPDerivatives(bool constPressure)
     }
 
     // WOrk with gas phase
-    auto W = thermo().meanMolecularWeight();
-    const auto weights = thermo().molecularWeights();
-    auto den = thermo().density();
+    auto W = thermo(gasPhaseIndex).meanMolecularWeight();
+    const auto weights = thermo(gasPhaseIndex).molecularWeights();
+    auto den = thermo(gasPhaseIndex).density();
 
-    for (size_t j = 0; j < thermo().nSpecies(); j++){    
+    for (size_t j = 0; j < thermo(gasPhaseIndex).nSpecies(); j++){
+        size_t j1 = j + m_start[gasPhaseIndex];
         m_dNetROPdY.setColumn(j, m_rfn.data());
         m_reactantStoich.derivative_multiply(
-                m_actConc.data(), m_dNetROPdY.ptrColumn(j), j);
+                m_actConc.data(), m_dNetROPdY.ptrColumn(j), j1);
 
         auto den_by_wght = den / weights[j];
-        auto muwght_by_wght = W / weights[j] ;
         for (size_t i = 0; i < nReactions(); i++){
             m_dNetROPdY(i, j) *=  den_by_wght;
         }
 
         if (constPressure){     // Do this on gas phase only 
+            auto muwght_by_wght = W / weights[j];
             for (size_t i = 0; i < nReactions(); i++){
                 m_dNetROPdY(i, j) -= m_ropf[i] * m_reactant_stoichsum[i] *
                                      muwght_by_wght;
@@ -452,19 +465,20 @@ void InterfaceKinetics::updateROPDerivatives(bool constPressure)
         }
     }
 
-    for (size_t j = 0; j < thermo().nSpecies(); j++){    // Rev part of Eq. 76 of pyjac
+    for (size_t j = 0; j < thermo(gasPhaseIndex).nSpecies(); j++){    // Rev part of Eq. 76 of pyjac
+        size_t j1 = j + m_start[gasPhaseIndex];
         m_dRevROPdY.setColumn(j, m_rfn.data());
         m_revProductStoich.derivative_multiply(
-                m_actConc.data(), m_dRevROPdY.ptrColumn(j), j);
+                m_actConc.data(), m_dRevROPdY.ptrColumn(j), j1);
 
         auto den_by_wght = den / weights[j];
-        auto muwght_by_wght = W / weights[j] ;
         for (size_t i = 0; i < nReactions(); i++){
-            m_dRevROPdY(i, j) *=  den_by_wght * m_rkcn[i];;
+            m_dRevROPdY(i, j) *=  den_by_wght * m_rkcn[i];
         }
         
         // Eq. 58 of pyjac net
         if (constPressure){     // Do this on gas phase only 
+            auto muwght_by_wght = W / weights[j] ;
             for (size_t i = 0; i < nReactions(); i++){
                 m_dRevROPdY(i, j) -= m_ropr[i] * m_product_stoichsum[i] *
                                      muwght_by_wght;
@@ -472,7 +486,7 @@ void InterfaceKinetics::updateROPDerivatives(bool constPressure)
         }
     }
 
-    for (size_t j = 0; j < thermo().nSpecies(); j++){
+    for (size_t j = 0; j < thermo(gasPhaseIndex).nSpecies(); j++){
         for (size_t i = 0; i < nReactions(); i++) {
             m_dNetROPdY(i, j) -= m_dRevROPdY(i, j);
         }
@@ -484,7 +498,7 @@ void InterfaceKinetics::updateROPDerivatives(bool constPressure)
 
     for (size_t k = 0; k < thermo(surfacePhaseIndex()).nSpecies(); k++){    
         size_t j = k + m_start[surfacePhaseIndex()];
-        size_t j1 = k + thermo().nSpecies();
+        size_t j1 = k + thermo(gasPhaseIndex).nSpecies();
         m_dNetROPdY.setColumn(j1, m_rfn.data());
         m_reactantStoich.derivative_multiply(
                 m_actConc.data(), m_dNetROPdY.ptrColumn(j1), j);
@@ -497,7 +511,7 @@ void InterfaceKinetics::updateROPDerivatives(bool constPressure)
 
     for (size_t k = 0; k < thermo(surfacePhaseIndex()).nSpecies(); k++){    // Rev part of Eq. 76 of pyjac
         size_t j = k + m_start[surfacePhaseIndex()];
-        size_t j1 = k + thermo().nSpecies();
+        size_t j1 = k + thermo(gasPhaseIndex).nSpecies();
 
         m_dRevROPdY.setColumn(j1, m_rfn.data());
         m_revProductStoich.derivative_multiply(
@@ -505,12 +519,12 @@ void InterfaceKinetics::updateROPDerivatives(bool constPressure)
 
         auto mult_fctr  = Gamma / sizes[k];
         for (size_t i = 0; i < nReactions(); i++){
-            m_dRevROPdY(i, j1) *=  mult_fctr;;
+            m_dRevROPdY(i, j1) *=  mult_fctr * m_rkcn[i];
         }
     }
 
     for (size_t k = 0; k < thermo(surfacePhaseIndex()).nSpecies(); k++){
-        size_t j1 = k + thermo().nSpecies();
+        size_t j1 = k + thermo(gasPhaseIndex).nSpecies();
         for (size_t i = 0; i < nReactions(); i++) {
             m_dNetROPdY(i, j1) -= m_dRevROPdY(i, j1);
         }

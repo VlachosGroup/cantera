@@ -172,7 +172,7 @@ protected:
     //! @param t          the current time
     //! @param[out] ydot  array of d(coverage)/dt for surface species
     //! @returns          Net mass flux from surfaces
-    virtual double evalSurfaceDerivatives(double t, double* ydot, Array2D* jac);
+    virtual double evalSurfaceDerivatives(double t, double* y, double* ydot, Array2D* jac);
 
     //! Update the state of SurfPhase objects attached to this reactor
     virtual void updateSurfaceState(double* y);

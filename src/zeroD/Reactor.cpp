@@ -363,14 +363,12 @@ double Reactor::evalSurfaces(double t, double* ydot)
     return mdot_surf;
 }
 
-double Reactor::evalSurfaceDerivatives(double t, double* ydot, Array2D* jac)
+double Reactor::evalSurfaceDerivatives(double t, double* y, double* ydot, Array2D* jac)
 {
     Array2D &J = *jac;
-    //double msdot = evalSurfaces(double t, double* ydot);
     const size_t y_ind = 3;
     size_t loc = 0; // offset into ydot
     const vector_fp& mw = m_thermo->molecularWeights();
-    cout << "m_nsp " << m_nsp << endl;
 
     for (auto S : m_surfaces) {
         Kinetics* kin = S->kinetics();
@@ -382,32 +380,69 @@ double Reactor::evalSurfaceDerivatives(double t, double* ydot, Array2D* jac)
         size_t surfloc = kin->kineticsSpeciesIndex(0,ns);
         double rs0 = 1.0/surf->siteDensity();
 
-        //double sum = 0.0;
-        m_work.resize(m_nsp + nk);
+        kin->updateROPDerivatives(false);
+        double dsdm = 0;
         for (size_t k = 0; k < m_nsp; k++) {
+            size_t k1 = k + y_ind;
             kin->getNetProductionRateYDerivatives(m_work.data(), k);
-            //double wt_frac = m_thermo->meanMolecularWeight() / mw[k];
-             for (size_t j = 0; j < m_nsp; j++) {
-                 J(y_ind+j, y_ind+k) += mw[j] * wallarea / m_mass * m_work[j];
-                 J(0, y_ind+k) += mw[j] * wallarea * m_work[j];
-             }
-             for (size_t j = m_nsp; j < m_nsp + nk; j++) {
-                 J(y_ind+loc+j, y_ind+k) = m_work[j] * rs0*surf->size(j - m_nsp);
-             }
+
+            double dsdZ = 0;
+            for (size_t j = 0; j < m_nsp; j++) {
+                auto J_0k = mw[j] * wallarea * m_work[j];
+                J(y_ind+j, k1) += J_0k /m_mass;
+                dsdZ += J_0k /m_mass; 
+                J(0, k1) += J_0k;
+                auto J_j0 = J_0k / (m_mass*m_mass) * y[k1];
+                dsdm += J_j0;
+                J(y_ind+j, 0) += J_j0;
+                J(0, 0) += J_0k / m_mass * y[k1];
+            }
+            for (size_t j = 0; j < m_nsp; j++) {
+                J(y_ind+j, k1) -= y[y_ind+j] * dsdZ; 
+            }
+            
+            double sum = 0;
+            for (size_t j = 1; j < nk; j++) {
+                J(y_ind+loc+m_nsp+j, k1) = m_work[surfloc+j] * rs0*surf->size(j);
+                cout << j << " " <<  k1 << " " << J(y_ind+loc+m_nsp+j, k1) << endl;;
+                sum -= J(y_ind+loc+m_nsp+j, k1);
+                J(y_ind+loc+m_nsp+j, 0) += m_work[surfloc+j] / m_mass * y[k1] * rs0*surf->size(j);
+            }
+            J(y_ind + loc + m_nsp, k1)  = sum;
+
+            double sum1 = 0;
+            for (size_t j = 1; j < nk; j++) {
+                sum1 -= J(y_ind+loc+m_nsp+j, 0); 
+            }
+            J(y_ind + loc + m_nsp, 0)  = sum1;
+
+        }
+        for (size_t j = 0; j < m_nsp; j++) {
+            J(y_ind+j, 0) -= y[j + y_ind] * dsdm;
         }
 
-        for (size_t k = m_nsp; k < m_nsp+nk; k++) {
-            kin->getNetProductionRateYDerivatives(m_work.data(), k);
-            //double wt_frac = m_thermo->meanMolecularWeight() / mw[k];
-             for (size_t j = 0; j < m_nsp; j++) {
-                 J(y_ind+j, y_ind+loc+k) = mw[j] * wallarea / m_mass * m_work[j];
-                 J(0, y_ind+loc+k) += mw[j] * wallarea * m_work[j];
-             }
-             for (size_t j = m_nsp; j < m_nsp + nk; j++) {
-                 J(y_ind+loc+j, y_ind+loc+k) = m_work[j] * rs0*surf->size(j - m_nsp);
-             }
-        }
+        for (size_t k = 0; k < nk; k++) {
+            kin->getNetProductionRateYDerivatives(m_work.data(), m_nsp+k);
+            size_t k1 = k + loc + m_nsp + y_ind;
 
+            double dsdZ = 0;
+            for (size_t j = 0; j < m_nsp; j++) {
+                double tmp = mw[j] * wallarea * m_work[j];
+                J(y_ind+j, k1) = tmp / m_mass;
+                J(0, k1) += tmp;
+                dsdZ += tmp;
+            }
+            for (size_t j = 0; j < m_nsp; j++) {
+                J(y_ind+j, k1) -= y[y_ind+j] * dsdZ / m_mass;
+            }
+
+            double sum = 0;
+            for (size_t j = 1; j < nk; j++) {
+                J(y_ind+loc+m_nsp+j, k1) = m_work[surfloc+j] * rs0*surf->size(j);
+                sum -= J(y_ind+loc+m_nsp+j, k1);
+            }
+            J(y_ind + loc + m_nsp, k1)  = sum;
+        }
         loc += nk;
     }
 }
