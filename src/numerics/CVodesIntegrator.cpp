@@ -501,8 +501,11 @@ double CVodesIntegrator::step(double tout)
     Array2D jac;
     jac.resize(m_neq, m_neq);
     m_func->evalJacobian(m_time, NV_DATA_S(m_y), ydot.data(), jac.ptrColumn(0));
-    //cout << "Analytical jacobian " << endl;
-    //cout << jac;
+    cout << "Analytical jacobian " << endl;
+    cout << jac;
+    m_func->evalJacobianFD(m_time, NV_DATA_S(m_y), ydot.data(), jac.ptrColumn(0));
+    cout << "Finite Difference jacobian " << endl;
+    cout << jac;
 
     int flag = CVode(m_cvode_mem, tout, m_y, &m_time, CV_ONE_STEP);
     if (flag != CV_SUCCESS) {
