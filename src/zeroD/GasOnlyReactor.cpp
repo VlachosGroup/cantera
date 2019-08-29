@@ -132,6 +132,7 @@ void GasOnlyReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydot
     // J(j, k) = $\dho Y_j / dho Y_k$
     const vector_fp& mw = m_thermo->molecularWeights();
     m_work.resize(m_nsp);
+    m_kin->updateROPDerivatives();
     for (size_t j = 0; j < m_nsp; j++){             // Eq. (49) of pyjac
         m_kin->getNetProductionRateYDerivatives(m_work.data(), j);
         double wt_frac = m_thermo->meanMolecularWeight() / mw[j];
@@ -140,8 +141,6 @@ void GasOnlyReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydot
             J(k,j) = mw[k] / m_thermo->density() * m_work[k];
         }
     }
-    
-
 }
 
 size_t GasOnlyReactor::componentIndex(const string& nm) const
