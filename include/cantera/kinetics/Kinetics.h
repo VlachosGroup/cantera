@@ -178,6 +178,12 @@ public:
     //! which take an array pointer.
     void checkPhaseArraySize(size_t mm) const;
 
+    // Update internal derivatives of rate-of-progress variables 
+    // #m_dropfdt and #m_droprdt.
+    virtual void updateROPDerivatives(bool constPressure = false) {
+        throw NotImplementedError("Kinetics::updateROP");
+    }
+
     /**
      * Return the phase index of a phase in the list of phases defined within
      * the object.
@@ -893,11 +899,6 @@ protected:
         throw NotImplementedError("Kinetics::updateROP");
     }
 
-    // Update internal derivatives of rate-of-progress variables 
-    // #m_dropfdt and #m_droprdt.
-    virtual void updateROPDerivatives(bool constPressure = false) {
-        throw NotImplementedError("Kinetics::updateROP");
-    }
 
     //! Check whether `r1` and `r2` represent duplicate stoichiometries
     //! This function returns a ratio if two reactions are duplicates of

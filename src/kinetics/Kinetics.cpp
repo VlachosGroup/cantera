@@ -441,8 +441,6 @@ void Kinetics::getNetProductionRates(doublereal* net)
 
 void Kinetics::getNetProductionRateTDerivatives(doublereal* dNetdT)
 {
-    updateROPDerivatives();
-
     fill(dNetdT, dNetdT + m_kk, 0.0);
     // products are created for positive net rate of progress
     m_revProductStoich.incrementSpecies(m_dNetROPdT.data(), dNetdT);
@@ -453,8 +451,6 @@ void Kinetics::getNetProductionRateTDerivatives(doublereal* dNetdT)
 
 void Kinetics::getNetProductionRateYDerivatives(doublereal* dNetdY, size_t k)
 {
-    updateROPDerivatives();
-
     fill(dNetdY, dNetdY + m_kk, 0.0);
     // products are created for positive net rate of progress
     m_revProductStoich.incrementSpecies(m_dNetROPdY.ptrColumn(k), dNetdY);
