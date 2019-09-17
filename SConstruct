@@ -804,6 +804,18 @@ else:
     env['blas_lapack_libs'] = []
     env['use_lapack'] = False
 
+# **************************************************
+# Conan related info if using conan package manager
+# *************************************************
+build_path_relative_to_sconstruct = Dir('..').path
+conan_scons_script_path = '{}/SConscript_conan'.format(build_path_relative_to_sconstruct)
+if os.path.exists(conan_scons_script_path):
+    conan = SConscript(conan_scons_script_path)
+    if conan:
+        flags = conan["conan"]
+        env.MergeFlags(flags)
+
+
 # ************************************
 # *** Compiler Configuration Tests ***
 # ************************************
