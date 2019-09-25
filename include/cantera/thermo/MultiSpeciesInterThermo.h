@@ -58,7 +58,7 @@ class MultiSpeciesInterThermo
 {
 public:
     //! Constructor
-    MultiSpeciesInterThermo() {}
+    MultiSpeciesInterThermo(); 
 
     MultiSpeciesInterThermo(
             std::vector<std::shared_ptr<LateralInteraction> > interactions);

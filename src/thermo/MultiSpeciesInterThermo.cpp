@@ -24,8 +24,14 @@ using namespace std;
 namespace Cantera
 {
 
+MultiSpeciesInterThermo::MultiSpeciesInterThermo() :
+    m_nSpecies(0)
+{
+}
+
 MultiSpeciesInterThermo::MultiSpeciesInterThermo(
         vector<shared_ptr<LateralInteraction> > interactions) :
+    m_nSpecies(0),
     m_interactions(interactions)
 {
 }
