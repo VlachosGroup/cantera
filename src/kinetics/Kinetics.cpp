@@ -618,4 +618,42 @@ shared_ptr<const Reaction> Kinetics::reaction(size_t i) const
     return m_reactions[i];
 }
 
+bool Kinetics::addBEP(shared_ptr<BEP> bep)
+{
+    // Map the reaction ids in BEP with reaction indices in the kinetic object for quick usage. 
+    // Any unfound reaction is ignored.
+    // Also verify that the reaction id is not used with other existing BEP objects
+    const auto& rxnIds = bep->getReactionIds();
+    for (size_t j = 0; j < rxnIds.size(); j++) {
+        auto bep_rxnId = rxnIds[j];
+        for (size_t i = 0; i < nReactions(); i++) {
+            auto kin_rxnId = reaction(i)->id;
+            if (kin_rxnId == bep_rxnId) {
+                // Check the rxnId is affliated with existing BEPs
+                for (const auto bep : m_BEPs) {
+                    if (bep->reactionInBEP(i)) {
+                        cout << "**********************************\n" 
+                             << "WARNING: Reaction already part of another BEP\n" 
+                             << "Not adding the reaction to BEP " << bep->id() << endl;
+                    }
+                }
+                bep->addReaction(i, bep->rxnIdIsCleave(j));
+            }
+        }
+    }
+    
+    m_BEPs.push_back(bep);
+    return true;
+}
+
+shared_ptr<BEP> Kinetics::getBEP(size_t i)
+{
+    return m_BEPs[i];
+}
+    
+shared_ptr<const BEP> Kinetics::getBEP(size_t i) const
+{
+    return m_BEPs[i];
+}
+
 }

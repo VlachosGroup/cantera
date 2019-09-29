@@ -41,6 +41,7 @@ bool installReactionArrays(const XML_Node& p, Kinetics& kin,
     if (rarrays.empty()) {
         return false;
     }
+    cout << "In install rArrays: rarrays size "  << rarrays.size() << endl;
     for (size_t n = 0; n < rarrays.size(); n++) {
         // Go get a reference to the current XML element, reactionArray. We will
         // process this element now.
@@ -129,6 +130,82 @@ bool installReactionArrays(const XML_Node& p, Kinetics& kin,
     return true;
 }
 
+bool installBEPArrays(const XML_Node& p, Kinetics& kin,
+                           std::string default_phase, bool check_for_duplicates)
+{
+    int itot = 0;
+
+    // Search the children of the phase element for the XML element named
+    // BEPArray. If we can't find it, then return signaling having not
+    // found any BEPS. Apparently, we allow multiple BEPArray elements
+    // here Each one will be processed sequentially, with the end result being
+    // purely additive.
+    vector<XML_Node*> bepArrays = p.getChildren("bepArray");
+    if (bepArrays.empty()) {
+        return false;
+    }
+    for (size_t n = 0; n < bepArrays.size(); n++) {
+        // Go get a reference to the current XML element, BEPArray. We will
+        // process this element now.
+        const XML_Node& beps = *bepArrays[n];
+
+        // The reactionArray element has an attribute called, datasrc. The value
+        // of the attribute is the XML element comprising the top of the tree of
+        // reactions for the phase. Find this datasrc element starting with the
+        // root of the current XML node.
+        const XML_Node* bepdata = get_XML_Node(beps["datasrc"], &beps.root());
+
+        // Search for child elements called include. We only include a BEP relation
+        // if it's tagged by one of the include fields. Or, we include all
+        // BEP relations if there are no include fields.
+        vector<XML_Node*> incl = beps.getChildren("include");
+        vector<XML_Node*> allbeps = bepdata->getChildren("bep");
+        // if no 'include' directive, then include all reactions
+        if (incl.empty()) {
+            for (size_t i = 0; i < allbeps.size(); i++) {
+                kin.addBEP(newBEP(*allbeps[i]));
+                ++itot;
+            }
+        } else {
+            for (size_t nii = 0; nii < incl.size(); nii++) {
+                const XML_Node& ii = *incl[nii];
+                string imin = ii["min"];
+                string imax = ii["max"];
+
+                string::size_type iwild = string::npos;
+                if (imax == imin) {
+                    iwild = imin.find("*");
+                    if (iwild != string::npos) {
+                        imin = imin.substr(0,iwild);
+                        imax = imin;
+                    }
+                }
+
+                for (size_t i = 0; i < allbeps.size(); i++) {
+                    const XML_Node* bep = allbeps[i];
+                    string bepid;
+                    if (bep) {
+                        bepid = bep->attrib("id");
+                        if (iwild != string::npos) {
+                            bepid = bepid.substr(0,iwild);
+                        }
+
+                        // To decide whether the BEP is included or not we
+                        // do a lexical min max and operation. This sometimes
+                        // has surprising results.
+                        if ((bepid >= imin) && (bepid <= imax)) {
+                            kin.addBEP(newBEP(*bep));
+                            ++itot;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
 bool importKinetics(const XML_Node& phase, std::vector<ThermoPhase*> th,
                     Kinetics* k)
 {
@@ -189,7 +266,8 @@ bool importKinetics(const XML_Node& phase, std::vector<ThermoPhase*> th,
     k->init();
 
     // Install the reactions.
-    return installReactionArrays(phase, *k, owning_phase, check_for_duplicates);
+    auto result = installReactionArrays(phase, *k, owning_phase, check_for_duplicates);
+    return result && installBEPArrays(phase, *k, owning_phase, check_for_duplicates);
 }
 
 bool buildSolutionFromXML(XML_Node& root, const std::string& id,

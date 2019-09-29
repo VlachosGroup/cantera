@@ -44,6 +44,29 @@ bool installReactionArrays(const XML_Node& p, Kinetics& kin,
                            std::string default_phase,
                            bool check_for_duplicates = false);
 
+//!  Install information about BEPs into the kinetics object, kin.
+/*!
+ *  At this point, parent usually refers to the phase XML element. One of the
+ *  children of this element is BEPArray, the element which determines
+ *  where in the XML file to look up the reaction rate data.
+ *
+ *  @param p             parent XML phase element
+ *  @param kin           Kinetics object to install reactions into
+ *  @param default_phase The default_phase is the default phase to assume when
+ *                       looking up species.
+ *  @param check_for_duplicates Check for reactions with exactly the same
+ *                       reactants and products.
+ *
+ *  @return
+ *    On return, if reaction instantiation goes correctly, return true.
+ *    If there is a problem, return false.
+ *
+ * @ingroup kineticsmgr
+ */
+bool installBEPArrays(const XML_Node& p, Kinetics& kin,
+                           std::string default_phase,
+                           bool check_for_duplicates = false);
+
 //! Import a reaction mechanism for a phase or an interface.
 /*!
  * This routine will import a reaction mechanism into a kinetics object. The
