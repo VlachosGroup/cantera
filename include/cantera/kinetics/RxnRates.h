@@ -62,6 +62,14 @@ public:
     }
 
     /**
+     * Update the activation energy of the reaction. Required for the
+     * cases where Ea is set from BEP relations
+     */
+    void update_Ea_R(const doublereal Ea_R) {
+        m_E = Ea_R;
+    }
+
+    /**
      * Update the value the rate constant.
      *
      * This function returns the actual value of the rate constant. It can be
@@ -143,6 +151,14 @@ public:
 
     void resetIntrxnCoverageDependence() {
         m_has_intrxn_species = false;
+    }
+
+    /**
+     * Update the activation energy of the reaction. Required for the
+     * cases where Ea is set from BEP relations
+     */
+    void update_Ea_R(const doublereal Ea_R) {
+        m_E = Ea_R;
     }
 
     void update_C(const doublereal* theta) {

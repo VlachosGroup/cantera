@@ -678,6 +678,14 @@ protected:
     //! Number of dimensions of reacting phase (2 for InterfaceKinetics, 1 for
     //! EdgeKinetics)
     size_t m_nDim;
+
+    //! Vector of indices of reactions, whose action energies are determined 
+    //! from BEP relations
+    std::vector<size_t> m_BEPRxns = {};
+
+    //! Vector of activation energies defined by BEPs
+    //! from BEP relations
+    std::vector<double> m_BEP_EaR = {};
 };
 }
 

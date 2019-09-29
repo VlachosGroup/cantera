@@ -64,7 +64,46 @@ void InterfaceKinetics::_update_rates_T()
     if (T != m_temp || m_redo_rates) {
         m_logtemp = log(T);
 
-        //  Calculate the forward rate constant by calling m_rates and store it in m_rfn[]
+        // Update the BEP dependent activation energies
+        cout << "nBEPs " << nBEPs() << endl;
+        if (nBEPs()) {
+            cout << "BEP reactions # " << m_BEPRxns.size() << endl;
+            if (!m_BEPRxns.size()) { // Populate the BEP rxns if not done before
+                for (const auto bep : m_BEPs) {
+                    const auto rxnIds = bep->getReactionIndices();
+                    m_BEPRxns.insert(m_BEPRxns.end(), rxnIds.begin(), 
+                                     rxnIds.end());
+                }
+                m_BEP_EaR.resize(m_BEPRxns.size());
+            }
+
+            // Get the reaction enthalpies
+            //
+            vector_fp deltaH(m_deltaG0.size());
+            getDeltaEnthalpy(deltaH.data());
+            /*for (size_t i = 0; i < deltaH_R.size(); i++){
+                deltaH_R[i] /= GasConstant; 
+            }
+            */
+            size_t ind = 0;
+            for (const auto bep : m_BEPs) {
+                bep->computeActivationEnergies(deltaH.data(), 
+                                               m_BEP_EaR.data() + ind);
+                ind += bep->nReactions();
+            }
+            cout << "Gas Constant" << endl;
+            for (size_t i = 0; i < m_BEPRxns.size(); i++){
+                m_BEP_EaR[i] /= GasConstant;
+            }
+            m_rates.updateActivationEnergies(m_BEPRxns.size(), m_BEPRxns.data(), 
+                                             m_BEP_EaR.data());
+        }
+        // Calculate the forward rate constant by calling m_rates and store it in m_rfn[]
+        cout << "Activation energies" << endl;
+        for (size_t i = 0; i < nReactions(); i++){
+            cout << i << " " << m_rates.effectiveActivationEnergy_R(i) << endl;
+        }
+
         if (m_has_thermo_coverage_dependence){
             vector_fp deltaG0_R(m_deltaG0.size());
             getDeltaSSGibbs(deltaG0_R.data());

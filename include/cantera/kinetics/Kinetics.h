@@ -14,6 +14,7 @@
 #include "cantera/thermo/ThermoPhase.h"
 #include "StoichManager.h"
 #include "cantera/kinetics/Reaction.h"
+#include "cantera/kinetics/BEP.h"
 #include "cantera/base/global.h"
 
 namespace Cantera
@@ -134,6 +135,11 @@ public:
     //! Number of reactions in the reaction mechanism.
     size_t nReactions() const {
         return m_reactions.size();
+    }
+
+    //! Number of BEP relations in the reaction mechanism.
+    size_t nBEPs() const {
+        return m_BEPs.size();
     }
 
     //! Check that the specified reaction index is in range
@@ -733,6 +739,26 @@ public:
 
     shared_ptr<const Reaction> reaction(size_t i) const;
 
+    /**
+     * Add a single BEP to the mechanism. Derived classes should call the
+     * base class method in addition to handling their own specialized behavior.
+     * Call this only after installing the reactions.
+     *
+     * @param bep     Pointer to the BEP object to be added.
+     * @return `true` if the BEP is added or `false` if it was skipped
+     */
+    virtual bool addBEP(shared_ptr<BEP> bep);
+
+    /**
+     * Return the BEP object for BEP *i*. 
+     */
+    shared_ptr<BEP> getBEP(size_t i);
+
+    shared_ptr<const BEP> getBEP(size_t i) const;
+
+    void updateActEnergiesfromBEP();
+
+
     //! Determine behavior when adding a new reaction that contains species not
     //! defined in any of the phases associated with this kinetics manager. If
     //! set to true, the reaction will silently be ignored. If false, (the
@@ -866,6 +892,9 @@ protected:
 
     //! Vector of Reaction objects represented by this Kinetics manager
     std::vector<shared_ptr<Reaction> > m_reactions;
+
+    //! Vector of Reaction objects represented by this Kinetics manager
+    std::vector<shared_ptr<BEP> > m_BEPs;
 
     //! m_thermo is a vector of pointers to ThermoPhase objects that are
     //! involved with this kinetics operator

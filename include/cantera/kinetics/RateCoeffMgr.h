@@ -44,6 +44,21 @@ public:
     }
 
     /**
+     * Modify the activation energies for the given reaction numbers with the
+     * given activation energies. This function is added to update/populate the 
+     * activation energies defined with Bell-Evans-Polyanni (BEP) relation.  
+     * The activation energies are computed elsewhere like in BEP class.
+     */
+    void updateActivationEnergies(const size_t RxnNoSize, 
+                                  const size_t* rxnNumbers, 
+                                  const doublereal* Ea_R) {
+        for (size_t i = 0; i < RxnNoSize; i++) {
+            std::cout << i << " " << rxnNumbers[i] << " Ea: " << Ea_R[i] << std::endl;
+            m_rates[rxnNumbers[i]].update_Ea_R(Ea_R[i]);
+        }
+    }
+
+    /**
      * Update the concentration-dependent parts of the rate coefficient, if any.
      * Used by class SurfaceArrhenius to compute coverage-dependent *
      * modifications to the Arrhenius parameters. The array c should contain
