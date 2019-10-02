@@ -53,7 +53,6 @@ public:
                                   const size_t* rxnNumbers, 
                                   const doublereal* Ea_R) {
         for (size_t i = 0; i < RxnNoSize; i++) {
-            std::cout << i << " " << rxnNumbers[i] << " Ea: " << Ea_R[i] << std::endl;
             m_rates[rxnNumbers[i]].update_Ea_R(Ea_R[i]);
         }
     }

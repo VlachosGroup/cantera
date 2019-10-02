@@ -168,7 +168,7 @@ shared_ptr<BEP> newBEP(const XML_Node& bep_node)
 {
     string id = bep_node["id"];
     double slope = getFloat(bep_node, "alpha");
-    double intercept = getFloat(bep_node, "beta");
+    double intercept = getFloat(bep_node, "beta", "actEnergy");
     string dir = bep_node.child("direction").value();
 
     bool isCleave;

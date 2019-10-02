@@ -43,7 +43,9 @@ class Reaction;
 class BEP
 {
 public:
-    BEP() : m_m(0), m_b(0), m_BEPIsClvg(true), m_id(0) {}
+    BEP() 
+        //: m_m(0), m_b(0), m_BEPIsClvg(true), m_id(0) 
+    {}
 
     BEP(double slope, double intercept, bool cleave, std::string id) : 
         m_m(slope), m_b(intercept), m_BEPIsClvg(cleave), m_id(id) {}
@@ -124,10 +126,10 @@ protected:
     double m_b;
     std::string m_id;
     bool m_BEPIsClvg;
-    std::vector<size_t> m_reactionIndices = {};     // To identify the reactions in kinetics objects associated with this BEP
-    std::vector<std::string> m_reactionIds = {}; // Used to read the reactions from xml file associated with this BEP
-    std::vector<bool> m_rxnIsClvg = {};
-    std::vector<bool> m_rxnIdIsClvg = {};
+    std::vector<size_t> m_reactionIndices;     // To identify the reactions in kinetics objects associated with this BEP
+    std::vector<std::string> m_reactionIds; // Used to read the reactions from xml file associated with this BEP
+    std::vector<bool> m_rxnIsClvg;
+    std::vector<bool> m_rxnIdIsClvg;
 
 };
 
