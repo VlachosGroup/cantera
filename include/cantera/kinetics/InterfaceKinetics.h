@@ -693,11 +693,11 @@ protected:
 
     //! Vector of indices of reactions, whose action energies are determined 
     //! from BEP relations
-    std::vector<size_t> m_BEPRxns = {};
+    std::vector<size_t> m_BEPRxns;
 
     //! Vector of activation energies defined by BEPs
     //! from BEP relations
-    std::vector<double> m_BEP_EaR = {};
+    std::vector<double> m_BEP_EaR;
 };
 
 }

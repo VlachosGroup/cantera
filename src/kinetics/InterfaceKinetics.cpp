@@ -65,9 +65,7 @@ void InterfaceKinetics::_update_rates_T()
         m_logtemp = log(T);
 
         // Update the BEP dependent activation energies
-        cout << "nBEPs " << nBEPs() << endl;
         if (nBEPs()) {
-            cout << "BEP reactions # " << m_BEPRxns.size() << endl;
             if (!m_BEPRxns.size()) { // Populate the BEP rxns if not done before
                 for (const auto bep : m_BEPs) {
                     const auto rxnIds = bep->getReactionIndices();
@@ -91,7 +89,6 @@ void InterfaceKinetics::_update_rates_T()
                                                m_BEP_EaR.data() + ind);
                 ind += bep->nReactions();
             }
-            cout << "Gas Constant" << endl;
             for (size_t i = 0; i < m_BEPRxns.size(); i++){
                 m_BEP_EaR[i] /= GasConstant;
             }
@@ -99,10 +96,6 @@ void InterfaceKinetics::_update_rates_T()
                                              m_BEP_EaR.data());
         }
         // Calculate the forward rate constant by calling m_rates and store it in m_rfn[]
-        cout << "Activation energies" << endl;
-        for (size_t i = 0; i < nReactions(); i++){
-            cout << i << " " << m_rates.effectiveActivationEnergy_R(i) << endl;
-        }
 
         if (m_has_thermo_coverage_dependence){
             vector_fp deltaG0_R(m_deltaG0.size());
