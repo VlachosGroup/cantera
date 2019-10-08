@@ -210,7 +210,7 @@ public:
      */
     doublereal updateRC(const doublereal logT, const doublereal recipT, const doublereal& deltaG0) const {
         doublereal act_en = m_E;
-        if (m_has_intrxn_species and deltaG0 > m_E)
+        if (m_has_intrxn_species && deltaG0 > m_E)
             act_en = deltaG0;
         return m_A * std::exp(m_b*logT - act_en*recipT);
     }
