@@ -663,7 +663,9 @@ int IDA_Solver::solve(double tout)
     }
     while (tretn < tout) {
         if (tout <= m_tcurrent) {
-            throw CanteraError("IDA_Solver::solve", "tout <= tcurrent");
+            cout << "Simulation end time reached\n";
+            break;
+            //throw CanteraError("IDA_Solver::solve", "tout <= tcurrent");
         }
         m_told_old = m_told;
         m_told = m_tcurrent;
@@ -675,7 +677,8 @@ int IDA_Solver::solve(double tout)
         } else if (flag == IDA_ROOT_RETURN) {
             // not sure what to do with this yet
         } else if (flag == IDA_WARNING) {
-            throw CanteraError("IDA_Solver::solve", "IDA Warning encountered.");
+            cout << "DAE Solver WARNING!\n";
+            //throw CanteraError("IDA_Solver::solve", "IDA Warning encountered.");
         }
         m_tcurrent = tretn;
         m_deltat = m_tcurrent - m_told;
