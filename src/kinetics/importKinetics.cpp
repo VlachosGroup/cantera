@@ -40,6 +40,7 @@ bool installReactionArrays(const XML_Node& p, Kinetics& kin,
     if (rarrays.empty()) {
         return false;
     }
+    
     for (size_t n = 0; n < rarrays.size(); n++) {
         // Go get a reference to the current XML element, reactionArray. We will
         // process this element now.
