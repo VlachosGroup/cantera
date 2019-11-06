@@ -193,7 +193,7 @@ void GasKinetics::processFalloffReactionDerivatives()
     double invT = 1.0/thermo().temperature();
     for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
         falloff_pr[i] = concm_falloff_values[i] * m_rfn_low[i] / (m_rfn_high[i] + SmallNumber);
-        AssertFinite(pr[i], "GasKinetics::processFalloffReactions",
+        AssertFinite(falloff_pr[i], "GasKinetics::processFalloffReactions",
                      "pr[{}] is not finite.", i);
         m_dPr_dT[i] = (m_rfn_low_dT[i] - m_rfn_high_dT[i] - invT) * falloff_pr[i];
     }
