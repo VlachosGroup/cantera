@@ -225,8 +225,12 @@ public:
         if (S[m_ic0] < 0 && S[m_ic1] < 0) {
             R[m_rxn] = 0;
         } else {
-            if (k == m_ic0)
-                R[m_rxn] *= S[m_ic1];
+            if (k == m_ic0){
+                if (m_ic0 == m_ic1)
+                    R[m_rxn] *= 2* S[m_ic1];
+                else
+                    R[m_rxn] *= S[m_ic1];
+            }
             else if (k == m_ic1)
                 R[m_rxn] *= S[m_ic0];
             else 
@@ -306,10 +310,18 @@ public:
             R[m_rxn] = 0;
         } else {
             if (k == m_ic0) {
-                R[m_rxn] *= S[m_ic1] * S[m_ic2];
+                if (m_ic0 == m_ic1 &&  m_ic0 == m_ic2)
+                    R[m_rxn] *= 3 * S[m_ic1] * S[m_ic2];
+                else if (m_ic0 == m_ic1 || m_ic0 == m_ic2)
+                    R[m_rxn] *= 2 * S[m_ic1] * S[m_ic2];
+                else
+                    R[m_rxn] *= S[m_ic1] * S[m_ic2];
                 return;
             } else if (k == m_ic1) {
-                R[m_rxn] *= S[m_ic0] * S[m_ic2];
+                if (m_ic1 == m_ic2)
+                    R[m_rxn] *= 2 * S[m_ic0] * S[m_ic2];
+                else 
+                    R[m_rxn] *= S[m_ic0] * S[m_ic2];
                 return;
             } else if (k == m_ic2) {
                 R[m_rxn] *= S[m_ic0] * S[m_ic1];

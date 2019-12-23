@@ -433,15 +433,15 @@ void InterfaceKinetics::updateROPDerivatives(bool constPressure)
     }
 
     if (!m_dRevROPdY.data().size()){   //TODO: Push these to class initialization
-        sp_sz += thermo(gasPhaseIndex).nSpecies();
-        sp_sz += thermo(surfacePhaseIndex()).nSpecies();
-        m_dRevROPdY.resize(nReactions(), sp_sz);
+        //sp_sz += thermo(gasPhaseIndex).nSpecies();
+        //sp_sz += thermo(surfacePhaseIndex()).nSpecies();
+        m_dRevROPdY.resize(nReactions(), m_kk);
     }
     if (!m_dNetROPdY.data().size()){
-        m_dNetROPdY.resize(nReactions(), sp_sz);
+        m_dNetROPdY.resize(nReactions(), m_kk);
     }
 
-    // WOrk with gas phase
+    // Gas Phase
     auto W = thermo(gasPhaseIndex).meanMolecularWeight();
     const auto weights = thermo(gasPhaseIndex).molecularWeights();
     auto den = thermo(gasPhaseIndex).density();
@@ -493,41 +493,42 @@ void InterfaceKinetics::updateROPDerivatives(bool constPressure)
         }
     }
 
-    // WOrk with surface phase. Here site fractions is the state variable
+    // Work with surface phase. Here site fractions is the state variable
     auto Gamma = m_surf->siteDensity();
     const auto sizes = m_surf->sizes();
 
     for (size_t k = 0; k < thermo(surfacePhaseIndex()).nSpecies(); k++){    
         size_t j = k + m_start[surfacePhaseIndex()];
-        size_t j1 = k + thermo(gasPhaseIndex).nSpecies();
-        m_dNetROPdY.setColumn(j1, m_rfn.data());
+        //size_t j1 = k + thermo(gasPhaseIndex).nSpecies();
+        m_dNetROPdY.setColumn(j, m_rfn.data());
         m_reactantStoich.derivative_multiply(
-                m_actConc.data(), m_dNetROPdY.ptrColumn(j1), j);
+                m_actConc.data(), m_dNetROPdY.ptrColumn(j), j);
 
         auto mult_fctr  = Gamma / sizes[k];
         for (size_t i = 0; i < nReactions(); i++){
-            m_dNetROPdY(i, j1) *=  mult_fctr;
+            m_dNetROPdY(i, j) *=  mult_fctr;
         }
     }
 
     for (size_t k = 0; k < thermo(surfacePhaseIndex()).nSpecies(); k++){    // Rev part of Eq. 76 of pyjac
         size_t j = k + m_start[surfacePhaseIndex()];
-        size_t j1 = k + thermo(gasPhaseIndex).nSpecies();
+        //size_t j1 = k + thermo(gasPhaseIndex).nSpecies();
 
-        m_dRevROPdY.setColumn(j1, m_rfn.data());
+        m_dRevROPdY.setColumn(j, m_rfn.data());
         m_revProductStoich.derivative_multiply(
-                m_actConc.data(), m_dRevROPdY.ptrColumn(j1), j);
+                m_actConc.data(), m_dRevROPdY.ptrColumn(j), j);
 
         auto mult_fctr  = Gamma / sizes[k];
         for (size_t i = 0; i < nReactions(); i++){
-            m_dRevROPdY(i, j1) *=  mult_fctr * m_rkcn[i];
+            m_dRevROPdY(i, j) *=  mult_fctr * m_rkcn[i];
         }
     }
 
     for (size_t k = 0; k < thermo(surfacePhaseIndex()).nSpecies(); k++){
-        size_t j1 = k + thermo(gasPhaseIndex).nSpecies();
+        //size_t j1 = k + thermo(gasPhaseIndex).nSpecies();
+        size_t j = k + m_start[surfacePhaseIndex()];
         for (size_t i = 0; i < nReactions(); i++) {
-            m_dNetROPdY(i, j1) -= m_dRevROPdY(i, j1);
+            m_dNetROPdY(i, j) -= m_dRevROPdY(i, j);
         }
     }
 }

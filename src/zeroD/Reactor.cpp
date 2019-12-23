@@ -375,7 +375,7 @@ double Reactor::evalSurfaces(double t, double* ydot)
 double Reactor::evalSurfaceDerivatives(double t, double* y, double* ydot, Array2D* jac)
 {
     Array2D &J = *jac;
-    const size_t y_ind = 3;
+    const size_t y_ind = 1;
     size_t loc = 0; // offset into ydot
     const vector_fp& mw = m_thermo->molecularWeights();
 
@@ -431,10 +431,11 @@ double Reactor::evalSurfaceDerivatives(double t, double* y, double* ydot, Array2
         }
 
         for (size_t k = 0; k < nk; k++) {
-            kin->getNetProductionRateYDerivatives(m_work.data(), m_nsp+k);
+            kin->getNetProductionRateYDerivatives(m_work.data(), surfloc+k);
             size_t k1 = k + loc + m_nsp + y_ind;
 
             double dsdZ = 0;
+            J(0, k1) = 0;
             for (size_t j = 0; j < m_nsp; j++) {
                 double tmp = mw[j] * wallarea * m_work[j];
                 J(y_ind+j, k1) = tmp / m_mass;
