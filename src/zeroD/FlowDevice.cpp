@@ -68,6 +68,25 @@ double FlowDevice::outletSpeciesMassFlowRate(size_t k)
     return m_mdot * m_in->massFraction(ki);
 }
 
+doublereal FlowDevice::outletSpeciesMassFlowRateYDerivative(size_t j, size_t k){
+    if (outletSpeciesMassFlowRate(j)){
+        if (j == k) {
+            return m_mdot;
+        } else {
+            return 0;
+        }
+    }
+    return 0;
+}
+
+doublereal FlowDevice::outletSpeciesMassFlowRateMassDerivative(size_t j){
+    if (outletSpeciesMassFlowRate(j)){
+        size_t ji = m_out2in[j];
+        return massFlowRateMassDerivative() * m_in->massFraction(ji);
+    }
+    return 0;
+}
+
 double FlowDevice::enthalpy_mass()
 {
     return m_in->enthalpy_mass();

@@ -20,7 +20,7 @@ ReactorNet::ReactorNet() :
     m_nv(0), m_rtol(1.0e-9), m_rtolsens(1.0e-4),
     m_atols(1.0e-15), m_atolsens(1.0e-6),
     m_maxstep(0.0), m_initstep(0.0), m_maxErrTestFails(0),
-    m_verbose(false)
+    m_verbose(false), m_anal_jac(false)
 {
     suppressErrors(true);
 
@@ -51,6 +51,18 @@ void ReactorNet::setInitTimeStep(double initstep)
 void ReactorNet::setMaxErrTestFails(int nmax)
 {
     m_maxErrTestFails = nmax;
+    m_init = false;
+}
+
+void ReactorNet::enableAnalyticJacobian()
+{
+    m_anal_jac = true;
+    m_init = false;
+}
+
+void ReactorNet::disableAnalyticJacobian()
+{
+    m_anal_jac = false;
     m_init = false;
 }
 
@@ -111,6 +123,11 @@ void ReactorNet::initialize()
     m_integ->setSensitivityTolerances(m_rtolsens, m_atolsens);
     m_integ->setMaxStepSize(m_maxstep);
     m_integ->setMaxErrTestFails(m_maxErrTestFails);
+    if (m_anal_jac){
+        m_integ->setUserJacobian(true);
+    } else {
+        m_integ->setUserJacobian(false);
+    }
     if (m_verbose) {
         writelog("Number of equations: {:d}\n", neq());
         writelog("Maximum time step:   {:14.6g}\n", m_maxstep);
@@ -134,7 +151,7 @@ void ReactorNet::reinitialize()
 
 void ReactorNet::advance(doublereal time)
 {
-    m_integ->setUserJacobian(true);
+    //m_integ->setUserJacobian(true);
     if (!m_init) {
         initialize();
     } else if (!m_integrator_init) {
@@ -208,14 +225,14 @@ double ReactorNet::step()
         reinitialize();
     }
     /* Delete this code after testing jacobian*/
-    m_integ->step(m_time+1.0);
-    cout << "completed stepping with finite time difference" << endl;
+    /*m_integ->step(m_time+1.0);
+    cout << "completed stepping with finite time difference" << endl;*/
     //m_integ->setUserJacobian(true);
     //reinitialize();
     //m_integ->step(m_time+1.0);
     /* After testing delete above code and uncomment below code */ 
-    //m_time = m_integ->step(m_time + 1.0);
-    //updateState(m_integ->solution());
+    m_time = m_integ->step(m_time + 1.0);
+    updateState(m_integ->solution());
     return m_time;
 }
 
@@ -271,40 +288,31 @@ double ReactorNet::sensitivity(size_t k, size_t p)
     return m_integ->sensitivity(k, p) / denom;
 }
 
-
-
 void ReactorNet::evalJacobian(doublereal t, doublereal* y, doublereal* ydot,
                               doublereal* jac)
 {
     // Assuming the jacobian entities are 0 if not defined or used
     // Typically ReactorNet contains a single reactor leading to a dense type jac matrix
     // If multiple reactors are defined, jac is a block diagonal matrix.
+    // TODO: Eliminate m_jac and use input jac directly using matrix stride.
     updateState(y);
     for (size_t n = 0; n < m_reactors.size(); n++) {
         size_t size = m_reactors[n]->neq();
-        //cout << "Before resizing m_jac" << endl;
         m_jac.resize(size, size);
-        //cout << "After resizing m_jac" << endl;
         m_reactors[n]->evalJacEqs(t, y + m_start[n], ydot + m_start[n], &m_jac);
-        //cout << "After calling evalJacs " << endl;
-        //cout << m_jac << endl;
         auto jac_start = jac + neq() * m_start[n] + m_start[n];
         for (size_t i = 0; i < size; i++){
             copy(m_jac.ptrColumn(i), m_jac.ptrColumn(i+1), jac_start);
-            //cout << i << " After copying Jac " << endl;
             jac_start += neq();
         }
     }
 }
 
-
-
-
 void ReactorNet::evalJacobianFD(doublereal t, doublereal* y,
                               //doublereal* ydot, doublereal* p, Array2D* j)
                               doublereal* ydot, doublereal* j)
 {
-    auto central_diff = true;
+    auto central_diff = false;
     vector<double> tmp;
     doublereal* p = tmp.data();
 
@@ -328,6 +336,7 @@ void ReactorNet::evalJacobianFD(doublereal t, doublereal* y,
             //cout <<  endl;
             y[n] = ysave;
         }
+        //eval(t, y, ydot, p);
 
     } else {
         //evaluate the unperturbed ydot
@@ -337,7 +346,7 @@ void ReactorNet::evalJacobianFD(doublereal t, doublereal* y,
             double ysave = y[n];
             double dy = m_atol[n] + fabs(ysave)*m_rtol;
             y[n] = ysave + dy;
-            dy = y[n] - ysave;
+            //dy = y[n] - ysave;
 
             // calculate perturbed residual
             eval(t, y, m_ydot.data(), p);
@@ -353,10 +362,6 @@ void ReactorNet::evalJacobianFD(doublereal t, doublereal* y,
         }
     }
 }
-
-
-
-
 
 void ReactorNet::updateState(doublereal* y)
 {

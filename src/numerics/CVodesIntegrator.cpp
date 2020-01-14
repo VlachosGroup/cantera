@@ -501,16 +501,20 @@ void CVodesIntegrator::integrate(double tout)
 double CVodesIntegrator::step(double tout)
 {
     // Compute analytical jacobian for the same time
+    
     vector<double> ydot(m_neq); 
     m_func->eval_nothrow(m_time, NV_DATA_S(m_y), ydot.data());
-    Array2D jac;
+
+    auto jac = Array2D(m_neq, m_neq);
     jac.resize(m_neq, m_neq);
     m_func->evalJacobian(m_time, NV_DATA_S(m_y), ydot.data(), jac.ptrColumn(0));
     cout << "Analytical jacobian " << endl;
     cout << jac;
+    jac.zero();
     m_func->evalJacobianFD(m_time, NV_DATA_S(m_y), ydot.data(), jac.ptrColumn(0));
     cout << "Finite Difference jacobian " << endl;
     cout << jac;
+    
 
     int flag = CVode(m_cvode_mem, tout, m_y, &m_time, CV_ONE_STEP);
     if (flag != CV_SUCCESS) {
@@ -527,6 +531,7 @@ double CVodesIntegrator::step(double tout)
     }
     m_sens_ok = false;
 
+    /*
     // Save Jacobian
     FILE* fp = fopen("jac.txt", "w");
     SUNDenseMatrix_Print((SUNMatrix) m_linsol_matrix, fp);
@@ -536,6 +541,7 @@ double CVodesIntegrator::step(double tout)
     long int n_jac_evals;
     CVDlsGetNumJacEvals(m_cvode_mem, &n_jac_evals);
     cout << "no of jac evaluation " << n_jac_evals << endl;
+    */
 
     return m_time;
 }
