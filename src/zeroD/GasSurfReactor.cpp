@@ -226,6 +226,23 @@ void GasSurfReactor::evalEqs(doublereal time, doublereal* y,
         dYdt[n] -= Y[n] * mdot_surf / m_mass;
     }
 
+    // add terms for outlets
+    for (size_t i = 0; i < m_outlet.size(); i++) {
+        double mdot_out = m_outlet[i]->massFlowRate(time);
+        dmdt -= mdot_out; // mass flow out of system
+    }
+
+    // add terms for inlets
+    for (size_t i = 0; i < m_inlet.size(); i++) {
+        double mdot_in = m_inlet[i]->massFlowRate(time);
+        dmdt += mdot_in; // mass flow into system
+        for (size_t n = 0; n < m_nsp; n++) {
+            double mdot_spec = m_inlet[i]->outletSpeciesMassFlowRate(n);
+            // flow of species into system and dilution by other species
+            dYdt[n] += (mdot_spec - mdot_in * Y[n]) / m_mass;
+        }
+    }
+
     ydot[0] = dmdt;
     resetSensitivity(params);
 }
@@ -245,7 +262,7 @@ void GasSurfReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydot
     for (size_t j = 0; j < m_nsp; j++){             // Eq. (49) of pyjac
         m_kin->getNetProductionRateYDerivatives(m_work.data(), j);
         auto j1 = j + yloc;
-        J(j1, 0) = (mdot_surf * y[j1] - m_sdot[j] * mw[j]) / (m_mass * m_mass);
+        J(j1, 0) = (mdot_surf * y[j1] - m_wdot[j] * m_vol -  m_sdot[j] * mw[j]) / (m_mass * m_mass);
         double wt_frac = m_thermo->meanMolecularWeight() / mw[j];
         for (size_t k = 0; k < m_nsp; k++) {
             auto k1 = k + yloc;
@@ -257,39 +274,37 @@ void GasSurfReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydot
         }
     }
     evalSurfaceDerivatives(time, y, ydot, jac);
-    //Array2D &J = *jac;
-    
-    //const size_t m_ind = 0;
-    //size_t y_ind = 1;
 
-    /* Volume related terms. 
-     * For Idea Gas Constant volume Reactor, these are trivial w.r.t. reactor */
-    /*
-    J(V_ind, m_ind) = 0;
-    J(V_ind, V_ind) = 1;
-    J(V_ind, T_ind) = 0;
-    for (size_t i = 0; i < m_nsp; i++) J(V_ind, y_ind + i) =0;
-    */
+    // Outlets 
+    for (size_t i = 0; i < m_outlet.size(); i++) {
+        J(0,0) -= m_outlet[i]->massFlowRateMassDerivative(true);
 
-    /* Mass related terms */
-    //J(m_ind, m_ind) = 1;
-    //J(m_ind, V_ind) = 0;
+        for (size_t j = 0; j < m_nsp; j++) {
+            auto j1 = j + yloc;
+            J(0, j1) -= m_outlet[i]->massFlowRateYDerivative(j, true);
+        }
+    }
 
-    // Temperature Derivatives
-    // TODO: Implement A\sum_k W_k ds_k/dT 
-    // Mass fraction derivatives 
-    // TODO: Implement A\sum_j W_j ds_j/dY_k 
-    //for (size_t i = 0; i < m_nsp; i++) J(m_ind, y_ind + i) = 0;
+    // Inlets
+    for (size_t i = 0; i < m_inlet.size(); i++) {
+        auto inlet_mass_der = m_inlet[i]->massFlowRateMassDerivative(false);
+        J(0,0) += inlet_mass_der; 
 
-    /* Temperature related terms */
-    // J(T_ind, T_ind) = $\dho Tdot / dho T$
-    //double mdot_surf = evalSurfaces(time, ydot + m_nsp + 3); 
-    // Mass fraction derivatives
-    // J(T_ind, k) = $\dho Tdot / dho Y_k$
+        double mdot_in = m_inlet[i]->massFlowRate(time);
+        for (size_t j = 0; j < m_nsp; j++) {
+            auto j1 = j + yloc;
+            J(0, j1) += m_inlet[i]->massFlowRateYDerivative(j, false);
 
-    
-    // J(j, k) = $\dho Y_j / dho Y_k$
-    //
+            J(j1,j1) -= mdot_in / m_mass;
+            double mdot_spec = m_inlet[i]->outletSpeciesMassFlowRate(j);
+            double mdot_spec_mass_der = m_inlet[i]->outletSpeciesMassFlowRateMassDerivative(j);
+            J(j1, 0) += (inlet_mass_der * y[j1] - mdot_spec_mass_der)/m_mass;
+            J(j1, 0) -= (mdot_in * y[j1] - mdot_spec)/(m_mass*m_mass);
+
+        }
+    }
+
+
 }
 
 size_t GasSurfReactor::componentIndex(const string& nm) const

@@ -38,6 +38,12 @@ public:
     //! Set the maximum time step.
     void setMaxTimeStep(double maxstep);
 
+    //! Enable analytical Jacobian if not.
+    void enableAnalyticJacobian();
+
+    //! Disable analytical Jacobian if enabled.
+    void disableAnalyticJacobian();
+
     //! Set the Initial time step.
     void setInitTimeStep(double initstep);
 
@@ -259,6 +265,7 @@ protected:
 
     vector_fp m_ydot;
     Array2D m_jac;
+    bool m_anal_jac;
 };
 }
 

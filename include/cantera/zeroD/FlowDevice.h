@@ -48,6 +48,14 @@ public:
         return m_mdot;
     }
 
+    virtual doublereal massFlowRateMassDerivative(bool upstream = false) {
+        return 0;
+    }
+
+    virtual doublereal massFlowRateYDerivative(size_t k, bool upstream = false) {
+        return 0;
+    }
+
     //! Update the mass flow rate at time 'time'. This must be overloaded in
     //! subclassess to update m_mdot.
     virtual void updateMassFlowRate(doublereal time) {}
@@ -55,6 +63,10 @@ public:
     //! Mass flow rate (kg/s) of outlet species k. Returns zero if this species
     //! is not present in the upstream mixture.
     doublereal outletSpeciesMassFlowRate(size_t k);
+
+    doublereal outletSpeciesMassFlowRateYDerivative(size_t j, size_t k);
+
+    doublereal outletSpeciesMassFlowRateMassDerivative(size_t j);
 
     //! specific enthalpy
     doublereal enthalpy_mass();
