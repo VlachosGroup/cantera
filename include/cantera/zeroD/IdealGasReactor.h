@@ -57,8 +57,8 @@ public:
     virtual size_t componentIndex(const std::string& nm) const;
     std::string componentName(size_t k);
 
-protected:
-    vector_fp m_uk; //!< Species molar internal energies
+//protected:
+//    vector_fp m_uk; //!< Species molar internal energies
 };
 
 }

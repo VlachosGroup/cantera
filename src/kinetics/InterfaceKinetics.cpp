@@ -86,7 +86,7 @@ void InterfaceKinetics::updateTDerivativeFactors(){
     doublereal T = thermo(surfacePhaseIndex()).temperature();
     doublereal logT = log(T);
     m_rates.update_TDerivative(T, logT, m_rfn_dTMult.data());
-    //applyStickingCorrectionDerivatives(T, m_rfn_dTMult.data());
+    applyStickingCorrectionTDerivatives(T, m_rfn_dTMult.data());
 
     if (m_has_electrochem_rxns) {
         //applyVoltageKfwdCorrectionDerivative(m_rfn_dTMult.data());
@@ -1038,5 +1038,34 @@ void InterfaceKinetics::applyStickingCorrection(double T, double* kf)
         kf[item.index] *= factors[n] * sqrt(T) * item.multiplier;
     }
 }
+
+void InterfaceKinetics::applyStickingCorrectionTDerivatives(double T, double* d_kf_dT)
+{
+    if (m_stickingData.empty()) {
+        return;
+    }
+
+    static const int cacheId = m_cache.getId();
+    CachedArray cached = m_cache.getArray(cacheId);
+    vector_fp& factors = cached.value;
+
+    double n0 = m_surf->siteDensity();
+    if (!cached.validate(n0)) {
+        factors.resize(m_stickingData.size());
+        for (size_t n = 0; n < m_stickingData.size(); n++) {
+            factors[n] = pow(n0, -m_stickingData[n].order);
+        }
+    }
+
+    auto isqrtT = 1.0/sqrt(T);
+    for (size_t n = 0; n < m_stickingData.size(); n++) {
+        const StickData& item = m_stickingData[n];
+        if (item.use_motz_wise) {
+            d_kf_dT[item.index] /= 1 - 0.5 * d_kf_dT[item.index];
+        }
+        d_kf_dT[item.index] *= 0.5 * factors[n] * isqrtT * item.multiplier;
+    }
+}
+
 
 }

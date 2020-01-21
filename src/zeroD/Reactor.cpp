@@ -375,7 +375,12 @@ double Reactor::evalSurfaces(double t, double* ydot)
 double Reactor::evalSurfaceDerivatives(double t, double* y, double* ydot, Array2D* jac)
 {
     Array2D &J = *jac;
-    const size_t y_ind = 1;
+    size_t y_ind, m_ind = 0;
+    if (m_energy)
+        y_ind = 2;
+    else
+        y_ind = 1;
+
     size_t loc = 0; // offset into ydot
     const vector_fp& mw = m_thermo->molecularWeights();
 
@@ -400,11 +405,11 @@ double Reactor::evalSurfaceDerivatives(double t, double* y, double* ydot, Array2
                 auto J_0k = mw[j] * wallarea * m_work[j];
                 J(y_ind+j, k1) += J_0k /m_mass;
                 dsdZ += J_0k /m_mass; 
-                J(0, k1) += J_0k;
+                J(m_ind, k1) += J_0k;
                 auto J_j0 = J_0k / (m_mass*m_mass) * y[k1];
                 dsdm += J_j0;
-                J(y_ind+j, 0) += J_j0;
-                J(0, 0) += J_0k / m_mass * y[k1];
+                J(y_ind+j, m_ind) += J_j0;
+                J(m_ind, m_ind) += J_0k / m_mass * y[k1];
             }
             for (size_t j = 0; j < m_nsp; j++) {
                 J(y_ind+j, k1) -= y[y_ind+j] * dsdZ; 
@@ -413,7 +418,7 @@ double Reactor::evalSurfaceDerivatives(double t, double* y, double* ydot, Array2
             double sum = 0;
             for (size_t j = 1; j < nk; j++) {
                 J(y_ind+loc+m_nsp+j, k1) = m_work[surfloc+j] * rs0*surf->size(j);
-                cout << j << " " <<  k1 << " " << J(y_ind+loc+m_nsp+j, k1) << endl;;
+                //cout << j << " " <<  k1 << " " << J(y_ind+loc+m_nsp+j, k1) << endl;;
                 sum -= J(y_ind+loc+m_nsp+j, k1);
                 J(y_ind+loc+m_nsp+j, 0) += m_work[surfloc+j] / m_mass * y[k1] * rs0*surf->size(j);
             }
@@ -427,7 +432,7 @@ double Reactor::evalSurfaceDerivatives(double t, double* y, double* ydot, Array2
 
         }
         for (size_t j = 0; j < m_nsp; j++) {
-            J(y_ind+j, 0) -= y[j + y_ind] * dsdm;
+            J(y_ind+j, m_ind) -= y[j + y_ind] * dsdm;
         }
 
         for (size_t k = 0; k < nk; k++) {
@@ -439,7 +444,7 @@ double Reactor::evalSurfaceDerivatives(double t, double* y, double* ydot, Array2
             for (size_t j = 0; j < m_nsp; j++) {
                 double tmp = mw[j] * wallarea * m_work[j];
                 J(y_ind+j, k1) = tmp / m_mass;
-                J(0, k1) += tmp;
+                J(m_ind, k1) += tmp;
                 dsdZ += tmp;
             }
             for (size_t j = 0; j < m_nsp; j++) {
@@ -452,7 +457,57 @@ double Reactor::evalSurfaceDerivatives(double t, double* y, double* ydot, Array2
                 sum -= J(y_ind+loc+m_nsp+j, k1);
             }
             J(y_ind + loc + m_nsp, k1)  = sum;
+
+            // f_T derivatives 
+            if (m_energy) {
+                size_t T_ind = 1;
+                double Udsdz = 0;
+                for (size_t j = 0; j < m_nsp; j++) {
+                    Udsdz += m_uk[j] * m_work[j];
+                }
+                J(T_ind, k1) -= wallarea/ (m_mass * m_thermo->cv_mass()) * Udsdz;
+            }
         }
+
+        // Temperature derivatives
+        if (m_energy) {
+            // Temperature as differentiating variable 
+            size_t T_ind = 1;
+            //vector_fp dsdotdT(m_nsp);
+            auto inv_mcv = 1.0/(m_mass * m_thermo->cv_mass());
+            kin->getNetProductionRateTDerivatives(m_work.data()); 
+
+            // Gas mass fractions and mass
+            for (size_t j = 0; j < m_nsp; j++) {
+                auto J_kT = mw[j] * m_work[j] * wallarea;
+                cout << "j " << j << " J_kT " << J_kT << endl;
+                auto j1 = j + y_ind;
+                J(j1, T_ind)  += J_kT / m_mass;
+                J(m_ind, T_ind) += J_kT;
+            }
+
+            // Surface coverages 
+            double sum = 0;
+            for (size_t j = 1; j < nk; j++){
+                J(y_ind+loc+m_nsp+j, T_ind) = m_work[surfloc+j] * rs0*surf->size(j);
+                cout << "j " << j << " NetProductionTDer " << m_work[surfloc+j] << endl;
+                sum -= m_work[surfloc+j];
+            }
+            J(y_ind + loc + m_nsp, T_ind) = sum * rs0 * surf->size(0);
+
+            // Surface contribution to Temperature  
+            double df1dT_s{0};
+            for (size_t j = 0; j < m_nsp; j++) {
+                df1dT_s += m_uk[j] * m_work[j];
+            }
+            df1dT_s *= wallarea * inv_mcv; 
+            J(T_ind, T_ind) -= df1dT_s;
+
+            //
+            // w.r.t mass fractions
+
+        }
+
         loc += nk;
     }
 }
