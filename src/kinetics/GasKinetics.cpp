@@ -291,10 +291,15 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
     // Temperature derivatives
     doublereal invT = 1.0/m_temp;
     for (size_t i = 0; i < nReactions(); i++){
-        m_dNetROPdT[i] = m_ropf[i] * 
-            (m_rfn_dTMult[i] - m_reactant_stoichsum[i] * invT);
-        m_dNetROPdT[i] -= m_ropr[i] * 
-            (m_rfn_dTMult[i] - m_product_stoichsum[i] * invT - m_dBdT[i]);
+        if (constPressure){
+            m_dNetROPdT[i] = m_ropf[i] * 
+                (m_rfn_dTMult[i] - m_reactant_stoichsum[i]) * invT;
+            m_dNetROPdT[i] -= m_ropr[i] * 
+                ((m_rfn_dTMult[i] - m_product_stoichsum[i]) * invT - m_dBdT[i]);
+        } else {
+            m_dNetROPdT[i] = m_ropf[i] * m_rfn_dTMult[i] * invT;
+            m_dNetROPdT[i] -= m_ropr[i] * (m_rfn_dTMult[i] * invT - m_dBdT[i]);
+        }
     }
 
     // Process 3b reactions 
