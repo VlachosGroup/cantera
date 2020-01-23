@@ -87,7 +87,12 @@ void GasKinetics::updateTDerivativeFactors()
 
     vector_fp dbdt(m_kk);
     thermo().getdBdT(dbdt.data());
-    getReactionDelta(dbdt.data(),  m_dBdT.data());
+    /*for (size_t i = 0; i < m_kk; i++){
+        dbdt[i] -= 1/T;
+    }
+    */
+
+    getRevReactionDelta(dbdt.data(),  m_dBdT.data());
 }
 
 void GasKinetics::updateYDerivativeFactors()
@@ -290,13 +295,15 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
 
     // Temperature derivatives
     doublereal invT = 1.0/m_temp;
-    for (size_t i = 0; i < nReactions(); i++){
-        if (constPressure){
+    if (constPressure){
+        for (size_t i = 0; i < nReactions(); i++){
             m_dNetROPdT[i] = m_ropf[i] * 
                 (m_rfn_dTMult[i] - m_reactant_stoichsum[i]) * invT;
             m_dNetROPdT[i] -= m_ropr[i] * 
                 ((m_rfn_dTMult[i] - m_product_stoichsum[i]) * invT - m_dBdT[i]);
-        } else {
+        }
+    } else {
+        for (size_t i = 0; i < nReactions(); i++){
             m_dNetROPdT[i] = m_ropf[i] * m_rfn_dTMult[i] * invT;
             m_dNetROPdT[i] -= m_ropr[i] * (m_rfn_dTMult[i] * invT - m_dBdT[i]);
         }
