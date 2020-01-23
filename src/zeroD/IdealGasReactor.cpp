@@ -308,13 +308,16 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydo
     // Temperature Derivatives
     const vector_fp& mw = m_thermo->molecularWeights(); 
     auto inv_mcv = 1.0/(m_mass * m_thermo->cv_mass());
+    m_kin->updateROPDerivatives();
 
+    m_kin->getNetProductionRates(m_wdot.data());              
     if (m_energy){
         vector_fp dwdotdT(m_nsp);
         m_kin->getNetProductionRateTDerivatives(dwdotdT.data());
         for (size_t j = 0; j < m_nsp; j++){
             auto j1 = j + y_ind;
-            J(j1, T_ind) = mw[j] * dwdotdT[j] / m_thermo->density();
+            J(j1, T_ind) = mw[j]/m_thermo->density() * (
+                    dwdotdT[j] + m_wdot[j]/y[T_ind]);
         }
 
         double dcvRdT = 0;                                  // Small c/R
@@ -329,7 +332,6 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydo
         m_thermo->getCp_R(m_work.data());                   // C_p/R
 
         m_thermo->getPartialMolarIntEnergies(m_uk.data());  // U
-        m_kin->getNetProductionRates(m_wdot.data());              
 
         double df1dT {0}, df1dT_2t{0};
         for (size_t j = 0; j < m_nsp; j++) { 
@@ -357,7 +359,6 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydo
     }
 
     m_work.resize(m_nsp);
-    m_kin->updateROPDerivatives();
     vector_fp Cv(m_nsp);
     m_thermo->getCp_R(Cv.data());                   // C_p/R
     double dfTdg_t1 = 0;
@@ -371,7 +372,7 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydo
     for (size_t j = 0; j < m_nsp; j++){             // Eq. (49) of pyjac
         m_kin->getNetProductionRateYDerivatives(m_work.data(), j);
         auto j1 = j + y_ind;
-        J(j1, m_ind) = (mdot_surf * y[j1] - (m_wdot[j] * m_vol -  m_sdot[j]) * mw[j]) / (m_mass * m_mass);
+        J(j1, m_ind) = (mdot_surf * y[j1] - (m_wdot[j] * m_vol +  m_sdot[j]) * mw[j]) / (m_mass * m_mass);
         double wt_frac = m_thermo->meanMolecularWeight() / mw[j];
         for (size_t k = 0; k < m_nsp; k++) {
             auto k1 = k + y_ind;
@@ -396,11 +397,16 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydo
 
     // Outlets
     for (size_t i = 0; i < m_outlet.size(); i++) {
+        cout << "In outlets " << endl;
         J(m_ind, m_ind) -= m_outlet[i]->massFlowRateMassDerivative(true);
 
         for (size_t j = 0; j < m_nsp; j++) {
             auto j1 = j + y_ind;
             J(m_ind, j1) -= m_outlet[i]->massFlowRateYDerivative(j, true);
+        }
+        if (m_energy){
+            cout << "energy balance inside outlet" << endl;
+            J(m_ind, T_ind) -= m_outlet[i]->massFlowRateTDerivative(true);
         }
     }
 
@@ -408,6 +414,9 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydo
     for (size_t i = 0; i < m_inlet.size(); i++) {
         auto inlet_mass_der = m_inlet[i]->massFlowRateMassDerivative(false);
         J(m_ind,m_ind) += inlet_mass_der;
+
+        if (m_energy)
+            J(m_ind, T_ind) -= m_inlet[i]->massFlowRateTDerivative(false);
 
         double mdot_in = m_inlet[i]->massFlowRate(time);
         for (size_t j = 0; j < m_nsp; j++) {

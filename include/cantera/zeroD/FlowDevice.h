@@ -56,6 +56,10 @@ public:
         return 0;
     }
 
+    virtual doublereal massFlowRateTDerivative(bool upstream = false) {
+        return 0;
+    }
+
     //! Update the mass flow rate at time 'time'. This must be overloaded in
     //! subclassess to update m_mdot.
     virtual void updateMassFlowRate(doublereal time) {}

@@ -6,6 +6,7 @@
 #ifndef CT_FLOWCONTR_H
 #define CT_FLOWCONTR_H
 
+#include <iostream>
 #include "FlowDevice.h"
 #include "ReactorBase.h"
 #include "cantera/numerics/Func1.h"
@@ -110,6 +111,19 @@ public:
         return derivative;
     }
 
+    virtual double massFlowRateTDerivative(bool upstream){ 
+        double den, meanW;
+        if (upstream){
+            den = in().density();
+            meanW = in().contents().meanMolecularWeight();
+        } else {
+            den = -out().density();
+            meanW = out().contents().meanMolecularWeight();
+        }
+        auto derivative = m_coeffs[0] * GasConstant * den / meanW;
+        return derivative;
+    }
+
 protected:
     FlowDevice* m_master;
 };
@@ -170,6 +184,26 @@ public:
             RT = out().contents().RT();
             meanW = out().contents().meanMolecularWeight();
             der_P = -RT / (vol * meanW); 
+        }
+
+        if (m_func){
+            double delta_P = in().pressure() - out().pressure();
+            return m_func->derivative()(delta_P) * der_P;
+        }
+        return der_P * m_coeffs[0];
+    }
+
+    virtual double massFlowRateTDerivative(bool upstream){
+        double der_P;
+        double den, meanW;
+        if (upstream){
+            den = in().density();
+            meanW = in().contents().meanMolecularWeight();
+            der_P = GasConstant * den /  meanW; 
+        } else {
+            den = out().density();
+            meanW = out().contents().meanMolecularWeight();
+            der_P = -GasConstant * den / meanW; 
         }
 
         if (m_func){
