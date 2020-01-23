@@ -115,6 +115,12 @@ public:
                                    doublereal* dCp_RdT, 
                                    doublereal* dS_RdT) const;
 
+    virtual void updateDerivatives(const doublereal* tt,
+                                   doublereal* dBdT) const;
+
+    virtual void updateDerivatives(const doublereal temp,
+                                   doublereal* dBdT) const;
+
     //! This utility function reports back the type of parameterization and all
     //! of the parameters for the species
     /*!

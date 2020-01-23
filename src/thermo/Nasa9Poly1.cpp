@@ -101,6 +101,32 @@ void Nasa9Poly1::updateDerivatives(const doublereal temp,
     updateDerivatives(tPoly, dCp_RdT, dS_RdT);
 }
 
+void Nasa9Poly1::updateDerivatives(const doublereal* tt,
+                                   doublereal* dBdT) const
+{
+    auto tm3 = tt[4] * tt[5];      // 1. / (T^3)
+    auto ct0 = m_coeff[0] * tm3;   // a0 / (T^3)
+    auto ct1 = m_coeff[1] * tt[5]; // a1 / (T^2)
+    auto ct2 = m_coeff[2] * tt[4]; // a2 / T
+    auto ct3 = m_coeff[3];         // a3 
+    auto ct4 = m_coeff[4] * tt[0]; // a4 * T
+    auto ct5 = m_coeff[5] * tt[1]; // a5 * T^2
+    auto ct6 = m_coeff[6] * tt[2]; // a6 * T^3
+
+    doublereal dh_RTdT = 2*ct0 + (1.0 - tt[6]) * ct1  + 0.5*ct3 + 2.0/3.0*ct4 
+              + 3*0.25*ct5 + 4*0.2*ct6 - m_coeff[7]*tt[5];
+    doublereal dS_RdT = ct0 + ct1 + ct2 + ct3 + ct4 + ct5 + ct6;
+    *dBdT = dS_RdT - dh_RTdT;
+}
+
+void Nasa9Poly1::updateDerivatives(const doublereal temp,
+                                   doublereal* dBdT) const
+{
+    double tPoly[7];
+    updateTemperaturePoly(temp, tPoly);
+    updateDerivatives(tPoly, dBdT);
+}
+
 void Nasa9Poly1::reportParameters(size_t& n, int& type,
                                   doublereal& tlow, doublereal& thigh,
                                   doublereal& pref,

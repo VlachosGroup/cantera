@@ -135,6 +135,35 @@ void Nasa9PolyMultiTempRegion::updateDerivatives(const doublereal temp,
     m_regionPts[m_currRegion]->updateDerivatives(temp, dCp_RdT, dS_RdT);
 }
 
+void Nasa9PolyMultiTempRegion::updateDerivatives(const doublereal* tt,
+        doublereal* dBdT) const
+{
+    m_currRegion = 0;
+    for (size_t i = 1; i < m_regionPts.size(); i++) {
+        if (tt[0] < m_lowerTempBounds[i]) {
+            break;
+        }
+        m_currRegion++;
+    }
+
+    m_regionPts[m_currRegion]->updateDerivatives(tt, dBdT);
+}
+
+void Nasa9PolyMultiTempRegion::updateDerivatives(const doublereal temp,
+        doublereal* dBdT) const
+{
+    // Now find the region
+    m_currRegion = 0;
+    for (size_t i = 1; i < m_regionPts.size(); i++) {
+        if (temp < m_lowerTempBounds[i]) {
+            break;
+        }
+        m_currRegion++;
+    }
+
+    m_regionPts[m_currRegion]->updateDerivatives(temp, dBdT);
+}
+
 void Nasa9PolyMultiTempRegion::reportParameters(size_t& n, int& type,
         doublereal& tlow, doublereal& thigh,
         doublereal& pref,

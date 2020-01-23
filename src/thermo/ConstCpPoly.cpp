@@ -65,6 +65,23 @@ void ConstCpPoly::updateDerivatives(const doublereal* temp,
     updateDerivatives(temp[0], dCp_RdT, dS_RdT);
 }
 
+void ConstCpPoly::updateDerivatives(const doublereal temp,
+                                       doublereal* dBdT) const
+{
+    doublereal rt = 1.0/temp;
+
+    doublereal dh_RTdT = (m_t0 * m_cp0_R - m_h0_R) * rt * rt;
+    doublereal ds_RdT = m_cp0_R * rt;
+
+    *dBdT = ds_RdT - dh_RTdT;
+}
+
+void ConstCpPoly::updateDerivatives(const doublereal* temp,
+                                       doublereal* dBdT) const
+{
+    updateDerivatives(temp[0], dBdT);
+}
+
 void ConstCpPoly::reportParameters(size_t& n, int& type,
                                    doublereal& tlow, doublereal& thigh,
                                    doublereal& pref,

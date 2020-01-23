@@ -118,6 +118,25 @@ public:
         }
     }
 
+    //! @copydoc NasaPoly1::updateDerivatives
+    virtual void updateDerivatives(const doublereal* tt,
+                           doublereal* dBdT) const {
+        if (tt[0] <= m_midT) {
+            mnp_low.updateDerivatives(tt, dBdT);
+        } else {
+            mnp_high.updateDerivatives(tt, dBdT);
+        }
+    }
+
+    virtual void updateDerivatives(const doublereal temp,
+                           doublereal* dBdT) const {
+        if (temp <= m_midT) {
+            mnp_low.updateDerivatives(temp, dBdT);
+        } else {
+            mnp_high.updateDerivatives(temp, dBdT);
+        }
+    }
+
     void reportParameters(size_t& n, int& type,
                           doublereal& tlow, doublereal& thigh,
                           doublereal& pref,
