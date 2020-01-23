@@ -99,9 +99,16 @@ public:
     virtual void updateDerivatives(const doublereal* tt,
                                    doublereal* dCp_RdT, 
                                    doublereal* dS_RdT) const;
+
     virtual void updateDerivatives(const doublereal temp,
                                    doublereal* dCp_RdT, 
                                    doublereal* dS_RdT) const;
+
+    virtual void updateDerivatives(const doublereal* tt,
+                                   doublereal* dBRdT) const;
+
+    virtual void updateDerivatives(const doublereal temp,
+                                   doublereal* dBRdT) const;
 
     void reportParameters(size_t& n, int& type,
                           doublereal& tlow, doublereal& thigh,

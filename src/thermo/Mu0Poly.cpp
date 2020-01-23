@@ -161,6 +161,32 @@ void Mu0Poly::updateDerivatives(const doublereal T,
     updateDerivatives(&T, dCp_RdT, dS_RdT);
 }
 
+void Mu0Poly::updateDerivatives(const doublereal* tt, 
+                                doublereal* dBdT) const
+{
+    size_t j = m_numIntervals;
+    double T = *tt;
+    for (size_t i = 0; i < m_numIntervals; i++) {
+        double T2 = m_t0_int[i+1];
+        if (T <=T2) {
+            j = i;
+            break;
+        }
+    }
+    double T1 = m_t0_int[j];
+    double cp_Rj = m_cp0_R_int[j];
+
+    doublereal dh_RTdT = (T1 * cp_Rj - m_h0_R_int[j])/(T*T);
+    doublereal ds_RdT = cp_Rj / T;
+    *dBdT = ds_RdT - dh_RTdT;
+}
+
+void Mu0Poly::updateDerivatives(const doublereal T,
+                                doublereal* dBdT) const
+{
+    updateDerivatives(&T, dBdT);
+}
+
 void Mu0Poly::reportParameters(size_t& n, int& type,
                                doublereal& tlow, doublereal& thigh,
                                doublereal& pref,

@@ -325,12 +325,14 @@ void IdealGasPhase::_updateThermoDerivatives() const
     // If the temperature has changed since the last time these
     // properties were computed, recompute them.
     if (cached.state1 != tnow) {
-        _updateThermo();
-        m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
+        //_updateThermo();
+        //m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
+        m_spthermo.update_derivatives(tnow, m_dB0dT.data());
         cached.state1 = tnow;
+        /*
         for (size_t i = 0; i < m_kk; i++) {
             m_dB0dT[i] = m_dS0_RdT[i] - m_cp0_R[i];
-        }
+        }*/
     }
 }
 }

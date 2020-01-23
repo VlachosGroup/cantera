@@ -144,6 +144,12 @@ public:
                                    doublereal* dCp_RdT, 
                                    doublereal* dS_RdT) const;
 
+    virtual void updateDerivatives(const doublereal* tt,
+                                   doublereal* dBdT) const;
+
+    virtual void updateDerivatives(const doublereal temp,
+                                   doublereal* dBdT) const;
+
     virtual void reportParameters(size_t& n, int& type,
                                   doublereal& tlow, doublereal& thigh,
                                   doublereal& pref,

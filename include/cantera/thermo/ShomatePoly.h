@@ -180,6 +180,41 @@ public:
         updateDerivatives(tPoly, dCp_RdT, dS_RdT);
     }
 
+    /*!
+     * @copydoc SpeciesThermoInterpType::updateDerivatives
+     *
+     * Form of the temperature polynomial:
+     *   - `t` is T/1000.
+     *   - `t[0] = t`
+     *   - `t[1] = t*t`
+     *   - `t[2] = t[1]*t`
+     *   - `t[3] = 1.0/t[1]`
+     *   - `t[4] = log(t)`
+     *   - `t[5] = 1.0/t;
+     */
+    virtual void updateDerivatives(const doublereal* tt,
+                                   doublereal* dBdT) const {
+
+        // TODO: Investigate the effect on 1e-3*t done in updatetTemperaturePoly
+        doublereal Atm1 = m_coeff[0]*tt[5];
+        doublereal B = m_coeff[1];
+        doublereal Ct = m_coeff[2]*tt[0];
+        doublereal Dt2 = m_coeff[3]*tt[1];
+        doublereal Etm3 = m_coeff[4]*tt[3]*tt[5];
+        doublereal Ftm2 = m_coeff[5]*tt[3];
+
+        doublereal dh_RTdT = 0.5*B + 2.0/3.0*Ct + 3*0.25*Dt2 + 2*Etm3 - Ftm2;
+        doublereal dS_RdT = Atm1 + B + Ct + Dt2 + Etm3;
+        *dBdT = dS_RdT - dh_RTdT; 
+    }
+
+    virtual void updateDerivatives(const doublereal temp,
+                                   doublereal* dBdT) const {
+        double tPoly[6];
+        updateTemperaturePoly(temp, tPoly);
+        updateDerivatives(tPoly, dBdT);
+    }
+
     virtual void reportParameters(size_t& n, int& type,
                                   doublereal& tlow, doublereal& thigh,
                                   doublereal& pref,

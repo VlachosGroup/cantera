@@ -128,6 +128,29 @@ void MultiSpeciesThermo::update_derivatives(doublereal t, double* dCp_RdT,
     }
 }
 
+void MultiSpeciesThermo::update_derivatives_single(size_t k, double t, 
+                                       double* dBdT) const
+{
+    const SpeciesThermoInterpType* sp_ptr = provideSTIT(k);
+    if (sp_ptr) {
+        sp_ptr->updateDerivatives(t, dBdT);
+    }
+}
+
+void MultiSpeciesThermo::update_derivatives(doublereal t, double* dBdT) const
+{
+    auto iter = m_sp.begin();
+    auto jter = m_tpoly.begin();
+    for (; iter != m_sp.end(); iter++, jter++) {
+        const std::vector<index_STIT>& species = iter->second;
+        double* tpoly = &jter->second[0];
+        species[0].second->updateTemperaturePoly(t, tpoly);
+        for (size_t k = 0; k < species.size(); k++) {
+            size_t i = species[k].first;
+            species[k].second->updateDerivatives(tpoly, dBdT+i);
+        }
+    }
+}
 
 int MultiSpeciesThermo::reportType(size_t index) const
 {
