@@ -317,7 +317,7 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydo
         for (size_t j = 0; j < m_nsp; j++){
             auto j1 = j + y_ind;
             J(j1, T_ind) = mw[j]/m_thermo->density() * (
-                    dwdotdT[j] + m_wdot[j]/y[T_ind]);
+                    dwdotdT[j]);// + m_wdot[j]/y[T_ind]);
         }
 
         double dcvRdT = 0;                                  // Small c/R
@@ -333,23 +333,24 @@ void IdealGasReactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydo
 
         m_thermo->getPartialMolarIntEnergies(m_uk.data());  // U
 
-        double df1dT {0}, df1dT_2t{0};
+        double df1dT {0};
         for (size_t j = 0; j < m_nsp; j++) { 
             auto CvR = m_work[j] - 1;
             CvR -= m_uk[j] * dcvRdT / m_thermo->cv_mass();  // C_v(k)/R - u(k) * dc_v/R/dT
-            CvR -= m_uk[j]/RT;          
+            //CvR -= m_uk[j]/RT;          
             CvR *= (m_wdot[j] * m_vol + m_sdot[j]);         // End of first term Eq (46)
             df1dT += CvR;
         }
         df1dT *= inv_mcv * GasConstant;                     // First term of Eq. (46) of pyjac
 
+        double df1dT_2t{0};
         for (size_t i = 0; i < m_nsp; i++) { 
             auto prod_rate = m_vol * dwdotdT[i]; //TODO: + dsdotdT 
             df1dT_2t +=  m_uk[i] *  prod_rate;
         }
         df1dT_2t *= inv_mcv;
 
-        J(T_ind, T_ind) = df1dT - df1dT_2t;
+        J(T_ind, T_ind) = -df1dT - df1dT_2t;
 
         double dfTdm_1t{0}; 
         for (size_t j = 0; j < m_nsp; j++) { 

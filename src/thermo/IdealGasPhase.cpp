@@ -326,7 +326,7 @@ void IdealGasPhase::_updateThermoDerivatives() const
     // properties were computed, recompute them.
     if (cached.state1 != tnow) {
         //_updateThermo();
-        //m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
+        m_spthermo.update_derivatives(tnow, m_dCp0_RdT.data(), m_dS0_RdT.data());
         m_spthermo.update_derivatives(tnow, m_dB0dT.data());
         cached.state1 = tnow;
         /*

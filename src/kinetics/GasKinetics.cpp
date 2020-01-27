@@ -87,11 +87,9 @@ void GasKinetics::updateTDerivativeFactors()
 
     vector_fp dbdt(m_kk);
     thermo().getdBdT(dbdt.data());
-    /*for (size_t i = 0; i < m_kk; i++){
+    for (size_t i = 0; i < m_kk; i++){
         dbdt[i] -= 1/T;
     }
-    */
-
     getRevReactionDelta(dbdt.data(),  m_dBdT.data());
 }
 
@@ -298,14 +296,14 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
     if (constPressure){
         for (size_t i = 0; i < nReactions(); i++){
             m_dNetROPdT[i] = m_ropf[i] * 
-                (m_rfn_dTMult[i] - m_reactant_stoichsum[i]) * invT;
+                (m_rfn_dTMult[i] - m_reactant_stoichsum[i] * invT);
             m_dNetROPdT[i] -= m_ropr[i] * 
-                ((m_rfn_dTMult[i] - m_product_stoichsum[i]) * invT - m_dBdT[i]);
+                ((m_rfn_dTMult[i] - m_product_stoichsum[i] * invT) - m_dBdT[i]);
         }
     } else {
         for (size_t i = 0; i < nReactions(); i++){
-            m_dNetROPdT[i] = m_ropf[i] * m_rfn_dTMult[i] * invT;
-            m_dNetROPdT[i] -= m_ropr[i] * (m_rfn_dTMult[i] * invT - m_dBdT[i]);
+            m_dNetROPdT[i] = m_ropf[i] * m_rfn_dTMult[i];// * invT;
+            m_dNetROPdT[i] -= m_ropr[i] * (m_rfn_dTMult[i]  - m_dBdT[i]);
         }
     }
 
