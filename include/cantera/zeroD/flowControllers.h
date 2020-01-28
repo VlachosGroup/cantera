@@ -119,7 +119,7 @@ public:
             meanW = out().contents().meanMolecularWeight();
         }
         
-        auto derivative = m_coeff * RT / (meanW * vol);
+        auto derivative = m_master->massFlowRateMassDerivative(false) + m_coeff * RT / (meanW * vol);
         return derivative;
     }
 
