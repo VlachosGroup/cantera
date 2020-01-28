@@ -58,7 +58,8 @@ doublereal FlowDevice::outletSpeciesMassFlowRate(size_t k)
     return m_mdot * m_in->massFraction(ki);
 }
 
-doublereal FlowDevice::outletSpeciesMassFlowRateYDerivative(size_t j, size_t k){
+doublereal FlowDevice::outletSpeciesMassFlowRateYDerivative(size_t j, size_t k)
+{
     if (outletSpeciesMassFlowRate(j)){
         if (j == k) {
             return m_mdot;
@@ -69,10 +70,25 @@ doublereal FlowDevice::outletSpeciesMassFlowRateYDerivative(size_t j, size_t k){
     return 0;
 }
 
-doublereal FlowDevice::outletSpeciesMassFlowRateMassDerivative(size_t j){
+doublereal FlowDevice::outletSpeciesMassFlowRateMassDerivative(size_t j)
+{
     if (outletSpeciesMassFlowRate(j)){
         size_t ji = m_out2in[j];
         return massFlowRateMassDerivative() * m_in->massFraction(ji);
+    }
+    return 0;
+}
+
+doublereal FlowDevice::outletSpeciesMassFlowRateTDerivative(size_t j, bool constPressure) 
+{
+    if (outletSpeciesMassFlowRate(j)){
+        if (!constPressure){
+            size_t ji = m_out2in[j];
+            return massFlowRateTDerivative() * m_in->massFraction(ji);
+        } else {
+            size_t ji = m_out2in[j];
+            return m_in->massFraction(ji) * (massFlowRateTDerivative() + m_mdot / m_in->temperature());
+        }
     }
     return 0;
 }

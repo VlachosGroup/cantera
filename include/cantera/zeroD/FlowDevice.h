@@ -72,6 +72,8 @@ public:
 
     doublereal outletSpeciesMassFlowRateMassDerivative(size_t j);
 
+    doublereal outletSpeciesMassFlowRateTDerivative(size_t j, bool constPressure = false);
+
     //! specific enthalpy
     doublereal enthalpy_mass();
 
