@@ -459,6 +459,16 @@ void Kinetics::getNetProductionRateYDerivatives(doublereal* dNetdY, size_t k)
     m_reactantStoich.decrementSpecies(m_dNetROPdY.ptrColumn(k), dNetdY);
 }
 
+void Kinetics::getNetProductionRateMassDerivatives(doublereal* dNetdm)
+{
+    fill(dNetdm, dNetdm + m_kk, 0.0);
+    // products are created for positive net rate of progress
+    m_revProductStoich.incrementSpecies(m_dNetROPdm.data(), dNetdm);
+    m_irrevProductStoich.incrementSpecies(m_dNetROPdm.data(), dNetdm);
+    // reactants are destroyed for positive net rate of progress
+    m_reactantStoich.decrementSpecies(m_dNetROPdm.data(), dNetdm);
+}
+
 void Kinetics::addPhase(thermo_t& thermo)
 {
     // the phase with lowest dimensionality is assumed to be the
@@ -601,9 +611,8 @@ bool Kinetics::addReaction(shared_ptr<Reaction> r)
 
     // Add derivative related terms
     m_rfn_dTMult.push_back(0.0);
-    m_dFwdROPdT.push_back(0.0);
-    m_dRevROPdT.push_back(0.0);
     m_dNetROPdT.push_back(0.0);
+    m_dNetROPdm.push_back(0.0);
     m_dBdT.push_back(0.0);
 
     double rstoich_sum {0}, pstoich_sum {0};

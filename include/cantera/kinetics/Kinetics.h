@@ -597,6 +597,17 @@ public:
     virtual void getNetProductionRateTDerivatives(doublereal* dwdotdT);
 
     /**
+     * Total mass derivative of species net production rates. Return the
+     * mass derivative of species net production rates (creation - destruction) 
+     * in array dwdotdm, which must be dimensioned at least as large as the 
+     * total number of species. @see nTotalSpecies.
+     *
+     * @param dwdotdm   Output vector of mass derivatives of net production 
+     *                  rates. Length: m_kk.
+     */
+    virtual void getNetProductionRateMassDerivatives(doublereal* dwdotdm);
+
+    /**
      * Mass fraction derivative of species net production rates. Return the
      * derivative of species net production rates (creation - destruction) with
      * respect to mass fraction of species k in array dwdotdY, which must be 
@@ -1020,14 +1031,11 @@ protected:
     //! T derivative multiplier of forward rate constant for each reaction
     vector_fp m_rfn_dTMult;
 
-    //! T derivative of forward rate-of-progress for each reaction
-    vector_fp m_dFwdROPdT;
-
-    //! T derivative of reverse rate-of-progress for each reaction
-    vector_fp m_dRevROPdT;
-
     //! T derivative of net rate-of-progress for each reaction
     vector_fp m_dNetROPdT;
+
+    //! Total mass derivative of net rate-of-progress for each reaction
+    vector_fp m_dNetROPdm;
 
     //! T derivative of net rate-of-progress for each reaction
     vector_fp m_dBdT;       // dB/dT term of Eq. 75 in pyjac paper
@@ -1041,7 +1049,6 @@ protected:
     vector_fp m_product_stoichsum;
 
     Array2D m_dNetROPdY;
-    Array2D m_dFwdROPdY;
     Array2D m_dRevROPdY;
 
 };

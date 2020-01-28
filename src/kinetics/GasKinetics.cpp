@@ -292,6 +292,7 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
     processFalloffReactionDerivatives();
 
     // Temperature derivatives
+    // -----------------------
     doublereal invT = 1.0/m_temp;
     if (constPressure){
         for (size_t i = 0; i < nReactions(); i++){
@@ -313,9 +314,35 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
     }
     
     // TODO: Process T derivatives of falloff reactions
+    
+    // Total Mass derivatives
+    // ----------------------
+    // TODO: Account for constPressure condition
+    // Don't forget to divide the m_dNetROPdT with total mass in the reactor code
+    for (size_t i = 0; i < nReactions(); i++){
+        m_dNetROPdm[i] = m_ropf[i] * m_reactant_stoichsum[i];
+        m_dNetROPdm[i] -= m_ropr[i] * m_product_stoichsum[i];
+    }
+    /*
+    if (!concm_3b_values.empty()) {     // Eq. 58 of pyjac net
+        m_3b_concm.multiply(m_dNetROPdY.ptrColumn(j), concm_3b_values.data());
+    }
+    // Process Falloff prefactors
+    for (size_t i = 0; i < m_falloff_low_rates.nReactions(); i++) {
+        m_dNetROPdY(m_fallindx[i], j) *= falloff_pr[i];
+    }
+
+    if (constPressure){
+        for (size_t i = 0; i < nReactions(); i++){
+            m_dNetROPdY(i, j) -= m_ropf[i] * m_reactant_stoichsum[i] * 
+                                 muwght_by_wght;
+        }
+    }
+    */
 
 
     // Mass fraction derivatives
+    // -------------------------
     updateYDerivativeFactors();
 
     if (!m_dRevROPdY.data().size()){   //TODO: Push these to class initialization
@@ -431,6 +458,7 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
         processFalloffReactionDerivatives();
     }*/
 
+    
 }
 
 void GasKinetics::getFwdRateConstants(doublereal* kfwd)
