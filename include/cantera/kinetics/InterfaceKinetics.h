@@ -666,6 +666,8 @@ protected:
 
     void applyStickingCorrection(double T, double* kf);
 
+    void applyStickingCorrectionTDerivatives(double T, double* d_kf_dT);
+
     int m_ioFlag;
 
     //! Number of dimensions of reacting phase (2 for InterfaceKinetics, 1 for
