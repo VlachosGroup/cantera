@@ -303,7 +303,7 @@ void GasKinetics::updateROPDerivatives(bool constPressure)
         }
     } else {
         for (size_t i = 0; i < nReactions(); i++){
-            m_dNetROPdT[i] = m_ropf[i] * m_rfn_dTMult[i];// * invT;
+            m_dNetROPdT[i] = m_ropf[i] * m_rfn_dTMult[i];
             m_dNetROPdT[i] -= m_ropr[i] * (m_rfn_dTMult[i]  - m_dBdT[i]);
         }
     }
