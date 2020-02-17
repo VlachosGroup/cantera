@@ -22,9 +22,9 @@ namespace Cantera
 {
 
 
-//class MultiSpeciesInterThermo;
+//class SurfLatIntPhase ;
 //! A thermodynamic model for a surface phase, where lateral interactions between
-//! different species types is accounted for 
+//! different species types is accounted for in the 
 //! model.
 /*!
  * The surface consists of a grid of equivalent sites. Surface species may be
