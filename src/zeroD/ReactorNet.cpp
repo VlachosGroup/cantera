@@ -326,7 +326,7 @@ void ReactorNet::evalJacobianFD(doublereal t, doublereal* y,
             y[n] = ysave - dy;
             eval(t, y, ydot, p);
             //dy = 2*(y[n] - ysave);
-
+            
             // compute nth column of Jacobian
             for (size_t m = 0; m < m_nv; m++) {
                 //j->value(m,n) = (m_ydot[m] - ydot[m])/dy;

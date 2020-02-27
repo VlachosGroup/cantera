@@ -315,7 +315,6 @@ void Reactor::evalJacEqs(doublereal time, doublereal* y, doublereal* ydot,
     */
 }
 
-
 void Reactor::evalWalls(double t)
 {
     m_vdot = 0.0;
