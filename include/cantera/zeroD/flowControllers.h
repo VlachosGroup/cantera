@@ -107,50 +107,11 @@ public:
 
     virtual void updateMassFlowRate(double time);
 
-    virtual double massFlowRateMassDerivative(bool upstream){ // Call it only for non-const Pressure reactors
-        double vol, RT, meanW;
-        if (upstream){
-            vol = in().volume();
-            RT = in().contents().RT();
-            meanW = in().contents().meanMolecularWeight();
-        } else {
-            vol = -out().volume();
-            RT = out().contents().RT();
-            meanW = out().contents().meanMolecularWeight();
-        }
-        
-        auto derivative = m_master->massFlowRateMassDerivative(false) + m_coeff * RT / (meanW * vol);
-        return derivative;
-    }
+    virtual double massFlowRateMassDerivative(bool upstream); // Call it only for non-const Pressure reactors
 
-    virtual double massFlowRateYDerivative(size_t k, bool upstream){ // Call it only for non-const Pressure reactors
-        double den, RT, Wk;
-        if (upstream){
-            den = in().density();
-            RT = in().contents().RT();
-            Wk = in().contents().molecularWeight(k);
-        } else {
-            den = -out().density();
-            RT = out().contents().RT();
-            Wk = out().contents().molecularWeight(k);
-        }
-        
-        auto derivative = m_coeff * RT * den / Wk;
-        return derivative;
-    }
+    virtual double massFlowRateYDerivative(size_t k, bool upstream); // Call it only for non-const Pressure reactors
 
-    virtual double massFlowRateTDerivative(bool upstream){ 
-        double den, meanW;
-        if (upstream){
-            den = in().density();
-            meanW = in().contents().meanMolecularWeight();
-        } else {
-            den = -out().density();
-            meanW = out().contents().meanMolecularWeight();
-        }
-        auto derivative = m_coeffs[0] * GasConstant * den / meanW;
-        return derivative;
-    }
+    virtual double massFlowRateTDerivative(bool upstream);
 
 protected:
     FlowDevice* m_master;
@@ -208,69 +169,12 @@ public:
     /// Compute the currrent mass flow rate, based on the pressure difference.
     virtual void updateMassFlowRate(double time);
 
-    virtual double massFlowRateMassDerivative(bool upstream){
-        double der_P;
-        double vol, RT, meanW;
-        if (upstream){
-            vol = in().volume();
-            RT = in().contents().RT();
-            meanW = in().contents().meanMolecularWeight();
-            der_P = RT / (vol * meanW); 
-        } else {
-            vol = out().volume();
-            RT = out().contents().RT();
-            meanW = out().contents().meanMolecularWeight();
-            der_P = -RT / (vol * meanW); 
-        }
+    virtual double massFlowRateMassDerivative(bool upstream);
 
-        if (m_pfunc){
-            double delta_P = in().pressure() - out().pressure();
-            return m_pfunc->derivative()(delta_P) * der_P;
-        }
-        return der_P * m_coeffs[0];
-    }
+    virtual double massFlowRateTDerivative(bool upstream);
 
-    virtual double massFlowRateTDerivative(bool upstream){
-        double der_P;
-        double den, meanW;
-        if (upstream){
-            den = in().density();
-            meanW = in().contents().meanMolecularWeight();
-            der_P = GasConstant * den /  meanW; 
-        } else {
-            den = out().density();
-            meanW = out().contents().meanMolecularWeight();
-            der_P = -GasConstant * den / meanW; 
-        }
-
-        if (m_func){
-            double delta_P = in().pressure() - out().pressure();
-            return m_func->derivative()(delta_P) * der_P;
-        }
-        return der_P * m_coeffs[0];
-    }
-
-    virtual double massFlowRateYDerivative(size_t k, bool upstream){
-        double der_P;
-        double den, RT, Wk;
-        if (upstream){
-            den = in().density();
-            RT = in().contents().RT();
-            Wk = in().contents().molecularWeight(k);
-            der_P = RT * den / Wk; 
-        } else {
-            den = out().density();
-            RT = out().contents().RT();
-            Wk = out().contents().molecularWeight(k);
-            der_P = -RT * den / Wk; 
-        }
-
-        if (m_func){
-            double delta_P = in().pressure() - out().pressure();
-            return m_pfunc->derivative()(delta_P) * der_P;
-        } 
-        return der_P * m_coeff;
-    }
+    virtual double massFlowRateYDerivative(size_t k, bool upstream);
+    
 };
 
 }
