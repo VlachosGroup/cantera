@@ -162,8 +162,16 @@ public:
      * set this to zero and have included it for later expansion
      */
     int nparams() const {
-        return 0;
+        return m_sens_params.size();
     }
+
+    //! Values for the problem parameters for which sensitivities are computed
+    //! This is the array which is perturbed and passed back as the fourth
+    //! argument to eval().
+    vector_fp m_sens_params;
+
+    //! Scaling factors for each sensitivity parameter
+    vector_fp m_paramScales;
 
 protected:
     //! Mapping vector that stores whether a degree of freedom is a DAE or not

@@ -78,6 +78,7 @@ public:
     DAE_Solver(ResidJacEval& f) :
         m_resid(f),
         m_neq(f.nEquations()),
+        m_ns(f.nParameters()),
         m_time(0.0) {
     }
 
@@ -248,6 +249,11 @@ protected:
     //! Number of total equations in the system
     integer m_neq;
     doublereal m_time;
+
+    //! Sensitivity Related Parameters
+    //! Number of  parameters in the system
+    integer m_np;
+    integer m_ns;
 
 private:
     void warn(const std::string& msg) const {
