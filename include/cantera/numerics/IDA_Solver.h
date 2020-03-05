@@ -130,10 +130,21 @@ public:
      */
     virtual doublereal getOutputParameter(int flag) const;
 
+    /**
+     * Compute the consistent initial conditions
+     */
     virtual void correctInitial_Y_given_Yp(doublereal* y, doublereal* yp,
                                            doublereal tout);
 
     virtual void correctInitial_YaYp_given_Yd(doublereal* y, doublereal* yp, doublereal tout);
+
+    /*! 
+     * For sensitivity coefficients, call correctSensInitial after calling 
+     * either of correctInitial_Y_given_Yp or correctInitial_YaYp_given_Yd
+     */
+    virtual void correctSensInitial_Y(doublereal* yS, doublereal* ypS);
+
+    virtual void getSensCoeff(double t, doublereal* yS);
 
     //! Step the system to a final value of the time
     /*!
@@ -306,6 +317,13 @@ protected:
     std::unique_ptr<ResidData> m_fdata;
     int m_mupper;
     int m_mlower;
+
+    //! Sensitivity parameters
+    N_Vector* m_yS;
+    N_Vector* m_ySdot;
+    //size_t m_ns;
+    double m_reltolsens, m_abstolsens;
+    bool m_sens_ok;
 };
 
 }

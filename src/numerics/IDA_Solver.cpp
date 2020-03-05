@@ -162,6 +162,8 @@ IDA_Solver::IDA_Solver(ResidJacEval& f) :
     m_iter(0),
     m_reltol(1.e-9),
     m_abstols(1.e-15),
+    m_reltolsens(1.e-5),
+    m_abstolsens(1.e-4),
     m_nabs(0),
     m_hmax(0.0),
     m_hmin(0.0),
@@ -179,7 +181,10 @@ IDA_Solver::IDA_Solver(ResidJacEval& f) :
     m_maxNonlinConvFails(-1),
     m_setSuppressAlg(0),
     m_mupper(0),
-    m_mlower(0)
+    m_mlower(0),
+    m_yS(nullptr),
+    m_ySdot(nullptr),
+    m_sens_ok(false)
 {
 }
 
@@ -197,6 +202,13 @@ IDA_Solver::~IDA_Solver()
     if (m_abstol) {
         N_VDestroy_Serial(m_abstol);
     }
+    if (m_yS) {
+        N_VDestroyVectorArray_Serial(m_yS, static_cast<sd_size_t>(m_ns));
+    }
+    if (m_ySdot) {
+        N_VDestroyVectorArray_Serial(m_ySdot, static_cast<sd_size_t>(m_ns));
+    }
+
     if (m_constraints) {
         N_VDestroy_Serial(m_constraints);
     }
@@ -394,6 +406,34 @@ void IDA_Solver::inclAlgebraicInErrorTest(bool yesno)
     }
 }
 
+void IDA_Solver::sensInit(double t0)
+{
+    m_sens_ok = false;
+    m_yS = N_VCloneVectorArray_Serial(static_cast<sd_size_t>(m_ns), m_y);
+    for (size_t n = 0; n < m_ns; n++) {
+        N_VConst(0.0, m_yS[n]);
+    }
+    m_ySdot = N_VCloneVectorArray_Serial(static_cast<sd_size_t>(m_ns), m_y);
+    for (size_t n = 0; n < m_ns; n++) {
+        N_VConst(0.0, m_ySdot[n]);
+    }
+
+
+    int flag = IDASensInit(m_ida_mem, static_cast<sd_size_t>(m_ns),
+                           IDA_STAGGERED, IDASensResFn(0), m_yS, m_ySdot);
+
+    if (flag != IDA_SUCCESS) {
+        throw CanteraError("IDA_Solver::sensInit", "Error in IDASensInit");
+    }
+    vector_fp atol(m_np);
+    for (size_t n = 0; n < m_np; n++) {
+        // This scaling factor is tuned so that reaction and species enthalpy
+        // sensitivities can be computed simultaneously with the same abstol.
+        atol[n] = m_abstolsens / func.m_paramScales[n];
+    }
+    flag = IDASensSStolerances(m_ida_mem, m_reltolsens, atol.data());
+}
+
 void IDA_Solver::init(doublereal t0)
 {
     m_t0 = t0;
@@ -529,6 +569,17 @@ void IDA_Solver::init(doublereal t0)
         throw CanteraError("IDA_Solver::init", "IDASetUserData failed.");
     }
 
+    // Sensitivity
+    if (m_ns > 0) {
+        sensInit(t0);
+        flag = IDASetSensParams(m_ida_mem, m_resid.m_sens_params.data(), 
+                                m_resid.m_paramScales.data(), NULL);
+        if (flag != IDA_SUCCESS) {
+            throw CanteraError("IDA_Solver::init",
+                               "IDASetSensParams failed.");
+        }
+    }
+
     // set options
     if (m_maxord > 0) {
         flag = IDASetMaxOrd(m_ida_mem, m_maxord);
@@ -618,6 +669,7 @@ void IDA_Solver::correctInitial_Y_given_Yp(doublereal* y, doublereal* yp, double
         y[i] = NV_Ith_S(m_y, i);
         yp[i] = NV_Ith_S(m_ydot, i);
     }
+
 }
 
 void IDA_Solver::correctInitial_YaYp_given_Yd(doublereal* y, doublereal* yp, doublereal tout)
@@ -641,11 +693,24 @@ void IDA_Solver::correctInitial_YaYp_given_Yd(doublereal* y, doublereal* yp, dou
     flag = IDAGetConsistentIC(m_ida_mem, m_y, m_ydot);
     if (flag != IDA_SUCCESS) {
         throw CanteraError("IDA_Solver::correctInitial_YaYp_given_Yd",
-                           "IDAGetSolution failed: error = {}", flag);
+                           "IDAGetConsistentIC failed: error = {}", flag);
     }
     for (int i = 0; i < m_neq; i++) {
         y[i] = NV_Ith_S(m_y, i);
         yp[i] = NV_Ith_S(m_ydot, i);
+    }
+}
+
+void IDA_Solver::correctSensInitial_Y(doublereal* yS, doublereal* ypS)
+{
+    flag = IDAGetSensConsistentIC(m_ida_mem, m_yS, m_ySdot);
+    if (flag != IDA_SUCCESS) {
+        throw CanteraError("IDA_Solver::correctSensInitial_Y",
+                           "IDAGetSensConsistentIC failed: error = {}", flag);
+    }
+    for (int i = 0; i < m_ns; i++) {
+        yS[i] = NV_Ith_S(m_yS, i);
+        ypS[i] = NV_Ith_S(m_ySdot, i);
     }
 }
 
@@ -709,6 +774,19 @@ double IDA_Solver::step(double tout)
     m_deltat = m_tcurrent - m_told;
     return t;
 }
+
+void IDA_Solver::getSensCoeff(double tout, doublereal* yS)
+{
+    flag = IDAGetSens(m_ida_mem, &t, m_yS);
+    if (flag != IDA_SUCCESS) {
+        throw CanteraError("IDA_Solver::getSensCoeff",
+                           "IDAGetSens failed: error = {}", flag);
+    }
+    for (int i = 0; i < m_ns; i++) {
+        yS[i] = NV_Ith_S(m_yS, i);
+    }
+}
+
 
 doublereal IDA_Solver::getOutputParameter(int flag) const
 {
