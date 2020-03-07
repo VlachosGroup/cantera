@@ -22,6 +22,7 @@
     #include "idas/idas_direct.h"
     #include "idas/idas_spils.h"
 #else
+    #include "idas/idas_direct.h"
     #include "idas/idas_dense.h"
     #include "idas/idas_spgmr.h"
     #include "idas/idas_band.h"
@@ -163,7 +164,7 @@ IDA_Solver::IDA_Solver(ResidJacEval& f) :
     m_reltol(1.e-9),
     m_abstols(1.e-15),
     m_reltolsens(1.e-5),
-    m_abstolsens(1.e-4),
+    m_abstolsens(1.e-7),
     m_nabs(0),
     m_hmax(0.0),
     m_hmin(0.0),
@@ -262,9 +263,16 @@ void IDA_Solver::setTolerances(doublereal reltol, doublereal abstol)
         int flag = IDASStolerances(m_ida_mem, m_reltol, m_abstols);
         if (flag != IDA_SUCCESS) {
             throw CanteraError("IDA_Solver::setTolerances",
-                               "Memory allocation failed.");
+                               "Call to IDASStolerances failed.");
         }
     }
+}
+
+void IDA_Solver::setSensitivityTolerances(doublereal rtol_sens, 
+                                          doublereal atol_sens)
+{
+    m_reltolsens = rtol_sens;
+    m_abstolsens = atol_sens;
 }
 
 void IDA_Solver::setLinearSolverType(int solverType)
@@ -425,11 +433,11 @@ void IDA_Solver::sensInit(double t0)
     if (flag != IDA_SUCCESS) {
         throw CanteraError("IDA_Solver::sensInit", "Error in IDASensInit");
     }
-    vector_fp atol(m_np);
-    for (size_t n = 0; n < m_np; n++) {
+    vector_fp atol(m_ns);
+    for (size_t n = 0; n < m_ns; n++) {
         // This scaling factor is tuned so that reaction and species enthalpy
         // sensitivities can be computed simultaneously with the same abstol.
-        atol[n] = m_abstolsens / func.m_paramScales[n];
+        atol[n] = m_abstolsens / m_resid.m_paramScales[n];
     }
     flag = IDASensSStolerances(m_ida_mem, m_reltolsens, atol.data());
 }
@@ -703,7 +711,8 @@ void IDA_Solver::correctInitial_YaYp_given_Yd(doublereal* y, doublereal* yp, dou
 
 void IDA_Solver::correctSensInitial_Y(doublereal* yS, doublereal* ypS)
 {
-    flag = IDAGetSensConsistentIC(m_ida_mem, m_yS, m_ySdot);
+    /*
+    auto flag = IDAGetSensConsistentIC(m_ida_mem, m_yS, m_ySdot);
     if (flag != IDA_SUCCESS) {
         throw CanteraError("IDA_Solver::correctSensInitial_Y",
                            "IDAGetSensConsistentIC failed: error = {}", flag);
@@ -712,6 +721,7 @@ void IDA_Solver::correctSensInitial_Y(doublereal* yS, doublereal* ypS)
         yS[i] = NV_Ith_S(m_yS, i);
         ypS[i] = NV_Ith_S(m_ySdot, i);
     }
+    */
 }
 
 int IDA_Solver::solve(double tout)
@@ -748,6 +758,7 @@ int IDA_Solver::solve(double tout)
     if (flag != IDA_SUCCESS && flag != IDA_TSTOP_RETURN) {
         throw CanteraError("IDA_Solver::solve", "IDA error encountered.");
     }
+    m_sens_ok = false;
     return flag;
 }
 
@@ -772,19 +783,38 @@ double IDA_Solver::step(double tout)
     }
     m_tcurrent = t;
     m_deltat = m_tcurrent - m_told;
+    m_sens_ok = false;
     return t;
 }
 
-void IDA_Solver::getSensCoeff(double tout, doublereal* yS)
+double IDA_Solver::sensitivity(size_t k, size_t p)
 {
-    flag = IDAGetSens(m_ida_mem, &t, m_yS);
-    if (flag != IDA_SUCCESS) {
-        throw CanteraError("IDA_Solver::getSensCoeff",
-                           "IDAGetSens failed: error = {}", flag);
+    if (!m_sens_ok && m_ns){
+        if (m_tcurrent = m_t0){
+            auto flag = IDAGetSensConsistentIC(m_ida_mem, m_yS, m_ySdot);
+            if (flag != IDA_SUCCESS) {
+                throw CanteraError("IDA_Solver::sensitivity",
+                                   "IDAGetSensConsistentIC failed: error = {}", flag);
+            }
+        } else {
+            auto flag = IDAGetSens(m_ida_mem, &m_tcurrent, m_yS);
+            if (flag != IDA_SUCCESS) {
+                throw CanteraError("IDA_Solver::sensitivity",
+                                   "IDAGetSens failed: error = {}", flag);
+            }
+        }
+        m_sens_ok = true;
     }
-    for (int i = 0; i < m_ns; i++) {
-        yS[i] = NV_Ith_S(m_yS, i);
+
+    if (k >= m_neq) {
+        throw CanteraError("IDA_Solver::sensitivity",
+                           "sensitivity: equation index out of range ({})", k);
     }
+    if (p >= m_ns) {
+        throw CanteraError("IDA_Solver::sensitivity",
+                           "sensitivity: parameter index out of range ({})", p);
+    }
+    return NV_Ith_S(m_yS[p], k);
 }
 
 

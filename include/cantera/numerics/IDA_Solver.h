@@ -56,6 +56,9 @@ public:
 
     virtual void setTolerances(doublereal reltol, doublereal abstol);
 
+    virtual void setSensitivityTolerances(doublereal rtol_sens, 
+                                          doublereal atol_sens);
+
     virtual void setLinearSolverType(int solverType);
 
     //! Set up the problem to use a dense linear direct solver
@@ -144,7 +147,7 @@ public:
      */
     virtual void correctSensInitial_Y(doublereal* yS, doublereal* ypS);
 
-    virtual void getSensCoeff(double t, doublereal* yS);
+    virtual double sensitivity(size_t k, size_t p);
 
     //! Step the system to a final value of the time
     /*!
@@ -220,6 +223,8 @@ public:
     virtual int solve(doublereal tout);
 
     virtual doublereal step(doublereal tout);
+
+    virtual void sensInit(doublereal t0);
 
     virtual void init(doublereal t0);
 
