@@ -78,7 +78,8 @@ public:
     DAE_Solver(ResidJacEval& f) :
         m_resid(f),
         m_neq(f.nEquations()),
-        m_ns(f.nParameters()),
+        m_ns(f.nparams()),
+        m_np(0),
         m_time(0.0) {
     }
 
@@ -187,6 +188,15 @@ public:
         return 0;
     }
 
+    virtual int nSensParams() {
+        return m_ns;
+    }
+
+    virtual double sensitivity(size_t k, size_t p) {
+        warn("sensitivity");
+        return 0.0;
+    }
+
     /**
      * Take one internal step.
      */
@@ -204,6 +214,11 @@ public:
      * initialize. Base class method does nothing.
      */
     virtual void init(doublereal t0) {}
+
+    /**
+     * initialize sensitivity related stuff. Base class method does nothing.
+     */
+    virtual void sensInit(doublereal t0) {}
 
     /**
      * Set a solver-specific input parameter.
