@@ -744,7 +744,7 @@ int IDA_Solver::solve(double tout)
         }
         m_told_old = m_told;
         m_told = m_tcurrent;
-        flag = IDASolve(m_ida_mem, tout, &tretn, m_y, m_ydot, IDA_ONE_STEP);
+        flag = IDASolve(m_ida_mem, tout, &tretn, m_y, m_ydot, IDA_NORMAL);
         if (flag < 0) {
             throw CanteraError("IDA_Solver::solve", "IDA error encountered.");
         } else if (flag == IDA_TSTOP_RETURN) {
