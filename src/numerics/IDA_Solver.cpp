@@ -586,6 +586,15 @@ void IDA_Solver::init(doublereal t0)
             throw CanteraError("IDA_Solver::init",
                                "IDASetSensParams failed.");
         }
+
+        // Applying forward difference scheme. Central difference scheme is 
+        // giving results off by factor of 2
+        flag = IDASetSensDQMethod(m_ida_mem, IDA_FORWARD, 0.0);
+        if (flag != IDA_SUCCESS) {
+            throw CanteraError("IDA_Solver::init",
+                               "IDASetSensDQMethod failed.");
+        }
+
     }
 
     // set options
