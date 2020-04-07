@@ -161,8 +161,8 @@ IDA_Solver::IDA_Solver(ResidJacEval& f) :
     m_type(0),
     m_itol(IDA_SS),
     m_iter(0),
-    m_reltol(1.e-9),
-    m_abstols(1.e-15),
+    m_reltol(1.e-8),
+    m_abstols(1.e-10),
     m_reltolsens(1.e-5),
     m_abstolsens(1.e-7),
     m_nabs(0),
@@ -589,11 +589,14 @@ void IDA_Solver::init(doublereal t0)
 
         // Applying forward difference scheme. Central difference scheme is 
         // giving results off by factor of 2
-        flag = IDASetSensDQMethod(m_ida_mem, IDA_FORWARD, 0.0);
+        // TODO: Get the forward difference scheme working. Temporarily the 
+        // the deficiency of central difference scheme is overcome by multiplying
+        // the sensitivity coefficient with 2.
+        /*flag = IDASetSensDQMethod(m_ida_mem, IDA_FORWARD, 1.0);
         if (flag != IDA_SUCCESS) {
             throw CanteraError("IDA_Solver::init",
                                "IDASetSensDQMethod failed.");
-        }
+        }*/
 
     }
 
