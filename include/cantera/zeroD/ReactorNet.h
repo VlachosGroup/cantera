@@ -267,9 +267,6 @@ protected:
     virtual int lastOrder() {
         return m_integ->lastOrder();
     }
-    //! Initialize the reactor network. Called automatically the first time
-    //! advance or step is called.
-    virtual void initialize();
 
     std::vector<Reactor*> m_reactors;
     std::unique_ptr<Integrator> m_integ;
