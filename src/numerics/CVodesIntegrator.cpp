@@ -231,6 +231,7 @@ void CVodesIntegrator::setMaxErrTestFails(int n)
     }
 }
 
+/*
 void CVodesIntegrator::setIterator(IterType t)
 {
     if (t == Newton_Iter) {
@@ -242,7 +243,6 @@ void CVodesIntegrator::setIterator(IterType t)
     }
 }
 
-/*
 bool checkFlag(const int constraintFlag)
  {
      auto cflag = constraintFlag;

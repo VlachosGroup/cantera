@@ -165,6 +165,22 @@ public:
         return m_sens_params.size();
     }
 
+    double sensitivityParameter(size_t k) {
+        if (k < nparams()){
+            return m_sens_params[k];
+        }
+        throw CanteraError("Cantera::ResidEval::sensitivityParameter", 
+                           "Index ({}) less than size ({})", k, nparams());
+    }
+
+    void setSensitivityParameter(size_t k, double sensVal) {
+        if (k < nparams()){
+            m_sens_params[k] = sensVal;
+        }
+        throw CanteraError("Cantera::ResidEval::sentSensitivityParameter",
+                           "Index ({}) less than size ({})", k, nparams());
+    }
+
     //! Values for the problem parameters for which sensitivities are computed
     //! This is the array which is perturbed and passed back as the fourth
     //! argument to eval().
