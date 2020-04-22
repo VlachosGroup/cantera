@@ -80,6 +80,7 @@ public:
         m_neq(f.nEquations()),
         m_ns(f.nparams()),
         m_np(0),
+        m_nq(0),
         m_time(0.0) {
     }
 
@@ -210,6 +211,16 @@ public:
         return m_resid.nEquations();
     }
 
+    /// Number of quadrature equations.
+    virtual int nQuadEquations() const {
+        return m_nq;
+    }
+
+    /// Set the number of quadrature equations.
+    virtual void setnQuadratureEquations(int n) {
+        m_nq = n;
+    }
+
     /**
      * initialize. Base class method does nothing.
      */
@@ -269,6 +280,10 @@ protected:
     //! Number of  parameters in the system
     integer m_np;
     integer m_ns;
+
+    //! Quadrature Related Parameters
+    //! Number of quadrature variables
+    integer m_nq;
 
 private:
     void warn(const std::string& msg) const {

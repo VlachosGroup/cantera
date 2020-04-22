@@ -93,6 +93,19 @@ public:
         throw NotImplementedError("ResidEval::eval");
     }
 
+    /**
+     * Evaluate the integrand rhs function. Called by the integrator for qaudrature evaluation.
+     * @param t time. (input)
+     * @param y solution vector. (input)
+     * @param ydot rate of change of solution vector. (input)
+     * @param rhsQ integrand rhs vector (output)
+     */
+    virtual int evalQuadRhs(const doublereal t, const doublereal* const y,
+                     const doublereal* const ydot,
+                     doublereal* const rhsQ) {
+        throw NotImplementedError("ResidEval::eval");
+    }
+
     virtual int evalSS(const doublereal t, const doublereal* const y,
                        doublereal* const r) {
         return eval(t, y, 0, r);

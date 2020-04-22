@@ -94,6 +94,41 @@ extern "C" {
         }
     }
 
+    //! Function called by IDA to evaluate the quadratures, given y and ydot.
+    /*!
+     * IDA allows passing in a void* pointer to access external data. Instead of
+     * requiring the user to provide a integrand function directly to IDA (which
+     * would require using the sundials data types N_Vector, etc.), we define
+     * this function as the single function that IDA always calls. The real
+     * evaluation of the integrands is done by an instance of a subclass of
+     * ResidEval, passed in to this function as a pointer in the parameters.
+     *
+     * FROM IDA WRITEUP -> What the IDA solver expects as a return flag from its
+     * residual routines:
+     *
+     * A IDAQuadRhsFn res should return a value of 0 if successful, a positive value
+     * if a recoverable error occured (e.g. yy has an illegal value), or a
+     * negative value if a nonrecoverable error occured. In the latter case, the
+     * program halts. If a recoverable error occured, the integrator will
+     * attempt to correct and retry.
+     */
+    static int ida_quad_rhs(realtype t, N_Vector y, N_Vector ydot, N_Vector rhsQ, void* f_data)
+    {
+        Cantera::ResidData* d = (Cantera::ResidData*) f_data;
+        Cantera::ResidEval* f = d->m_func;
+        Cantera::IDA_Solver* s = d->m_solver;
+        double delta_t = s->getCurrentStepFromIDA();
+        // TODO evaluate evalType. Assumed to be Base_ResidEval
+        int flag = f->evalQuadRhs(t, NV_DATA_S(y), NV_DATA_S(ydot),
+                                  NV_DATA_S(rhsQ));
+        if (flag < 0) {
+            // This signals to IDA that a nonrecoverable error has occurred.
+            return flag;
+        } else {
+            return 0;
+        }
+    }
+
     //! Function called by by IDA to evaluate the Jacobian, given y and ydot.
     /*!
      * typedef int (*IDADlsDenseJacFn)(sd_size_t N, realtype t, realtype c_j,
@@ -185,7 +220,11 @@ IDA_Solver::IDA_Solver(ResidJacEval& f) :
     m_mlower(0),
     m_yS(nullptr),
     m_ySdot(nullptr),
-    m_sens_ok(false)
+    m_sens_ok(false),
+    m_yQ(nullptr),
+    m_yQdot(nullptr),
+    m_reltolQuad(0.0),
+    m_abstolQuad(0.0)
 {
 }
 
@@ -208,6 +247,12 @@ IDA_Solver::~IDA_Solver()
     }
     if (m_ySdot) {
         N_VDestroyVectorArray_Serial(m_ySdot, static_cast<sd_size_t>(m_ns));
+    }
+    if (m_yQ) {
+        N_VDestroy_Serial(m_yQ);
+    }
+    if (m_yQdot) {
+        N_VDestroy_Serial(m_yQdot);
     }
 
     if (m_constraints) {
@@ -234,6 +279,7 @@ const doublereal* IDA_Solver::derivativeVector() const
 {
     return NV_DATA_S(m_ydot);
 }
+
 
 void IDA_Solver::setTolerances(double reltol, double* abstol)
 {
@@ -460,6 +506,12 @@ void IDA_Solver::init(doublereal t0)
     if (m_constraints) {
         N_VDestroy_Serial(m_constraints);
     }
+    if (m_yQ) {
+        N_VDestroy_Serial(m_yQ);
+    }
+    if (m_yQdot) {
+        N_VDestroy_Serial(m_yQdot);
+    }
 
     m_y = N_VNew_Serial(m_neq);
     m_ydot = N_VNew_Serial(m_neq);
@@ -469,6 +521,15 @@ void IDA_Solver::init(doublereal t0)
         NV_Ith_S(m_y, i) = 0.0;
         NV_Ith_S(m_ydot, i) = 0.0;
         NV_Ith_S(m_constraints, i) = 0.0;
+    }
+
+    if (nQuadEquations()){
+        m_yQ = N_VNew_Serial(nQuadEquations());
+        m_yQdot = N_VNew_Serial(nQuadEquations());
+    }
+    for (int i = 0; i < nQuadEquations(); i++) {
+        NV_Ith_S(m_yQ, i) = 0.0;
+        NV_Ith_S(m_yQdot, i) = 0.0;
     }
 
     // get the initial conditions
@@ -665,6 +726,14 @@ void IDA_Solver::init(doublereal t0)
             throw CanteraError("IDA_Solver::init", "IDASetConstraints failed");
         }
     }
+
+    // Work on quadrature setup
+    if (nQuadEquations()){
+        flag = IDAQuadInit(m_ida_mem, ida_quad_rhs, m_yQ);
+        if (flag != IDA_SUCCESS) {
+            throw CanteraError("IDA_Solver::init", "IDAQuadInit failed");
+        }
+    }
 }
 
 void IDA_Solver::correctInitial_Y_given_Yp(doublereal* y, doublereal* yp, doublereal tout)
@@ -801,6 +870,24 @@ double IDA_Solver::step(double tout)
     m_deltat = m_tcurrent - m_told;
     m_sens_ok = false;
     return t;
+}
+
+const doublereal* IDA_Solver::quadratureVector() const 
+{
+    if (nQuadEquations()){
+        double tret;
+        auto flag = IDAGetQuad(m_ida_mem, &tret, m_yQ);
+        if (flag != IDA_SUCCESS) {
+            throw CanteraError("IDA_Solver::quadratureVector",
+                               "IDAGetQuad failed: error = {}", flag);
+        }
+        return NV_DATA_S(m_yQ);
+    }
+    return nullptr;
+}
+
+double IDA_Solver::getCurrentTimeFromIDA(){
+    return m_tcurrent;
 }
 
 double IDA_Solver::sensitivity(size_t k, size_t p)

@@ -98,6 +98,12 @@ public:
      */
     virtual double getCurrentStepFromIDA();
 
+    //! Get the current time from IDA via a call
+    /*!
+     * @returns the current time.
+     */
+    virtual double getCurrentTimeFromIDA();
+
     //! Set the form of the Jacobian
     /*!
      * @param formJac  Form of the Jacobian
@@ -236,6 +242,8 @@ public:
 
     virtual const doublereal* derivativeVector() const;
 
+    virtual const doublereal* quadratureVector() const;
+
     void* IDAMemory() {
         return m_ida_mem;
     }
@@ -329,6 +337,11 @@ protected:
     //size_t m_ns;
     double m_reltolsens, m_abstolsens;
     bool m_sens_ok;
+
+    //! Quadrature parameters
+    N_Vector m_yQ;
+    N_Vector m_yQdot;
+    double m_reltolQuad, m_abstolQuad;
 };
 
 }
