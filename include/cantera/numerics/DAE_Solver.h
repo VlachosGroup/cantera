@@ -217,7 +217,7 @@ public:
     }
 
     /// Set the number of quadrature equations.
-    virtual void setnQuadratureEquations(int n) {
+    virtual void setQuadratureVarSize(int n) {
         m_nq = n;
     }
 
