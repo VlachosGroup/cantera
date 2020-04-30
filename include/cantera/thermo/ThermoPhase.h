@@ -1515,6 +1515,12 @@ public:
      */
     virtual void setStateFromXML(const XML_Node& state);
 
+
+    virtual void setupInteractions(const AnyMap& phaseNode, const AnyMap& rootNode)
+    {
+        throw NotImplementedError("ThermoPhase::setupInteractions");
+    }
+
     virtual void invalidateCache();
 
     //! @}

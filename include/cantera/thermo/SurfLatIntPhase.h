@@ -230,6 +230,19 @@ public:
 
     bool installInteractionArrays(const XML_Node& p, bool check_for_duplicates);
 
+    virtual void setupInteractions(const AnyMap& intrxnNode, const AnyMap& rootNode);
+
+    //! Determine behavior when adding a new interaction that contains species 
+    //! not defined in the phase. If set to true, the interaction will 
+    //! silently be ignored. If false, (the default) an exception will be 
+    //! raised.
+    void skipInteractionUndeclaredSpecies(bool skip) {
+        m_skipIntrxnUndeclaredSpecies = skip;
+    }
+    bool skipInteractionUndeclaredSpecies() const {
+        return m_skipIntrxnUndeclaredSpecies;
+    }
+
     void checkDuplicates() {}
 
     std::vector<std::string> getAffectedInteractions(std::string speciesName) const;
@@ -263,6 +276,8 @@ private:
      *                lateral interactions of surface species. default = false.
      */
     virtual void _updateThermo(bool force=false) const;
+ 
+    bool m_skipIntrxnUndeclaredSpecies = false;
 
 
 

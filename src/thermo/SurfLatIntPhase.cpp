@@ -145,6 +145,27 @@ bool SurfLatIntPhase::addInteraction(shared_ptr<LateralInteraction> intrxn) {
             name(), intrxn->name());
     }
 
+    // Check for undeclared species
+    auto ph_sp = speciesNames();
+    if (find(ph_sp.begin(), ph_sp.end(), intrxn->species1Name()) == ph_sp.end()) {
+        if (m_skipIntrxnUndeclaredSpecies) {
+            return false;
+        } else {
+            throw CanteraError("SurfLatIntPhase::addInteraction", "Interaction '" +
+                intrxn->name() + "' contains the undeclared species '" +
+                intrxn->species1Name() + "'");
+        }   
+    }   
+    if (find(ph_sp.begin(), ph_sp.end(), intrxn->species2Name()) == ph_sp.end()) {
+        if (m_skipIntrxnUndeclaredSpecies) {
+            return false;
+        } else {
+            throw CanteraError("SurfLatIntPhase::addInteraction", "Interaction '" +
+                intrxn->name() + "' contains the undeclared species '" +
+                intrxn->species2Name() + "'");
+        }   
+    }
+
     m_interactions[toLowerCopy(intrxn->name())] = intrxn;
 
     // Add the affected species to the m_intrxn_species list if not already present
@@ -282,49 +303,79 @@ void SurfLatIntPhase::initThermoXML(XML_Node& phaseNode, const string& id)
     // Lot of code is duplicated from species importing part in the importPhase 
     // function. Could be simplified.
     installInteractionArrays(phaseNode, true);
-    return;
+}
 
-    if (phaseNode.hasChild("interactionArray")){
-        vector<XML_Node*> intrxnArrays = phaseNode.getChildren("interactionArray");
+void SurfLatIntPhase::setupInteractions(const AnyMap& phaseNode, 
+                                        const AnyMap& rootNode)
+{
+    auto intrxnsNode = phaseNode.at("interactions");
+    
+    vector<string> sections, rules;
+    if (intrxnsNode.is<string>()) {
+        if (rootNode.hasKey("interactions")) {
+            // Specification of the rule for adding species from the default
+            // 'reactions' section, if it exists
+            sections.push_back("interactions");
+            rules.push_back(intrxnsNode.asString());
+        } else if (intrxnsNode.asString() != "none") {
+            throw InputFileError("setupInteractions", intrxnsNode,
+                "Phase entry implies existence of 'interactions' section "
+                "which does not exist in the current input file.");
+        }   
+    } else if (intrxnsNode.is<vector<string>>()) {
+        // List of sections from which all species should be added
+        for (const auto& item : intrxnsNode.as<vector<string>>()) {
+            sections.push_back(item);
+            rules.push_back("all");
+        }   
+    } else if (intrxnsNode.is<vector<AnyMap>>()) {
+        // Mapping of rules to apply for each specified section containing
+        // intrxns
+        for (const auto& item : intrxnsNode.as<vector<AnyMap>>()) {
+            sections.push_back(item.begin()->first);
+            rules.push_back(item.begin()->second.asString());
+        }   
+    }   
+  
 
-        vector<XML_Node*> dbases;
-        vector_int intrxnrule(intrxnArrays.size(), 0);
+    // Add interactions from each section
+    for (size_t i = 0; i < sections.size(); i++) {
+        if (rules[i] == "all") {
+            skipInteractionUndeclaredSpecies(false);
+        } else if (rules[i] == "declared-species") {
+            skipInteractionUndeclaredSpecies(true);
+        } else if (rules[i] == "none") {
+            continue;
+        } else {
+            throw InputFileError("setupInteractions", phaseNode.at("interactions"),
+                "Unknown rule '{}' for adding species from the '{}' section.",
+                rules[i], sections[i]);
+        }   
+        const auto& slash = boost::ifind_last(sections[i], "/");
+        if (slash) {
+            // specified section is in a different file
+            string fileName (sections[i].begin(), slash.begin());
+            string node(slash.end(), sections[i].end());
+            AnyMap intrxns = AnyMap::fromYamlFile(fileName,
+                rootNode.getString("__file__", ""));
+            for (const auto& intrxn : intrxns[node].asVector<AnyMap>()) {
+                addInteraction(newLateralInteraction(intrxn));
+            }   
+        } else {
+            // specified section is in the current file
+            for (const auto& intrxn : rootNode.at(sections[i]).asVector<AnyMap>()) {
+                addInteraction(newLateralInteraction(intrxn));
+            }   
+        }   
+    }   
 
-        // Default behavior when importing interactions containing unknown species
-        // is to discard them
+    //auto intrxns = getInteractions(intrxnNode, rootNode) 
 
-        for (size_t i = 0; i < intrxnArrays.size(); i++) {
-            const XML_Node& intrxnArray = *intrxnArrays[i];
-
-            XML_Node* db = get_XML_Node(intrxnArray["datasrc"], &phaseNode.root());
-            if (db == 0) {
-                throw CanteraError("importPhase() Can not find XML node for ", 
-                                   "interaction database: "
-                                   + intrxnArray["datasrc"]);
-            }
-            dbases.push_back(db);
-        }
-
-        // Now collect all the interxns and the XML_Node * pointer for those
-        // interxns in a single vector. This is where we decide what interxns
-        // are to be included in the phase. 
-        vector<XML_Node*> intrxnDataNodeList;
-        vector<string> intrxnNamesList;
-        vector_int intrxnRuleList;
-        formInteractionXMLNodeList(intrxnDataNodeList, intrxnNamesList, 
-                                   intrxnRuleList, intrxnArrays, 
-                                   dbases, intrxnrule);
-
-        size_t nIntrxn = intrxnDataNodeList.size();
-        for (size_t k = 0; k < nIntrxn; k++) {
-            XML_Node* s = intrxnDataNodeList[k];
-            AssertTrace(s != 0);
-            //if (intrxnRuleList[k]) {
-            //   ignoreUndefinedSpecies();
-            //}
-            this->addInteraction(newLateralInteraction(*s));
-        }
+    /* Add the interactions to MultiSpeciesInterThermo */
+    for (const auto & intrx_id_pair : m_interactions) {
+        m_spInterThermo.addInteraction(intrx_id_pair.second);
     }
+    m_spInterThermo.buildSpeciesInterMap(speciesNames()); 
 
 }
 

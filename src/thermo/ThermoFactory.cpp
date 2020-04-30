@@ -591,6 +591,11 @@ void setupPhase(ThermoPhase& thermo, AnyMap& phaseNode, const AnyMap& rootNode)
     } else {
         thermo.setState_TP(298.15, OneAtm);
     }
+
+    // Add interactions for surface phases
+    if (phaseNode.hasKey("interactions")) {
+        thermo.setupInteractions(phaseNode, rootNode);
+    }
 }
 
 void installElements(Phase& th, const XML_Node& phaseNode)

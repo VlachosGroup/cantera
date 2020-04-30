@@ -118,14 +118,51 @@ shared_ptr<LateralInteraction> newLateralInteraction(const XML_Node& interaction
     return interaction;
 }
 
-
-std::vector<shared_ptr<LateralInteraction> > getInteractions(const XML_Node& node)
+std::vector<shared_ptr<LateralInteraction>> getInteractions(const XML_Node& node)
 {
-    std::vector<shared_ptr<LateralInteraction> > interactions;
+    std::vector<shared_ptr<LateralInteraction>> interactions;
     for (const auto& intnode : node.child("interactionData").getChildren("interaction")) {
         interactions.push_back(newLateralInteraction(*intnode));
     }
     return interactions;
 }
+
+shared_ptr<LateralInteraction> newLateralInteraction(const AnyMap& intrxnNode)
+{
+    
+    std::string id = intrxnNode["id"].asString();
+    auto species = intrxnNode["species"].asVector<string>();
+    if (species.size() != 2)
+        throw CanteraError("Cantera::newLateralInteraction", 
+                "The size of the species array: '{}' is different from 2",  
+                species.size());
+    auto units = intrxnNode.units();
+    auto strengths = intrxnNode["strength"].asVector<double>(); // Update to account for units
+    //auto strengths = intrxnNode.convertVector("strength", "K", 
+    for (auto& strength : strengths) {
+        strength = units.convertActivationEnergy(strength, "K");
+    }
+    auto covs = intrxnNode["coverage_threshold"].asVector<double>();
+    
+
+    auto interaction = make_shared<LateralInteraction>(species[0], species[1], 
+                                                       strengths, covs, id);
+    return interaction;
+}
+
+std::vector<shared_ptr<LateralInteraction>> getInteractions(const AnyMap& intrxnNode, const AnyMap& rootNode)
+{
+    std::vector<shared_ptr<LateralInteraction>> interactions;
+    /*for (const auto& intnode : node.child("interactionData").getChildren("interaction")) {
+        interactions.push_back(newLateralInteraction(*intnode));
+    }*/
+    if (intrxnNode["interactions"].is<vector<AnyMap>>()) {
+        for (const auto& intrxnNd : intrxnNode["interactions"].asVector<AnyMap>()){
+            interactions.push_back(newLateralInteraction(intrxnNd));
+        }
+    }
+    return interactions;
+}
+
 
 }

@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "cantera/base/ct_defs.h"
+#include "cantera/base/AnyMap.h"
 
 namespace Cantera
 {
@@ -96,6 +97,9 @@ protected:
 //! defined in `intrxn_node`
 shared_ptr<LateralInteraction> newLateralInteraction(const XML_Node& intrxn_node);
 
+shared_ptr<LateralInteraction> newLateralInteraction(const AnyMap& intrxnNode);
+//shared_ptr<LateralInteraction> newLateralInteraction(AnyMap& intrxnNode, const AnyMap& rootNode);
+
 //! Create LateralInteraction objects for all `<interaction>` nodes in an 
 //! XML document.
 //!
@@ -116,6 +120,21 @@ shared_ptr<LateralInteraction> newLateralInteraction(const XML_Node& intrxn_node
 //!   - A `units` directive is included 
 std::vector<shared_ptr<LateralInteraction> > getInteractions(const XML_Node& node);
 
+
+//! Create LateralInteraction objects for all `interaction` nodes in an 
+//! YAML document.
+//!
+//! The `interaction` nodes are assumed to be children of the 
+//! `interactionData` node in an YAML document.
+//!
+//! If Interaction objects are being created from a definition that does not
+//! contain corresponding phase definitions, then one of the following must be
+//! true, or the resulting interaction parameters will be incorrect:
+//!
+//!   - The interaction strength constants are expressed in (Joules/mol) units
+//!   - A `units` directive is included 
+std::vector<shared_ptr<LateralInteraction> > getInteractions(const AnyMap& intrxnNode);
+//std::vector<shared_ptr<LateralInteraction> > getInteractions(AnyMap& intrxnNode, const AnyMap& rootNode);
 
 }
 #endif
