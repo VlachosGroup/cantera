@@ -6,6 +6,7 @@
 #include "cantera/base/stringUtils.h"
 #include "cantera/base/ctexceptions.h"
 #include "cantera/base/ctml.h"
+#include "cantera/base/AnyMap.h"
 //#include <iostream>
 //#include <limits>
 #include <vector>
@@ -163,6 +164,65 @@ int getBEPReactionArrayIds(const XML_Node& p, vector<string>& ids)
     return itot;
 }
 
+vector<string> getBEPReactionIds(const AnyMap& bepNode, const AnyMap& rootNode)
+{
+    // Find sections containing reactions to add
+    vector<string> sections, rules;
+    vector<string> ids;
+
+    if (bepNode.hasKey("reactions")) {
+        const auto& reactionsNode = bepNode.at("reactions");
+        if (reactionsNode.is<string>()) {
+            if (rootNode.hasKey("reactions")) {
+                // Specification of the rule for adding species from the default
+                // 'reactions' section, if it exists
+                sections.push_back("reactions");
+                rules.push_back(reactionsNode.asString());
+            } else if (reactionsNode.asString() != "none") {
+                throw InputFileError("getBEPReactionIds", reactionsNode,
+                    "BEP entry implies existence of 'reactions' section "
+                    "which does not exist in the current input file.");
+            }
+        } else if (reactionsNode.is<vector<string>>()) {
+            // List of sections from which all species should be added
+            for (const auto& item : reactionsNode.as<vector<string>>()) {
+                sections.push_back(item);
+                rules.push_back("all");
+            }
+        } else if (reactionsNode.is<vector<AnyMap>>()) {
+            // Mapping of rules to apply for each specified section containing
+            // reactions
+            for (const auto& item : reactionsNode.as<vector<AnyMap>>()) {
+                sections.push_back(item.begin()->first);
+                rules.push_back(item.begin()->second.asString());
+            }
+        }
+    } 
+
+    // Add reactions from each section
+    for (size_t i = 0; i < sections.size(); i++) {
+        
+        const auto& slash = boost::ifind_last(sections[i], "/");
+        if (slash) {
+            // specified section is in a different file
+            string fileName (sections[i].begin(), slash.begin());
+            string node(slash.end(), sections[i].end());
+            AnyMap reactions = AnyMap::fromYamlFile(fileName,
+                rootNode.getString("__file__", ""));
+            for (const auto& R : reactions[node].asVector<AnyMap>()) {
+                ids.push_back(R["id"].asString());
+            }
+        } else {
+            // specified section is in the current file
+            for (const auto& R : rootNode.at(sections[i]).asVector<AnyMap>()) {
+                ids.push_back(R["id"].asString());
+            }
+        }
+    }
+
+    return ids;
+}
+
 
 shared_ptr<BEP> newBEP(const XML_Node& bep_node)
 {
@@ -202,5 +262,36 @@ std::vector<shared_ptr<BEP> > getBEPs(const XML_Node& node)
     }
     return beps;
 }
+
+shared_ptr<BEP> newBEP(const AnyMap& bep_node, const AnyMap& rootNode)
+{
+    string id = bep_node["id"].asString();
+    double slope = bep_node["alpha"].asDouble();
+    auto units = bep_node.units();
+    double intercept = units.convertActivationEnergy(bep_node["beta"], "K");
+    string dir = bep_node["direction"].asString();
+
+    bool isCleave;
+    if (dir == "cleavage") {
+        isCleave = true;
+    } else if (dir == "synthesis") {
+        isCleave = false;
+    } else {
+        throw CanteraError("newBEP", "BEP direction takes only one of "
+                "'cleavage', 'synthesis', but {} is given", dir);
+    }
+    auto bep = make_shared<BEP>(slope, intercept, isCleave, id);
+
+    auto clv_rxn_node = bep_node["cleavage_reactions"].as<AnyMap>();
+    vector<string> rxnids = getBEPReactionIds(clv_rxn_node, rootNode);
+    bep->installCleaveReactions(rxnids);
+    rxnids.clear();
+
+    auto syn_rxn_node = bep_node["synthesis_reactions"].as<AnyMap>();
+    rxnids = getBEPReactionIds(syn_rxn_node, rootNode);
+    bep->installSynthesisReactions(rxnids);
+    return bep;
+}
+
 
 }

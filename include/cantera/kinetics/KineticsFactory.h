@@ -135,6 +135,19 @@ unique_ptr<Kinetics> newKinetics(std::vector<ThermoPhase*>& phases,
 void addReactions(Kinetics& kin, const AnyMap& phaseNode,
                   const AnyMap& rootNode=AnyMap());
 
+/*!
+ * Add BEPs (Bell-Evans-Polyanni relation) to a Kinetics object
+ *
+ * @param kin        The Kinetics object to be initialized
+ * @param phaseNode  Phase entry for the phase where the reactions occur. This
+ *     phase definition is used to determine the source of the reactions added
+ *     to the Kinetics object.
+ * @param rootNode   The root node of the file containing the phase definition,
+ *     which will be treated as the default source for reactions
+ */
+void addBEPs(Kinetics& kin, const AnyMap& phaseNode, 
+             const AnyMap& rootNode=AnyMap());
+
 }
 
 #endif

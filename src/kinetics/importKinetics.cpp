@@ -149,9 +149,9 @@ bool installBEPArrays(const XML_Node& p, Kinetics& kin,
         // process this element now.
         const XML_Node& beps = *bepArrays[n];
 
-        // The reactionArray element has an attribute called, datasrc. The value
+        // The bepArray element has an attribute called, datasrc. The value
         // of the attribute is the XML element comprising the top of the tree of
-        // reactions for the phase. Find this datasrc element starting with the
+        // BEPs for the phase. Find this datasrc element starting with the
         // root of the current XML node.
         const XML_Node* bepdata = get_XML_Node(beps["datasrc"], &beps.root());
 

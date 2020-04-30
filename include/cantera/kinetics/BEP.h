@@ -16,6 +16,7 @@
 #include <memory>
 
 #include "cantera/base/ct_defs.h"
+#include "cantera/base/AnyMap.h"
 
 namespace Cantera
 {
@@ -134,8 +135,12 @@ protected:
 };
 
 //! Create a new BEP object for a given BEP relation 
-//! defined in `bep_node`
+//! defined in `bep_node` in XML
 shared_ptr<BEP> newBEP(const XML_Node& bep_node);
+
+//! Create a new BEP object for a given BEP relation 
+//! defined under `bep_node` in YAML format with root at `root_node`
+shared_ptr<BEP> newBEP(const AnyMap& bep_node, const AnyMap& root_node);
 
 //! Create BEP objects for all `<bep>` nodes in an 
 //! XML document.

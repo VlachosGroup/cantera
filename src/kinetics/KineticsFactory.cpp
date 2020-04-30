@@ -10,6 +10,7 @@
 #include "cantera/kinetics/InterfaceKinetics.h"
 #include "cantera/kinetics/EdgeKinetics.h"
 #include "cantera/kinetics/importKinetics.h"
+#include "cantera/kinetics/BEP.h"
 #include "cantera/base/xml.h"
 
 using namespace std;
@@ -63,6 +64,7 @@ unique_ptr<Kinetics> newKinetics(vector<ThermoPhase*>& phases,
     }
     kin->init();
     addReactions(*kin, phaseNode, rootNode);
+    addBEPs(*kin, phaseNode, rootNode);
     return kin;
 }
 
@@ -174,6 +176,61 @@ void addReactions(Kinetics& kin, const AnyMap& phaseNode, const AnyMap& rootNode
             // specified section is in the current file
             for (const auto& R : rootNode.at(sections[i]).asVector<AnyMap>()) {
                 kin.addReaction(newReaction(R, kin));
+            }
+        }
+    }
+}
+
+void addBEPs(Kinetics& kin, const AnyMap& phaseNode, const AnyMap& rootNode)
+{
+    // Find sections containing reactions to add
+    vector<string> sections, rules;
+
+    if (phaseNode.hasKey("BEPs")) {
+        const auto& bepsNode = phaseNode.at("BEPs");
+        if (bepsNode.is<string>()) {
+            if (rootNode.hasKey("BEPs")) {
+                // Specification of the rule for adding species from the default
+                // 'reactions' section, if it exists
+                sections.push_back("BEPs");
+                rules.push_back(bepsNode.asString());
+            } else if (bepsNode.asString() != "none") {
+                throw InputFileError("addBEPs", bepsNode,
+                    "Phase entry implies existence of 'BEPs' section "
+                    "which does not exist in the current input file.");
+            }
+        } else if (bepsNode.is<vector<string>>()) {
+            // List of sections from which all species should be added
+            for (const auto& item : bepsNode.as<vector<string>>()) {
+                sections.push_back(item);
+                rules.push_back("all");
+            }
+        } else if (bepsNode.is<vector<AnyMap>>()) {
+            // Mapping of rules to apply for each specified section containing
+            // BEPs
+            for (const auto& item : bepsNode.as<vector<AnyMap>>()) {
+                sections.push_back(item.begin()->first);
+                rules.push_back(item.begin()->second.asString());
+            }
+        }
+    } 
+
+    // Add BEPs from each section
+    for (size_t i = 0; i < sections.size(); i++) {
+        const auto& slash = boost::ifind_last(sections[i], "/");
+        if (slash) {
+            // specified section is in a different file
+            string fileName (sections[i].begin(), slash.begin());
+            string node(slash.end(), sections[i].end());
+            AnyMap beps = AnyMap::fromYamlFile(fileName,
+                rootNode.getString("__file__", ""));
+            for (const auto& BEP : beps[node].asVector<AnyMap>()) {
+                kin.addBEP(newBEP(BEP, rootNode));
+            }
+        } else {
+            // specified section is in the current file
+            for (const auto& BEP : rootNode.at(sections[i]).asVector<AnyMap>()) {
+                kin.addBEP(newBEP(BEP, rootNode));
             }
         }
     }
