@@ -282,14 +282,19 @@ shared_ptr<BEP> newBEP(const AnyMap& bep_node, const AnyMap& rootNode)
     }
     auto bep = make_shared<BEP>(slope, intercept, isCleave, id);
 
-    auto clv_rxn_node = bep_node["cleavage_reactions"].as<AnyMap>();
-    vector<string> rxnids = getBEPReactionIds(clv_rxn_node, rootNode);
-    bep->installCleaveReactions(rxnids);
-    rxnids.clear();
+    //auto clv_rxn_node = bep_node["cleavage_reactions"].as<AnyMap>();
+    //auto rxnids = getBEPReactionIds(clv_rxn_node, rootNode);
+    if (bep_node.hasKey("cleavage_reactions")) {
+        auto rxnids = bep_node["cleavage_reactions"].as<vector<string>>();
+        bep->installCleaveReactions(rxnids);
+    }
 
-    auto syn_rxn_node = bep_node["synthesis_reactions"].as<AnyMap>();
-    rxnids = getBEPReactionIds(syn_rxn_node, rootNode);
-    bep->installSynthesisReactions(rxnids);
+    //auto syn_rxn_node = bep_node["synthesis_reactions"].as<AnyMap>();
+    //rxnids = getBEPReactionIds(syn_rxn_node, rootNode);
+    if (bep_node.hasKey("synthesis_reactions")) {
+        auto rxnids = bep_node["synthesis_reactions"].as<vector<string>>();
+        bep->installSynthesisReactions(rxnids);
+    }
     return bep;
 }
 

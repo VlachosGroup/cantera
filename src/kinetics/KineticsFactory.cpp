@@ -186,18 +186,17 @@ void addBEPs(Kinetics& kin, const AnyMap& phaseNode, const AnyMap& rootNode)
     // Find sections containing reactions to add
     vector<string> sections, rules;
 
-    if (phaseNode.hasKey("BEPs")) {
-        const auto& bepsNode = phaseNode.at("BEPs");
+    if (phaseNode.hasKey("bep")) {
+        const auto& bepsNode = phaseNode.at("bep");
         if (bepsNode.is<string>()) {
-            if (rootNode.hasKey("BEPs")) {
-                // Specification of the rule for adding species from the default
-                // 'reactions' section, if it exists
-                sections.push_back("BEPs");
+            if (rootNode.hasKey("bep")) {
+                sections.push_back("bep");
                 rules.push_back(bepsNode.asString());
             } else if (bepsNode.asString() != "none") {
                 throw InputFileError("addBEPs", bepsNode,
-                    "Phase entry implies existence of 'BEPs' section "
-                    "which does not exist in the current input file.");
+                    "Phase entry implies existence of 'bep' section "
+                    "at root level which does not exist in the current "
+                    "input file.");
             }
         } else if (bepsNode.is<vector<string>>()) {
             // List of sections from which all species should be added
