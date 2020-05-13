@@ -71,10 +71,10 @@ shared_ptr<Solution> newSolution(const std::string& infile,
 
     // kinetics
     std::vector<ThermoPhase*> phases;
-    phases.push_back(sol->thermo().get());
     for (auto& adj : adjacent) {
         phases.push_back(adj->thermo().get());
     }
+    phases.push_back(sol->thermo().get());
     sol->setKinetics(newKinetics(phases, infile, name));
 
     // transport
