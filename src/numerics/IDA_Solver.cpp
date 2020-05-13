@@ -334,7 +334,7 @@ void IDA_Solver::setDenseLinearSolver()
 void IDA_Solver::setBandedLinearSolver(int m_upper, int m_lower)
 {
     m_type = 2;
-    m_upper = m_mupper;
+    m_mupper = m_upper;
     m_mlower = m_lower;
 }
 
