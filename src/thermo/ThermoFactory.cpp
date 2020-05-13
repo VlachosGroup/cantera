@@ -56,7 +56,8 @@ ThermoFactory::ThermoFactory()
     addAlias("constant-density", "Incompressible");
     reg("ideal-surface", []() { return new SurfPhase(); });
     addAlias("ideal-surface", "Surface");
-    reg("SurfaceCoverage", []() { return new SurfLatIntPhase(); });
+    reg("surface-lateral-interaction", []() { return new SurfLatIntPhase(); });
+    addAlias("surface-lateral-interaction", "SurfaceCoverage");
     reg("edge", []() { return new EdgePhase(); });
     addAlias("edge", "Edge");
     reg("electron-cloud", []() { return new MetalPhase(); });
