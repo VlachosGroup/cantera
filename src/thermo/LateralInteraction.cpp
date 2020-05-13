@@ -137,16 +137,18 @@ shared_ptr<LateralInteraction> newLateralInteraction(const AnyMap& intrxnNode)
                 "The size of the species array: '{}' is different from 2",  
                 species.size());
     auto units = intrxnNode.units();
-    auto strengths = intrxnNode["strength"].asVector<double>(); // Update to account for units
+    auto strengths = intrxnNode["strength"].asVector<AnyValue>(); // Update to account for units
     //auto strengths = intrxnNode.convertVector("strength", "K", 
+    vector<double> slopes;
     for (auto& strength : strengths) {
-        strength = units.convertActivationEnergy(strength, "K");
+        slopes.push_back(units.convertActivationEnergy(strength, "K"));
+        
     }
     auto covs = intrxnNode["coverage_threshold"].asVector<double>();
     
 
     auto interaction = make_shared<LateralInteraction>(species[0], species[1], 
-                                                       strengths, covs, id);
+                                                       slopes, covs, id);
     return interaction;
 }
 
