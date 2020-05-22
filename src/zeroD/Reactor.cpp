@@ -304,8 +304,11 @@ double Reactor::evalSurfaces(double t, double* ydot)
         double wallarea = S->area();
         for (size_t k = 0; k < m_nsp; k++) {
             m_sdot[k] += m_work[k]*wallarea;
-            mdot_surf += m_sdot[k] * mw[k];
+            //mdot_surf += m_sdot[k] * mw[k];
         }
+    }
+    for (size_t k = 0; k < m_nsp; k++) {
+        mdot_surf += m_sdot[k] * mw[k];
     }
     return mdot_surf;
 }
