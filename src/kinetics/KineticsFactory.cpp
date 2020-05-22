@@ -186,11 +186,11 @@ void addBEPs(Kinetics& kin, const AnyMap& phaseNode, const AnyMap& rootNode)
     // Find sections containing reactions to add
     vector<string> sections, rules;
 
-    if (phaseNode.hasKey("bep")) {
-        const auto& bepsNode = phaseNode.at("bep");
+    if (phaseNode.hasKey("beps")) {
+        const auto& bepsNode = phaseNode.at("beps");
         if (bepsNode.is<string>()) {
-            if (rootNode.hasKey("bep")) {
-                sections.push_back("bep");
+            if (rootNode.hasKey("beps")) {
+                sections.push_back("beps");
                 rules.push_back(bepsNode.asString());
             } else if (bepsNode.asString() != "none") {
                 throw InputFileError("addBEPs", bepsNode,
