@@ -284,15 +284,15 @@ shared_ptr<BEP> newBEP(const AnyMap& bep_node, const AnyMap& rootNode)
 
     //auto clv_rxn_node = bep_node["cleavage_reactions"].as<AnyMap>();
     //auto rxnids = getBEPReactionIds(clv_rxn_node, rootNode);
-    if (bep_node.hasKey("cleavage_reactions")) {
-        auto rxnids = bep_node["cleavage_reactions"].as<vector<string>>();
+    if (bep_node.hasKey("cleavage-reactions")) {
+        auto rxnids = bep_node["cleavage-reactions"].as<vector<string>>();
         bep->installCleaveReactions(rxnids);
     }
 
     //auto syn_rxn_node = bep_node["synthesis_reactions"].as<AnyMap>();
     //rxnids = getBEPReactionIds(syn_rxn_node, rootNode);
-    if (bep_node.hasKey("synthesis_reactions")) {
-        auto rxnids = bep_node["synthesis_reactions"].as<vector<string>>();
+    if (bep_node.hasKey("synthesis-reactions")) {
+        auto rxnids = bep_node["synthesis-reactions"].as<vector<string>>();
         bep->installSynthesisReactions(rxnids);
     }
     return bep;

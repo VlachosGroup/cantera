@@ -144,7 +144,7 @@ shared_ptr<LateralInteraction> newLateralInteraction(const AnyMap& intrxnNode)
         slopes.push_back(units.convertActivationEnergy(strength, "K"));
         
     }
-    auto covs = intrxnNode["coverage_threshold"].asVector<double>();
+    auto covs = intrxnNode["coverage-threshold"].asVector<double>();
     
 
     auto interaction = make_shared<LateralInteraction>(species[0], species[1], 
