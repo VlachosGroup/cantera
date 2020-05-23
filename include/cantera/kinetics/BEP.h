@@ -44,11 +44,11 @@ class Reaction;
 class BEP
 {
 public:
-    BEP() 
-        //: m_m(0), m_b(0), m_BEPIsClvg(true), m_id(0) 
-    {}
+    //BEP() 
+    //    : m_m(0), m_b(0), m_BEPIsClvg(true), m_id("") 
+    //{}
 
-    BEP(double slope, double intercept, bool cleave, std::string id) : 
+    BEP(double slope=0, double intercept=0, bool cleave=true, std::string id="") : 
         m_m(slope), m_b(intercept), m_BEPIsClvg(cleave), m_id(id) {}
                        
     ~BEP() {}
