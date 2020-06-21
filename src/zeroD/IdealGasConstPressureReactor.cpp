@@ -126,6 +126,7 @@ void IdealGasConstPressureReactor::evalEqs(doublereal time, doublereal* y,
     } else {
         ydot[1] = 0.0;
     }
+    m_mdot = dmdt;
 
     resetSensitivity(params);
 }

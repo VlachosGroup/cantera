@@ -138,6 +138,7 @@ void IdealGasReactor::evalEqs(doublereal time, doublereal* y,
     } else {
         ydot[2] = 0;
     }
+    m_mdot = dmdt;
 
     resetSensitivity(params);
 }

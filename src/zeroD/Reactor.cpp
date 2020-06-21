@@ -70,6 +70,40 @@ void Reactor::getSurfaceProductionRates(double* y)
     }
 }
 
+double Reactor::getSurfaceMassProductionRate()
+{
+    double mdot_surf = 0.0;
+    const vector_fp& mw = m_thermo->molecularWeights();
+    for (size_t i = 0; i < m_nsp; i++) {
+        mdot_surf += m_sdot[i] * mw[i];
+    }
+    return mdot_surf;
+}
+
+double Reactor::getOutletMassFlowRate()
+{
+    double mdot_out = 0.0;
+    for (size_t i = 0; i < m_outlet.size(); i++) {
+        mdot_out -= m_mdot_out[i]; // mass flow out of system
+    }
+    return mdot_out;
+}
+
+double Reactor::getInletMassFlowRate()
+{
+    double mdot_in = 0.0;
+    for (size_t i = 0; i < m_inlet.size(); i++) {
+        mdot_in -= m_mdot_in[i]; // mass flow out of system
+    }
+    return mdot_in;
+}
+
+double Reactor::getMassProductionRate()
+{
+    return m_mdot;
+}
+
+
 void Reactor::getSurfaceInitialConditions(double* y)
 {
     size_t loc = 0;
@@ -251,6 +285,7 @@ void Reactor::evalEqs(doublereal time, doublereal* y,
     }
 
     ydot[0] = dmdt;
+    m_mdot = dmdt;
     resetSensitivity(params);
 }
 

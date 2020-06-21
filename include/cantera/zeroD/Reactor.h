@@ -113,6 +113,29 @@ public:
      */
     virtual void getSurfaceProductionRates(doublereal* y);
 
+    //! Get the the mass flow rate into the reactor due to the inlets 
+    /*!
+     */
+    virtual double getInletMassFlowRate();
+
+    //! Get the the mass flow rate out of the reactor due to the outlets 
+    /*!
+     *  Denote the mass flow rate out with a negative value
+     */
+    virtual double getOutletMassFlowRate();
+
+    //! Get the the mass generation from  catalyst surface
+    /*!
+     *  Mass absorbed onto the catalyst is denoted with -ve value
+     */
+    virtual double getSurfaceMassProductionRate();
+
+    //! Get the the rate of change of mass in the reactor
+    /*!
+     *  Rate of change of mass is coming from inlets, outlets, and surfaces absorbed onto the catalyst is denoted with -ve value
+     */
+    virtual double getMassProductionRate();
+
     virtual void initialize(doublereal t0 = 0.0);
 
     /*!
@@ -215,6 +238,7 @@ protected:
     doublereal m_vdot; //!< net rate of volume change from moving walls [m^3/s]
     doublereal m_Q; //!< net heat transfer through walls [W]
     doublereal m_mass; //!< total mass
+    doublereal m_mdot; //!< Net rate of total mass change in the reactor
     vector_fp m_work;
 
     //! Production rates of gas phase species on surfaces [kmol/s]
