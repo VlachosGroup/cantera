@@ -136,7 +136,7 @@ void IdealGasReactor::evalEqs(doublereal time, doublereal* y,
     if (m_energy) {
         ydot[2] = mcvdTdt / (m_mass * m_thermo->cv_mass());
     } else {
-        ydot[2] = 0;
+        ydot[2] = m_beta;
     }
     m_mdot = dmdt;
 

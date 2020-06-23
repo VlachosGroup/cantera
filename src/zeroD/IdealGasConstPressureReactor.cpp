@@ -124,7 +124,7 @@ void IdealGasConstPressureReactor::evalEqs(doublereal time, doublereal* y,
     if (m_energy) {
         ydot[1] = mcpdTdt / (m_mass * m_thermo->cp_mass());
     } else {
-        ydot[1] = 0.0;
+        ydot[1] = m_beta;
     }
     m_mdot = dmdt;
 

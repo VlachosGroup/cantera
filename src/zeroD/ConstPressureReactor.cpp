@@ -114,7 +114,7 @@ void ConstPressureReactor::evalEqs(doublereal time, doublereal* y,
     if (m_energy) {
         ydot[1] = dHdt;
     } else {
-        ydot[1] = 0.0;
+        ydot[1] = m_beta;
     }
 
     // reset sensitivity parameters

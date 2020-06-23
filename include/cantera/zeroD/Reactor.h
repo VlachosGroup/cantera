@@ -195,6 +195,10 @@ public:
     //! @param limit value for step size limit
     void setAdvanceLimit(const std::string& nm, const double limit);
 
+    void setBeta(double beta) { //! Set the temperature ramp for a TPD reactor
+        m_beta = beta;
+    }
+
 protected:
     //! Set reaction rate multipliers based on the sensitivity variables in
     //! *params*.
@@ -249,6 +253,7 @@ protected:
     bool m_chem;
     bool m_energy;
     size_t m_nv;
+    double m_beta;  //!< T ramp for TPD reactor
 
     vector_fp m_advancelimits; //!< Advance step limit
 

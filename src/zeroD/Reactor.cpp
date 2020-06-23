@@ -24,6 +24,7 @@ Reactor::Reactor() :
     m_mass(0.0),
     m_chem(false),
     m_energy(true),
+    m_beta(0.0),
     m_nv(0)
 {}
 
@@ -260,7 +261,7 @@ void Reactor::evalEqs(doublereal time, doublereal* y,
     if (m_energy) {
         ydot[2] = - m_thermo->pressure() * m_vdot - m_Q;
     } else {
-        ydot[2] = 0.0;
+        ydot[2] = m_beta;
     }
 
     // add terms for outlets
