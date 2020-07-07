@@ -125,8 +125,8 @@ public:
 protected:
     double m_m;
     double m_b;
-    std::string m_id;
     bool m_BEPIsClvg;
+    std::string m_id;
     std::vector<size_t> m_reactionIndices;     // To identify the reactions in kinetics objects associated with this BEP
     std::vector<std::string> m_reactionIds; // Used to read the reactions from xml file associated with this BEP
     std::vector<bool> m_rxnIsClvg;
