@@ -72,7 +72,7 @@ double BEP::actEnergy(double delH, bool rxnIsClvg) const
     if (m_BEPIsClvg  == rxnIsClvg) {
         return m_m * delH + m_b;
     } else {
-        return (m_m - 1) * delH + m_b;
+        return (1 - m_m) * delH + m_b;
     }
 }
 
@@ -83,7 +83,7 @@ void BEP::computeActivationEnergies(const double* deltaH, double* Ea_R) const
         if (m_BEPIsClvg == m_rxnIsClvg[i]) {
             Ea_R[i] = m_m * deltaH[m_reactionIndices[i]] + m_b;
         } else {
-            Ea_R[i] = (m_m - 1) * deltaH[m_reactionIndices[i]] + m_b;
+            Ea_R[i] = (1 - m_m) * deltaH[m_reactionIndices[i]] + m_b;
         }
     }
 }
