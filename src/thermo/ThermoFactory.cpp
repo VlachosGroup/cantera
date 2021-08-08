@@ -29,6 +29,7 @@
 #include "cantera/thermo/EdgePhase.h"
 #include "cantera/thermo/MetalPhase.h"
 #include "cantera/thermo/StoichSubstance.h"
+#include "cantera/thermo/RefStateStoichSubstance.h"
 #include "cantera/thermo/FixedChemPotSSTP.h"
 #include "cantera/thermo/LatticeSolidPhase.h"
 #include "cantera/thermo/LatticePhase.h"
@@ -64,6 +65,8 @@ ThermoFactory::ThermoFactory()
     addAlias("electron-cloud", "Metal");
     reg("fixed-stoichiometry", []() { return new StoichSubstance(); });
     addAlias("fixed-stoichiometry", "StoichSubstance");
+    reg("ref-state-fixed-stoichiometry", []() { return new RefStateStoichSubstance(); });
+    addAlias("ref-state-fixed-stoichiometry", "RefStateStoichSubstance");
     reg("pure-fluid", []() { return new PureFluidPhase(); });
     addAlias("pure-fluid", "PureFluid");
     reg("compound-lattice", []() { return new LatticeSolidPhase(); });
