@@ -47,12 +47,10 @@ int get_index(vector<string> species, string name) {
     if (it == species.end())
     {
         // name not in vector
-        //throw CanteraError(
-                //"Name of species in interaction not found in supplied species");
-    } else
-    {
-        return distance(species.begin(), it);
+        throw CanteraError("MultiSpeciesInterThermo::get_index",
+                "Name of species in interaction not found in supplied species");
     }
+    return distance(species.begin(), it);
 }
 
 void MultiSpeciesInterThermo::buildSpeciesInterMap(std::vector<std::string> species)

@@ -174,6 +174,7 @@ bool SurfLatIntPhase::addInteraction(shared_ptr<LateralInteraction> intrxn) {
         m_intrxn_species.insert(affectedSpecies);
         m_intrxn_species_index.insert(speciesIndex(affectedSpecies));
     }
+    return true;
 } 
 
 vector<string> SurfLatIntPhase::getAffectedInteractions(string speciesName) const

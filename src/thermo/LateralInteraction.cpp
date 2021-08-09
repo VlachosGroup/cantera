@@ -28,7 +28,7 @@ LateralInteraction::LateralInteraction(std::string species1, std::string species
                                        std::string name) :
     m_strengths(strengths), m_cov_thresholds(intercepts), m_id(name)
 {
-    m_species = make_pair(species1, species2);
+    m_species  = make_pair(species1, species2);
 }
 
 
@@ -38,10 +38,7 @@ LateralInteraction::~LateralInteraction()
 
 bool LateralInteraction::validate()
 {
-    if (m_strengths.size() == m_cov_thresholds.size()+1)
-        return true;
-    else
-        return false;
+    return (m_strengths.size() + 1 == m_cov_thresholds.size()) ? true : false;
 }
 
 
