@@ -93,7 +93,7 @@ void RefStateStoichSubstance::initThermoXML(XML_Node& phaseNode, const std::stri
     XML_Node& tnode = phaseNode.child("thermo");
     std::string model = tnode["model"];
     if (model != "RefStateStoichSubstance") {
-        throw CanteraError("StoichSubstance::initThermoXML",
+        throw CanteraError("RefStateStoichSubstance::initThermoXML",
                            "thermo model attribute must be RefStateStoichSubstance");
     }
     double dens = getFloat(tnode, "density", "toSI");
@@ -105,8 +105,8 @@ void RefStateStoichSubstance::setParametersFromXML(const XML_Node& eosdata)
 {
     std::string model = eosdata["model"];
     if (model != "RefStateStoichSubstance") {
-        throw CanteraError("StoichSubstance::setParametersFromXML",
-                           "thermo model attribute must be StoichSubstance");
+        throw CanteraError("RefStateStoichSubstance::setParametersFromXML",
+                           "thermo model attribute must be RefStateStoichSubstance");
     }
     assignDensity(getFloat(eosdata, "density", "toSI"));
 }
