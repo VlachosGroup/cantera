@@ -176,9 +176,11 @@ public:
         return "RefStateStoichSubstance";
     }
 
+    /*
     virtual bool isCompressible() const {
         return false;
     }
+    */
 
     /**
      * @}
@@ -189,7 +191,7 @@ public:
      * @{
      */
 
-    virtual Units standardConcentrationUnits() const;
+    // virtual Units standardConcentrationUnits() const;
 
     //! This method returns an array of generalized concentrations
     /*!
