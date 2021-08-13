@@ -514,6 +514,14 @@ public:
         throw NotImplementedError("Kinetics::getDeltaSSEntropy");
     }
 
+    virtual void getDeltaRefEntropy(doublereal* deltaS) {
+        throw NotImplementedError("Kinetics::getDeltaRefEntropy");
+    }
+
+    virtual void getDeltaRefGibbs(doublereal* deltaG) {
+        throw NotImplementedError("Kinetics::getDeltaRefGibbs");
+    }
+
     //! @}
     //! @name Species Production Rates
     //! @{
