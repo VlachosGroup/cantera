@@ -562,8 +562,8 @@ void InterfaceKinetics::getDeltaSSEntropy(doublereal* deltaS)
 void InterfaceKinetics::getDeltaRefEntropy(doublereal* deltaS)
 {
     // Get the standard state entropy of the species. We define these here as
-    // the entropies of the pure species at the temperature and pressure of the
-    // solution.
+    // the entropies of the pure species at the temperature and at reference 
+    // pressure of the solution.
     for (size_t n = 0; n < nPhases(); n++) {
         thermo(n).getEntropy_R_ref(m_grt.data() + m_start[n]);
     }
