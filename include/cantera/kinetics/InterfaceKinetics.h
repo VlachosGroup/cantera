@@ -107,6 +107,7 @@ public:
     virtual void getDeltaSSEntropy(doublereal* deltaS);
 
     virtual void getDeltaRefGibbs(doublereal* deltaG);
+	virtual void getDeltaRefEnthalpy(doublereal* deltaH);
     virtual void getDeltaRefEntropy(doublereal* deltaS);
 
     //! @}
