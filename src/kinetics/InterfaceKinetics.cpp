@@ -499,20 +499,18 @@ void InterfaceKinetics::getDeltaSSGibbs(doublereal* deltaGSS)
     // of the solution.
     for (size_t n = 0; n < nPhases(); n++) {
         thermo(n).getStandardChemPotentials(m_mu0.data() + m_start[n]);
-        //thermo(n).getGibbs_RT_ref(m_grt.data() + m_start[n]);
     }
 
     // Use the stoichiometric manager to find deltaG for each reaction.
-    //getReactionDelta(m_mu0.data(), deltaGSS);
     getReactionDelta(m_mu0.data(), deltaGSS);
 }
 
 void InterfaceKinetics::getDeltaRefGibbs(doublereal * deltaGSS)
 {
-    // Get the standard state chemical potentials of the species. This is the
+    // Get the reference state chemical potentials of the species. This is the
     // array of chemical potentials at unit activity We define these here as the
     // chemical potentials of the pure species at the temperature and reference 
-    // pressure of the solution.
+    // pressure of 1 bar of the solution.
     for (size_t n = 0; n < nPhases(); n++) {
         thermo(n).getGibbs_RT_ref(m_grt.data() + m_start[n]);
     }
@@ -561,9 +559,9 @@ void InterfaceKinetics::getDeltaSSEntropy(doublereal* deltaS)
 
 void InterfaceKinetics::getDeltaRefEntropy(doublereal* deltaS)
 {
-    // Get the standard state entropy of the species. We define these here as
+    // Get the reference state entropy of the species. We define these here as
     // the entropies of the pure species at the temperature and at reference 
-    // pressure of the solution.
+    // pressure of 1 bar of the solution.
     for (size_t n = 0; n < nPhases(); n++) {
         thermo(n).getEntropy_R_ref(m_grt.data() + m_start[n]);
     }
