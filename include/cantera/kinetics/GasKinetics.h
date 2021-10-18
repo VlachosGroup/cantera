@@ -46,6 +46,13 @@ public:
     virtual void getEquilibriumConstants(doublereal* kc);
     virtual void getFwdRateConstants(doublereal* kfwd);
 
+    // Utility methods to get reaction Deltas
+    virtual void getDeltaRefGibbs(doublereal* deltaG);
+    virtual void getDeltaRefEnthalpy(doublereal* deltaH){
+        throw NotImplementedError("GasKinetics::getDeltaRefEnthalpy");
+    }
+    virtual void getDeltaRefEntropy(doublereal* deltaS);
+
     //! @}
     //! @name Reaction Mechanism Setup Routines
     //! @{
