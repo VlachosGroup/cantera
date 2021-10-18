@@ -106,6 +106,9 @@ public:
     virtual void getDeltaSSEnthalpy(doublereal* deltaH);
     virtual void getDeltaSSEntropy(doublereal* deltaS);
 
+    virtual void getDeltaRefGibbs(doublereal* deltaG);
+    virtual void getDeltaRefEntropy(doublereal* deltaS);
+
     //! @}
     //! @name Reaction Mechanism Informational Query Routines
     //! @{

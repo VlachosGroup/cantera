@@ -222,6 +222,41 @@ void GasKinetics::getFwdRateConstants(doublereal* kfwd)
     }
 }
 
+void GasKinetics::getDeltaRefGibbs(doublereal* deltaGSS)
+{
+    // Get the reference state chemical potentials of the species. This is the
+    // array of chemical potentials at unit activity We define these here as the
+    // chemical potentials of the pure species at the temperature and reference 
+    // pressure of 1 bar of the solution.
+    for (size_t n = 0; n < nPhases(); n++) {
+        thermo(n).getGibbs_RT_ref(m_grt.data() + m_start[n]);
+    }
+
+    for (size_t k = 0; k < m_kk; k++) {
+        m_grt[k] *= thermo(reactionPhaseIndex()).RT();
+    }
+
+    // Use the stoichiometric manager to find deltaG for each reaction.
+    //getReactionDelta(m_mu0.data(), deltaGSS);
+    getReactionDelta(m_grt.data(), deltaGSS);
+}
+
+void GasKinetics::getDeltaRefEntropy(doublereal* deltaS)
+{
+    // Get the reference state entropy of the species. We define these here as
+    // the entropies of the pure species at the temperature and at reference 
+    // pressure of 1 bar of the solution.
+    for (size_t n = 0; n < nPhases(); n++) {
+        thermo(n).getEntropy_R_ref(m_grt.data() + m_start[n]);
+    }
+    for (size_t k = 0; k < m_kk; k++) {
+        m_grt[k] *= GasConstant;
+    }
+
+    // Use the stoichiometric manager to find deltaS for each reaction.
+    getReactionDelta(m_grt.data(), deltaS);
+}
+
 bool GasKinetics::addReaction(shared_ptr<Reaction> r)
 {
     // operations common to all reaction types

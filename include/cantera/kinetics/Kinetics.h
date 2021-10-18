@@ -514,6 +514,48 @@ public:
         throw NotImplementedError("Kinetics::getDeltaSSEntropy");
     }
 
+    /**
+     * Return the vector of values for the change in the standard state
+     * entropies for each reaction at reference pressure of 1 bar. These values
+	 * don't depend upon the concentration of the solution.
+     *
+     *  units = J kmol-1 Kelvin-1
+     *
+     * @param deltaS  Output vector of ss deltaS's for reactions Length:
+     *     nReactions().
+     */
+    virtual void getDeltaRefEntropy(doublereal* deltaS) {
+        throw NotImplementedError("Kinetics::getDeltaRefEntropy");
+    }
+
+    /**
+     * Return the vector of values for the reaction standard state Gibbs free
+     * energy change at reference pressure of 1 bar. These values don't 
+     * depend upon the concentration of the solution.
+     *
+     *  units = J kmol-1
+     *
+     * @param deltaG  Output vector of ss deltaG's for reactions Length:
+     *     nReactions().
+     */
+    virtual void getDeltaRefGibbs(doublereal* deltaG) {
+        throw NotImplementedError("Kinetics::getDeltaRefGibbs");
+    }
+
+    /**
+     * Return the vector of values for the change in the standard state
+     * enthalpies of each reaction at reference pressure of 1 bar. These values don't 
+     * depend upon the concentration of the solution.
+     *
+     *  units = J kmol-1
+     *
+     * @param deltaH  Output vector of ss deltaH's for reactions Length:
+     *     nReactions().
+     */
+    virtual void getDeltaRefEnthalpy(doublereal* deltaH) {
+        throw NotImplementedError("Kinetics::getDeltaRefEnthalpy");
+    }
+
     //! @}
     //! @name Species Production Rates
     //! @{
