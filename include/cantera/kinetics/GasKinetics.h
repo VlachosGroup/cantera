@@ -48,9 +48,6 @@ public:
 
     // Utility methods to get reaction Deltas
     virtual void getDeltaRefGibbs(doublereal* deltaG);
-    virtual void getDeltaRefEnthalpy(doublereal* deltaH){
-        throw NotImplementedError("GasKinetics::getDeltaRefEnthalpy");
-    }
     virtual void getDeltaRefEntropy(doublereal* deltaS);
 
     //! @}
