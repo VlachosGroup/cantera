@@ -268,7 +268,7 @@ shared_ptr<BEP> newBEP(const AnyMap& bep_node, const AnyMap& rootNode)
     string id = bep_node["id"].asString();
     double slope = bep_node["slope"].asDouble();
     auto units = bep_node.units();
-    double intercept = units.convertActivationEnergy(bep_node["intercept"], "K");
+    double intercept = units.convertActivationEnergy(bep_node["intercept"], "J/kmol");
     string dir = bep_node["direction"].asString();
 
     bool isCleave;
